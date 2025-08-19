@@ -1,7 +1,7 @@
 #include "enemy_manager.h"
 #include "sound_manager.h"
+#include "game_state.h"
 #include <glm/glm.hpp>
-
 
 EnemyManager::EnemyManager() {
 	all_paths = TileMap::Instance().get_road_graph().find_all_paths();
@@ -11,10 +11,17 @@ EnemyManager::EnemyManager() {
 	enemy_textures[EnemyTexturesID::TruckDestroyed].loadFromFile("sprites/truck_destroyed.png");
 	enemy_textures[EnemyTexturesID::MedBlustOfDestruction1].loadFromFile("sprites/med_blust_of_destruction1.png");
 	enemy_textures[EnemyTexturesID::MedBlustOfDestruction2].loadFromFile("sprites/med_blust_of_destruction2.png");
+	enemy_textures[EnemyTexturesID::Bike].loadFromFile("sprites/bike.png");
 }
 
 void EnemyManager::spawn() {
-	m_enemies.push_back((rand() % 2 ? create_tank() : create_truck()));
+	int enemy = rand() % 3;
+	if (enemy == 0)
+		m_enemies.push_back(create_tank());
+	else if (enemy == 1)
+		m_enemies.push_back(create_truck());
+	else
+		m_enemies.push_back(create_bike());
 	m_enemies.back().path_id = rand() % all_paths.size();
 	m_enemies.back().id = ++current_max_id;
 	if (current_max_id > 32768)
@@ -36,10 +43,13 @@ void EnemyManager::logic(double dtime) {
 		}
 	}
 	m_enemies = std::move(new_enemies);
-	for (auto& enemy : m_enemies) {
+	for (auto& enemy : m_enemies)
 		if (enemy.logic(dtime));
-			//TODO
-	}
+	m_enemies.erase(std::remove_if(m_enemies.begin(), m_enemies.end(),
+		[](const Enemy& enemy) {return enemy.path_is_completed; }),
+		m_enemies.end()
+	);
+
 	for (auto& destroyed_enemy : m_destroyed_enemies)
 		destroyed_enemy.logic(dtime);
 	m_destroyed_enemies.remove_if([](DestroyedEnemy& enemy) { return enemy.is_ready(); });
@@ -96,6 +106,25 @@ Enemy create_truck() {
 	return enemy;
 }
 
+Enemy create_bike() {
+	Enemy enemy;
+	enemy.speed = 1.6;
+	enemy.full_health = enemy.health = 30;
+	auto& enemy_manager = EnemyManager::Instance();
+	enemy.sprite = sf::Sprite(enemy_manager.enemy_textures[EnemyTexturesID::Bike]);
+	enemy.sprite.setOrigin(64, 64);
+	enemy.sprite.setScale(0.25, 0.25);
+
+	/*enemy.engine_sound = std::make_unique<sf::Sound>();
+	enemy.engine_sound->setLoop(true);
+	enemy.engine_sound->setBuffer(SoundManager::Instance().sounds[Sounds::TankEngine]);
+	enemy.engine_sound->play();
+	enemy.engine_sound->setVolume(10.f);*/
+	enemy.destroyed_texture = EnemyTexturesID::Bike;
+	return enemy;
+}
+
+
 
 void Enemy::draw(sf::RenderWindow& window) {
 	window.draw(sprite);
@@ -121,8 +150,11 @@ bool Enemy::logic(double dtime) {
 	else { // при старте goal нулевой и current_pos нулевой, поэтому попадаем сюда и выставляем начальную точку маршрута. 
 		auto& enemy_manager = EnemyManager::Instance();
 		auto& path = enemy_manager.all_paths[path_id];
-		if (goal_path_node + 1 == path.size())
+		if (goal_path_node + 1 == path.size()) {
+			GameState::Instance().player_health_add(-1); //TODO отнимать cost
+			path_is_completed = true;
 			return true;
+		}
 		sprite.setPosition(path[goal_path_node]->x * 32 + 16, path[goal_path_node]->y * 32 + 16);
 		++goal_path_node;
 		goal = sf::Vector2f(path[goal_path_node]->x * 32 + 16, path[goal_path_node]->y * 32 + 16);

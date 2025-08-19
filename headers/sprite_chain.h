@@ -1,7 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 
-#include <vector>
+#include <list>
 
 // сначала позиционирование, потом вращение.
 class SpriteChain {
@@ -14,7 +14,7 @@ public:
 	void draw(sf::RenderWindow& window);
 	int layer = 0;
 	sf::Sprite sprite;
-	std::vector<SpriteChain> childs;
+	std::list<SpriteChain> childs;
 private:
 	struct Element {
 		sf::Sprite* sprite;

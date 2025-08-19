@@ -15,8 +15,8 @@ TwinGunAnimation::TwinGunAnimation() {
 	lower_barrel.layer = 0;
 	m_twin_gun_sprite.childs.push_back(upper_barrel);
 	m_twin_gun_sprite.childs.push_back(lower_barrel);
-	m_upper_barrel = &m_twin_gun_sprite.childs[0];
-	m_lower_barrel = &m_twin_gun_sprite.childs[1];
+	m_upper_barrel = &*m_twin_gun_sprite.childs.begin();
+	m_lower_barrel = &*(++m_twin_gun_sprite.childs.begin());
 }
 
 void TwinGunAnimation::draw(sf::RenderWindow& window, int x_id, int y_id, float rotation) {
@@ -61,7 +61,7 @@ void TwinGunAnimation::fire_animation(sf::RenderWindow& window, int x_id, int y_
 		fire.setTextureRect(sf::IntRect(8, 0, 8, 8));
 	else
 		fire.setTextureRect(sf::IntRect(16, 0, 8, 8));
-	barrel->childs[0].sprite = fire;
+	barrel->childs.begin()->sprite = fire;
 }
 
 void TwinGunAnimation::draw_enemy_hit_animation(sf::RenderWindow& window, int x_id, int y_id, bool upper) {

@@ -4,10 +4,16 @@
 #include "tile_map.h"
 #include "enemy_manager.h"
 #include "sound_manager.h"
+#include "game_state.h"
+
 
 int main() {
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
+	
+	auto& game_state = GameState::Instance(&window);
+	auto& gui = GameState::Instance().get_tgui();
+
 	Camera camera(window);
 
 	sf::Clock clock;
@@ -22,16 +28,20 @@ int main() {
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				window.close();
-			if (camera.process(event));
+			if (gui.handleEvent(event));
+			else if (camera.process(event));
 		}
 		// логика
-		EnemyManager::Instance().logic(clock.getElapsedTime().asMicroseconds());
-		TileMap::Instance().logic(clock.getElapsedTime().asMicroseconds());
-		if (spawn_clock.getElapsedTime().asSeconds() > 2) {
-			EnemyManager::Instance().spawn();
-			spawn_clock.restart();
+		game_state.logic();
+		if (!game_state.is_game_over()) {
+			EnemyManager::Instance().logic(clock.getElapsedTime().asMicroseconds());
+			TileMap::Instance().logic(clock.getElapsedTime().asMicroseconds());
+			if (spawn_clock.getElapsedTime().asSeconds() > 2) {
+				EnemyManager::Instance().spawn();
+				spawn_clock.restart();
+			}
+			SoundManager::Instance().logic();
 		}
-
 		//отрисовка
 		clock.restart(); // рестарт часов после логики.
 		camera.apply(window);
@@ -39,7 +49,7 @@ int main() {
 		TileMap::Instance().draw(window);
 		EnemyManager::Instance().draw(window);
 		TileMap::Instance().draw_effects(window);
-		SoundManager::Instance().logic();
+		gui.draw();
 		window.display();
 	}
 

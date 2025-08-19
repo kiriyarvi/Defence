@@ -2,6 +2,7 @@
 #include "enemy_manager.h"
 #include "sound_manager.h"
 #include "twin_gun.h"
+#include "antitank_gun.h"
 
 #include "glm/glm.hpp"
 
@@ -44,6 +45,9 @@ TileMap::TileMap() {
 	textures[TileTexture::TwinGunUpperBarrel].loadFromFile("sprites/twin_gun_upper_barrel.png");
 	textures[TileTexture::Shot].loadFromFile("sprites/shot.png");
 
+	textures[TileTexture::AntitankGunTurret].loadFromFile("sprites/antitank_gun_turret.png");
+	textures[TileTexture::AntitankGunBarrel].loadFromFile("sprites/antitank_gun_barrel.png");
+	textures[TileTexture::AntitankGunTurretSubstrate].loadFromFile("sprites/antitank_gun_turret_substrate.png");
 	//Test Map
 	map[0][1].roads = { 1,0,1,0 };
 	map[1][1].roads = { 1,0,1,0 };
@@ -120,7 +124,7 @@ TileMap::TileMap() {
 }
 
 void TileMap::build_guns() {
-	map[3][1].building = std::make_unique<TwinGun>();
+	map[3][1].building = std::make_unique<AntitankGun>();
 
 	map[7][5].building = std::make_unique<TwinGun>();
 

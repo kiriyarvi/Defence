@@ -22,7 +22,10 @@ enum class TileTexture {
 	GunBase,
 	TwinGunTurret,
 	TwinGunUpperBarrel,
-	Shot
+	Shot,
+	AntitankGunTurret,
+	AntitankGunBarrel,
+	AntitankGunTurretSubstrate
 };
 
 class IBuilding {

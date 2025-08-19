@@ -17,3 +17,6 @@ target_include_directories(defence PUBLIC headers)
 
 find_package(glm CONFIG REQUIRED)
 target_link_libraries(defence PRIVATE glm::glm)
+
+find_package(TGUI CONFIG REQUIRED)
+target_link_libraries(defence PRIVATE TGUI::TGUI)

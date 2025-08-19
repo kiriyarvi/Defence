@@ -9,7 +9,8 @@ enum class EnemyTexturesID {
 	Truck,
 	TruckDestroyed,
 	MedBlustOfDestruction1,
-	MedBlustOfDestruction2
+	MedBlustOfDestruction2,
+	Bike
 };
 
 class HealthIndicator {
@@ -39,6 +40,7 @@ public:
 	int goal_path_node = 0; // номер узла в пути, к которому враг стремиться на данный момент
 	std::unique_ptr<sf::Sound> engine_sound;
 	uint32_t id;
+	bool path_is_completed = false;
 };
 
 class DestroyedEnemy {
@@ -55,6 +57,7 @@ private:
 
 Enemy create_tank();
 Enemy create_truck();
+Enemy create_bike();
 
 class EnemyManager {
 public:

@@ -4,6 +4,7 @@ SoundManager::SoundManager() {
 	sounds[Sounds::TankEngine].loadFromFile("sounds/tank.flac");
 	sounds[Sounds::TwinGunShot].loadFromFile("sounds/twin_gun_shot.wav");
 	sounds[Sounds::MedBlustOfDestruction].loadFromFile("sounds/med_blust_of_destruction.wav");
+	sounds[Sounds::AntitankGunShot].loadFromFile("sounds/antitank_gun_shot.wav");
 }
 
 void SoundManager::play(Sounds sound) {

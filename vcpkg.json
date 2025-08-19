@@ -1,6 +1,7 @@
 {
 	"dependencies": [
 		"sfml",
-		"glm"
+		"glm",
+		"tgui"
 	]
 }

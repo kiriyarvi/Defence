@@ -7,7 +7,8 @@
 enum class Sounds {
 	TankEngine,
 	TwinGunShot,
-	MedBlustOfDestruction
+	MedBlustOfDestruction,
+	AntitankGunShot
 };
 
 class SoundManager {

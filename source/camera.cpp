@@ -43,5 +43,10 @@ bool Camera::process(const sf::Event& event) {
 		m_view.setSize(m_scroll * m_base_view);
 		return true;
 	}
+	else if (event.type == sf::Event::Resized) {
+		m_base_view = sf::Vector2f( event.size.width , event.size.height );
+		m_view.setSize(m_scroll * m_base_view);
+		return true;
+	}
 	return false;
 }
