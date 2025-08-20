@@ -39,5 +39,8 @@ void Solder::draw(sf::RenderWindow& window) {
 DestroyedEnemy Solder::get_destroyed_enemy() {
 	DestroyedEnemy de;
 	de.sprite = m_solder_sprite;
+	de.sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::DeadSolder]);
+	de.sprite.setTextureRect(sf::IntRect(0, 0, 64, 64));
+	de.sprite.setOrigin(32, 32);
 	return de;
 }

@@ -17,6 +17,8 @@ EnemyManager::EnemyManager() {
 	enemy_textures[EnemyTexturesID::Bike].loadFromFile("sprites/bike.png");
 	enemy_textures[EnemyTexturesID::SolderWalkAnimation].loadFromFile("sprites/solder_walk_animation.png");
 	enemy_textures[EnemyTexturesID::SolderAmmunition].loadFromFile("sprites/solder_ammunition.png");
+	enemy_textures[EnemyTexturesID::DeadSolder].loadFromFile("sprites/dead_solder.png");
+	enemy_textures[EnemyTexturesID::DestroyedBike].loadFromFile("sprites/destroyed_bike.png");
 }
 
 void EnemyManager::spawn() {
@@ -24,11 +26,11 @@ void EnemyManager::spawn() {
 	if (enemy == 0)
 		m_enemies.push_back(std::make_unique<Tank>());
 	else if (enemy == 1)
-		m_enemies.push_back(std::make_unique<Truck>());
-	else if (enemy == 2)
-		m_enemies.push_back(std::make_unique<Bike>());
-	else 
 		m_enemies.push_back(std::make_unique<Solder>());
+	else if (enemy == 2)
+		m_enemies.push_back(std::make_unique<Truck>());
+	else 
+		m_enemies.push_back(std::make_unique<Bike>());
 	m_enemies.back()->path_id = rand() % all_paths.size();
 	m_enemies.back()->id = ++current_max_id;
 	if (current_max_id > 32768)

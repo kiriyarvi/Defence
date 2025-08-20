@@ -12,7 +12,9 @@ enum class EnemyTexturesID {
 	MedBlustOfDestruction2,
 	Bike,
 	SolderWalkAnimation,
-	SolderAmmunition
+	SolderAmmunition,
+	DeadSolder,
+	DestroyedBike
 };
 
 
