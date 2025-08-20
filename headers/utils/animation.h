@@ -14,6 +14,7 @@ public:
 	double get_animation_progress();
 	void start();
 	bool started() { return m_started; }
+	void set_loop(bool loop) { m_loop = loop; }
 
 	std::function<void()> on_start; // выполниться при старте анимации
 	std::function<void()> on_end;   // выполнится в конце анимации
@@ -28,6 +29,7 @@ private:
 	bool m_started = false;
 	double m_duration = 0;
 	double m_elapsed_time = 0;
+	bool m_loop = false;
 
 	struct Framer {
 		int last_frame = -1;

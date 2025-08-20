@@ -10,7 +10,9 @@ enum class EnemyTexturesID {
 	TruckDestroyed,
 	MedBlustOfDestruction1,
 	MedBlustOfDestruction2,
-	Bike
+	Bike,
+	SolderWalkAnimation,
+	SolderAmmunition
 };
 
 

@@ -21,7 +21,7 @@ Animation& Animation::add_subanimation(double start, double end, Animation&& ani
 
 void Animation::framers_logic(double progress) {
 	for (auto& framer : m_framers) {
-		int current_frame = std::min(int(progress * framer.frames), framer.frames);
+		int current_frame = std::min(int(progress * framer.frames), framer.frames - 1);
 		for (int i = framer.last_frame + 1; i <= current_frame; ++i)
 			framer.callback(i);
 		framer.last_frame = current_frame;
@@ -38,7 +38,7 @@ void Animation::subanimation_logic(double progress) {
 
 void Animation::finish() {
 	if (m_started) {
-		m_started = false;
+		m_started = m_loop;
 		m_elapsed_time = 0.0;
 		if (on_end) on_end();
 		framers_logic(1.0);

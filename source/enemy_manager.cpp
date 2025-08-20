@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "enemies/simple_enemy.h"
+#include "enemies/solder.h"
 
 EnemyManager::EnemyManager() {
 	all_paths = TileMap::Instance().get_road_graph().find_all_paths();
@@ -14,16 +15,20 @@ EnemyManager::EnemyManager() {
 	enemy_textures[EnemyTexturesID::MedBlustOfDestruction1].loadFromFile("sprites/med_blust_of_destruction1.png");
 	enemy_textures[EnemyTexturesID::MedBlustOfDestruction2].loadFromFile("sprites/med_blust_of_destruction2.png");
 	enemy_textures[EnemyTexturesID::Bike].loadFromFile("sprites/bike.png");
+	enemy_textures[EnemyTexturesID::SolderWalkAnimation].loadFromFile("sprites/solder_walk_animation.png");
+	enemy_textures[EnemyTexturesID::SolderAmmunition].loadFromFile("sprites/solder_ammunition.png");
 }
 
 void EnemyManager::spawn() {
-	int enemy = rand() % 3;
+	int enemy = rand() % 4;
 	if (enemy == 0)
 		m_enemies.push_back(std::make_unique<Tank>());
 	else if (enemy == 1)
 		m_enemies.push_back(std::make_unique<Truck>());
-	else
+	else if (enemy == 2)
 		m_enemies.push_back(std::make_unique<Bike>());
+	else 
+		m_enemies.push_back(std::make_unique<Solder>());
 	m_enemies.back()->path_id = rand() % all_paths.size();
 	m_enemies.back()->id = ++current_max_id;
 	if (current_max_id > 32768)
