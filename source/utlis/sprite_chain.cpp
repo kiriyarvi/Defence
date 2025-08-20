@@ -1,4 +1,4 @@
-#include "sprite_chain.h"
+#include "utils/sprite_chain.h"
 
 void SpriteChain::draw(sf::RenderWindow& window) {
 	std::vector<Element> elements;

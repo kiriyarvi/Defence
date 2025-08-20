@@ -1,4 +1,4 @@
-#include "antitank_gun.h"
+#include "guns/antitank_gun.h"
 #include "enemy_manager.h"
 #include "sound_manager.h"
 
@@ -44,7 +44,7 @@ void AntitankGun::fire_animation() {
 
 void AntitankGun::draw_effects(sf::RenderWindow& window, int x, int y) {
 	if (!m_animation) return;
-	Enemy* enemy = EnemyManager::Instance().get_enemy_by_id(m_shoted_enemy_id);
+	IEnemy* enemy = EnemyManager::Instance().get_enemy_by_id(m_shoted_enemy_id);
 	if (!enemy) return;
 	float k = m_animation_timer / (m_animation_duration * 1000 * 1000);
 	float fraction = 0.15;
@@ -88,7 +88,7 @@ void AntitankGun::logic(double dtime_microseconds, int x_id, int y_id) {
 
 
 
-void AntitankGun::shoot_logic(int x_id, int y_id, Enemy& enemy) {
+void AntitankGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
 	if (m_state == State::Ready) {
 		enemy.health -= m_damage;
 		SoundManager::Instance().play(Sounds::AntitankGunShot);

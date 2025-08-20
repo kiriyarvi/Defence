@@ -1,4 +1,4 @@
-#include "rotating_gun_base.h"
+#include "guns/rotating_gun_base.h"
 #include "enemy_manager.h"
 #include "glm/glm.hpp"
 
@@ -12,7 +12,7 @@ void IRotatingGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
 void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 	glm::vec2 gun_pos = glm::vec2(x_id * 32 + 16, y_id * 32 + 16);
 
-	Enemy* captured_enemy = nullptr;
+	IEnemy* captured_enemy = nullptr;
 
 	if (is_enemy_captured) {
 		// если враг был ранее захвачен, то нужно проверить, жив ли он до сих пор.
@@ -39,14 +39,14 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 		// ищем ближайшего врага в радиусе действия
 		double best_dist = 0;
 		for (auto& enemy : enemies) {
-			double dist = glm::length(enemy.get_position() - gun_pos);
+			double dist = glm::length(enemy->get_position() - gun_pos);
 			if (dist <= radius * 32) {
 				if (!captured_enemy) {
-					captured_enemy = &enemy;
+					captured_enemy = enemy.get();
 					best_dist = dist;
 				}
 				else if (best_dist > dist) {
-					captured_enemy = &enemy;
+					captured_enemy = enemy.get();
 					best_dist = dist;
 				}
 			}

@@ -1,13 +1,13 @@
 #pragma once
 #include "tile_map.h"
 
-class Enemy;
+class IEnemy;
 
 class IRotatingGun : public IBuilding {
 public:
 	void draw(sf::RenderWindow& window, int x_id, int y_id) override;
 	void logic(double dtime_microseconds, int x_id, int y_id) override;
-	virtual void shoot_logic(int x_id, int y_id, Enemy& enemy) = 0;
+	virtual void shoot_logic(int x_id, int y_id, IEnemy& enemy) = 0;
 
 	double rotation = 180; //текущее вращение.
 	double rotation_speed = 90; // скорость вращения (градусы в секунду).

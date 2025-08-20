@@ -1,6 +1,6 @@
 #pragma once
 #include "rotating_gun_base.h"
-#include "sprite_chain.h"
+#include "utils/sprite_chain.h"
 
 class AntitankGun: public IRotatingGun {
 public:
@@ -8,7 +8,7 @@ public:
 	void draw(sf::RenderWindow& window, int x_id, int y_id) override;
 	void draw_effects(sf::RenderWindow& window, int x, int y) override;
 	void logic(double dtime_microseconds, int x_id, int y_id) override;
-	void shoot_logic(int x_id, int y_id, Enemy& enemy) override;
+	void shoot_logic(int x_id, int y_id, IEnemy& enemy) override;
 private:
 	enum class State {
 		Ready,

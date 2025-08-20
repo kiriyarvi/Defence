@@ -1,8 +1,8 @@
 #include "tile_map.h"
 #include "enemy_manager.h"
 #include "sound_manager.h"
-#include "twin_gun.h"
-#include "antitank_gun.h"
+#include "guns/twin_gun.h"
+#include "guns/antitank_gun.h"
 
 #include "glm/glm.hpp"
 

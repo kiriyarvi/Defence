@@ -1,4 +1,4 @@
-#include "twin_gun.h"
+#include "guns/twin_gun.h"
 #include "sound_manager.h"
 #include "enemy_manager.h"
 
@@ -74,7 +74,7 @@ void TwinGunAnimation::draw_enemy_hit_animation(sf::RenderWindow& window, int x_
 	k = k / fire_duration;
 
 	uint32_t& enemy_id = upper ? upper_barrel_shoted_enemy_id : lower_barrel_shoted_enemy_id;
-	Enemy* enemy = EnemyManager::Instance().get_enemy_by_id(enemy_id);
+	IEnemy* enemy = EnemyManager::Instance().get_enemy_by_id(enemy_id);
 	if (!enemy) return;
 	glm::vec2 enemy_pos = enemy->get_position();
 	glm::vec2 hit_pos = enemy_pos + (upper ? upper_shot_fire_pos : lower_shot_fire_pos);
@@ -153,7 +153,7 @@ void TwinGun::logic(double dtime_microseconds, int x_id, int y_id) {
 	IRotatingGun::logic(dtime_microseconds, x_id, y_id);
 }
 
-void TwinGun::shot(int x_id, int y_id, Enemy& enemy, bool upper_barrel) {
+void TwinGun::shot(int x_id, int y_id, IEnemy& enemy, bool upper_barrel) {
 	enemy.health -= damage;
 	SoundManager::Instance().play(Sounds::TwinGunShot);
 	glm::vec3 gun_pos(x_id * 32 + 16, y_id * 32 + 16, 0);
@@ -168,7 +168,7 @@ void TwinGun::shot(int x_id, int y_id, Enemy& enemy, bool upper_barrel) {
 	
 }
 
-void TwinGun::shoot_logic(int x_id, int y_id, Enemy& enemy) {
+void TwinGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
 	if (state == State::Ready) {
 		animation.start_barrel_animation(true);
 		shot(x_id, y_id, enemy, true);
