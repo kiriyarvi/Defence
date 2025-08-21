@@ -18,44 +18,6 @@ void HealthIndicator::draw(sf::RenderWindow& window, float x, float y, float max
 	window.draw(rectangle);
 }
 
-float DestroyedEnemy::compute_k() {
-	return animation_time / (animation_duration * 1000 * 1000);
-}
-
-void DestroyedEnemy::draw(sf::RenderWindow& window) {
-	float k = compute_k();
-	if (k > 0.5) {
-		float t = (k - 0.5) / 2;
-		sprite.setColor(sf::Color(255, 255, 255, (1.f - t) * 255.f));
-	}
-	window.draw(sprite);
-	if (k < 0.3) {
-		sf::Sprite fire;
-		k /= 0.3;
-		int frame = k * 8;
-		if (frame < 4) {
-			fire.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::MedBlustOfDestruction1]);
-			fire.setTextureRect(sf::IntRect(16 * (frame % 2), 16 * (frame / 2), 16, 16));
-		}
-		else {
-			frame -= 4;
-			fire.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::MedBlustOfDestruction2]);
-			fire.setTextureRect(sf::IntRect(16 * (frame % 2), 16 * (frame / 2), 16, 16));
-		}
-		fire.setOrigin(8, 8);
-		fire.setPosition(sprite.getPosition());
-		window.draw(fire);
-	}
-}
-
-void DestroyedEnemy::logic(double dtime_microseconds) {
-	animation_time += dtime_microseconds;
-}
-
-bool DestroyedEnemy::is_ready() {
-	return animation_time >= animation_duration * 1000 * 1000;
-}
-
 bool IEnemy::logic(double dtime) {
 	sf::Vector2f current_pos(position.x, position.y);
 	auto sf_dir = goal - current_pos;

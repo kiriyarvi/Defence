@@ -1,3 +1,4 @@
+#pragma once
 #include <SFML/Audio.hpp>
 
 #include <unordered_map>
@@ -8,7 +9,9 @@ enum class Sounds {
 	TankEngine,
 	TwinGunShot,
 	MedBlustOfDestruction,
-	AntitankGunShot
+	AntitankGunShot,
+	DenceBlust,
+	DoubleBlust
 };
 
 class SoundManager {

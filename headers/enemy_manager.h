@@ -14,7 +14,9 @@ enum class EnemyTexturesID {
 	SolderWalkAnimation,
 	SolderAmmunition,
 	DeadSolder,
-	DestroyedBike
+	DestroyedBike,
+	DoubleBlust,
+	Blusts16x16
 };
 
 
@@ -41,5 +43,5 @@ public:
 private:
 	EnemyManager();
 	uint32_t current_max_id = 0;
-	std::list<DestroyedEnemy> m_destroyed_enemies;
+	std::list<IDestroyedEnemy::Ptr> m_destroyed_enemies;
 };

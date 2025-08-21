@@ -7,7 +7,7 @@ public:
 	Solder();
 	void draw(sf::RenderWindow& window) override;
 	bool logic(double dtime) override;
-	DestroyedEnemy get_destroyed_enemy() override;
+	IDestroyedEnemy::Ptr get_destroyed_enemy() override;
 private:
 	sf::Sprite m_solder_sprite;
 	sf::Sprite m_solder_ammunition;

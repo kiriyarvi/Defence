@@ -36,11 +36,29 @@ void Solder::draw(sf::RenderWindow& window) {
 	m_health_indicator.draw(window, position.x, position.y - 8, full_health, health);
 }
 
-DestroyedEnemy Solder::get_destroyed_enemy() {
-	DestroyedEnemy de;
-	de.sprite = m_solder_sprite;
-	de.sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::DeadSolder]);
-	de.sprite.setTextureRect(sf::IntRect(0, 0, 64, 64));
-	de.sprite.setOrigin(32, 32);
+class DestroyedSolder: public IDestroyedEnemy {
+public:
+	DestroyedSolder() {
+		m_animation.set_duration(2.5);
+		auto [_, fade] = m_animation.split(0.3);
+		fade->on_progress = [&](double progress) {
+			sprite.setColor(sf::Color(255, 255, 255, (1. - progress) * 255.f));
+		};
+		m_animation.start();
+	}
+	void draw(sf::RenderWindow& window) override { window.draw(sprite); }
+	void logic(double dtime_microseconds) override { m_animation.logic(dtime_microseconds); }
+	bool is_ready() override  { return !m_animation.started(); }
+	sf::Sprite sprite;
+private:
+	Animation m_animation;
+};
+
+IDestroyedEnemy::Ptr Solder::get_destroyed_enemy() {
+	auto de = std::make_unique<DestroyedSolder>();
+	de->sprite = m_solder_sprite;
+	de->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::DeadSolder]);
+	de->sprite.setOrigin(32, 32);
+	de->sprite.setTextureRect(sf::IntRect(0, 0, 64, 64));
 	return de;
 }

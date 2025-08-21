@@ -11,16 +11,12 @@ public:
 	float width = 16;
 };
 
-class DestroyedEnemy {
+class IDestroyedEnemy {
 public:
-	sf::Sprite sprite;
-	void draw(sf::RenderWindow& window);
-	void logic(double dtime_microseconds);
-	bool is_ready();
-private:
-	float compute_k();
-	double animation_time = 0;
-	double animation_duration = 2;
+	using Ptr = std::unique_ptr<IDestroyedEnemy>;
+	virtual void draw(sf::RenderWindow& window) = 0;
+	virtual void logic(double dtime_microseconds) = 0;
+	virtual bool is_ready() = 0;
 };
 
 class IEnemy {
@@ -36,7 +32,7 @@ public:
 	virtual void draw(sf::RenderWindow& window) = 0;
 	virtual bool logic(double dtime); // true --- достиг конца пути
 	virtual glm::vec2 get_position() { return position; }
-	virtual DestroyedEnemy get_destroyed_enemy() = 0;
+	virtual IDestroyedEnemy::Ptr get_destroyed_enemy() = 0;
 	uint32_t id; // уникальный идентификатор врага
 	float speed;
 	int health;

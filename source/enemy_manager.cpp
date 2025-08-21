@@ -19,6 +19,8 @@ EnemyManager::EnemyManager() {
 	enemy_textures[EnemyTexturesID::SolderAmmunition].loadFromFile("sprites/solder_ammunition.png");
 	enemy_textures[EnemyTexturesID::DeadSolder].loadFromFile("sprites/dead_solder.png");
 	enemy_textures[EnemyTexturesID::DestroyedBike].loadFromFile("sprites/destroyed_bike.png");
+	enemy_textures[EnemyTexturesID::DoubleBlust].loadFromFile("sprites/double_blust.png");
+	enemy_textures[EnemyTexturesID::Blusts16x16].loadFromFile("sprites/16x16_blusts.png");
 }
 
 void EnemyManager::spawn() {
@@ -26,11 +28,11 @@ void EnemyManager::spawn() {
 	if (enemy == 0)
 		m_enemies.push_back(std::make_unique<Tank>());
 	else if (enemy == 1)
-		m_enemies.push_back(std::make_unique<Solder>());
-	else if (enemy == 2)
-		m_enemies.push_back(std::make_unique<Truck>());
-	else 
 		m_enemies.push_back(std::make_unique<Bike>());
+	else if (enemy == 2)
+		m_enemies.push_back(std::make_unique<Solder>());
+	else 
+		m_enemies.push_back(std::make_unique<Truck>());
 	m_enemies.back()->path_id = rand() % all_paths.size();
 	m_enemies.back()->id = ++current_max_id;
 	if (current_max_id > 32768)
@@ -42,7 +44,6 @@ void EnemyManager::logic(double dtime) {
 	for (auto& enemy : m_enemies) {
 		if (enemy->health <= 0) {
 			m_destroyed_enemies.push_back(enemy->get_destroyed_enemy());
-			SoundManager::Instance().play(Sounds::MedBlustOfDestruction);
 		}
 		else {
 			new_enemies.push_back(std::move(enemy));
@@ -57,14 +58,14 @@ void EnemyManager::logic(double dtime) {
 	);
 
 	for (auto& destroyed_enemy : m_destroyed_enemies)
-		destroyed_enemy.logic(dtime);
-	m_destroyed_enemies.remove_if([](DestroyedEnemy& enemy) { return enemy.is_ready(); });
+		destroyed_enemy->logic(dtime);
+	m_destroyed_enemies.remove_if([](IDestroyedEnemy::Ptr& enemy) { return enemy->is_ready(); });
 }
 
 
 void EnemyManager::draw(sf::RenderWindow& window) {
 	for (auto& destroyed_enemy : m_destroyed_enemies) {
-		destroyed_enemy.draw(window);
+		destroyed_enemy->draw(window);
 	}
 	
 	for (auto& enemy : m_enemies)
