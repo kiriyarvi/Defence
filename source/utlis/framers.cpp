@@ -36,3 +36,46 @@ DenceBlustFramer::DenceBlustFramer() {
 void DenceBlustFramer::on_frame(int frame) {
 	sprite.setTextureRect(sf::IntRect(16 * (frame % 8), 16 * (frame / 8), 16, 16));
 }
+
+SteamFramer::SteamFramer() {
+	frames = 4;
+	sprite.setTexture(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sprite.setOrigin(1.5, 4);
+}
+
+void SteamFramer::on_frame(int frame) {
+	sprite.setTextureRect(sf::IntRect(16, 22 + frame, 3, 4));
+}
+
+
+MinigunHitFramer::MinigunHitFramer() {
+	frames = 2;
+	sprite.setTexture(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sprite.setOrigin(1.5, 1.5);
+}
+
+void MinigunHitFramer::on_frame(int frame) {
+	sprite.setTextureRect(sf::IntRect(16 + 3 * frame, 19, 3, 3));
+}
+
+
+MinigunShootFramer::MinigunShootFramer() {
+	frames = 4;
+	sprite.setTexture(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sprite.setOrigin(0, 1.5);
+}
+
+void MinigunShootFramer::on_frame(int frame) {
+	sprite.setTextureRect(sf::IntRect(16 + 3 * frame, 16, 3, 3));
+}
+
+
+MinigunReboundFramer::MinigunReboundFramer() {
+	frames = 4;
+	sprite.setTexture(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sprite.setOrigin(0, 1.5);
+}
+
+void MinigunReboundFramer::on_frame(int frame) {
+	sprite.setTextureRect(sf::IntRect(19 + 2 * frame, 22, 2, 3));
+}

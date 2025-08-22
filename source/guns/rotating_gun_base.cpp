@@ -14,24 +14,32 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 
 	IEnemy* captured_enemy = nullptr;
 
-	if (is_enemy_captured) {
+	if (m_is_enemy_captured) {
 		// если враг был ранее захвачен, то нужно проверить, жив ли он до сих пор.
-		captured_enemy = EnemyManager::Instance().get_enemy_by_id(captured_enemy_id);
+		captured_enemy = EnemyManager::Instance().get_enemy_by_id(m_captured_enemy_id);
 		if (!captured_enemy) { // захваченный враг пропал, видимо он был удален с поля боя.
-			is_enemy_captured = false;
+			m_is_enemy_captured = false;
 			captured_enemy = false;
+			if (m_is_gun_pointed) {
+				on_gun_unpointed();
+				m_is_gun_pointed = false;
+			}
 		}
 		else {
 			double dist = glm::length(captured_enemy->get_position() - gun_pos);
 			if (dist > radius * 32) { // враг вне зоны досигаемости.
-				is_enemy_captured = false;
+				m_is_enemy_captured = false;
 				captured_enemy = false;
+				if (m_is_gun_pointed) {
+					on_gun_unpointed();
+					m_is_gun_pointed = false;
+				}
 			}
 		}
 	}
 
 	// если нет захваченного врага, найдем его.
-	if (!is_enemy_captured) {
+	if (!m_is_enemy_captured) {
 		// захватываем цель. Ищем ближайшего врага.
 		auto& enemies = EnemyManager::Instance().m_enemies;
 		if (enemies.empty()) return; // врагов нет
@@ -52,8 +60,8 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 			}
 		}
 		if (captured_enemy) {
-			is_enemy_captured = true;
-			captured_enemy_id = captured_enemy->id;
+			m_is_enemy_captured = true;
+			m_captured_enemy_id = captured_enemy->id;
 		}
 	}
 	// если враг захвачен, нужно осуществить поворот к нему.
@@ -71,9 +79,18 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 
 		if (angle_potential > glm::abs(angle_distance)) {
 			rotation = goal_angle;
+			if (!m_is_gun_pointed) {
+				on_gun_pointed();
+				m_is_gun_pointed = true;
+			}
 			shoot_logic(x_id, y_id, *captured_enemy);
 		}
-		else
+		else {
 			rotation += glm::sign(angle_distance) * angle_potential;
+			if (m_is_gun_pointed) {
+				on_gun_unpointed();
+				m_is_gun_pointed = false;
+			}
+		}
 	}
 }

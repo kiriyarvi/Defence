@@ -6,6 +6,8 @@
 // сначала позиционирование, потом вращение.
 class SpriteChain {
 public:
+	SpriteChain() = default;
+	SpriteChain(const sf::Sprite& s) : sprite(s) {}
 	void set_position(float x, float y) { m_position = { x ,y }; }
 	void set_position_origin(float x, float  y) { m_position_origin = { x, y }; }
 	void set_rotation_origin(float x, float y) { m_rotation_origin = { x, y }; }
@@ -13,6 +15,7 @@ public:
 
 	void draw(sf::RenderWindow& window);
 	int layer = 0;
+	bool enabled = true;
 	sf::Sprite sprite;
 	std::list<SpriteChain> childs;
 private:

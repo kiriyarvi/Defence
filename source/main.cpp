@@ -23,6 +23,9 @@ int main() {
 	EnemyManager::Instance().spawn();
 	TileMap::Instance().build_guns();
 
+	const float dt = 1.f / 60.f; // логика обновляется 60 раз в секунду
+	float accumulator = 0.f;
+
 	while (window.isOpen()) {
 		sf::Event event;
 		while (window.pollEvent(event)) {
@@ -32,15 +35,21 @@ int main() {
 			else if (camera.process(event));
 		}
 		// логика
-		game_state.logic();
-		if (!game_state.is_game_over()) {
-			EnemyManager::Instance().logic(clock.getElapsedTime().asMicroseconds());
-			TileMap::Instance().logic(clock.getElapsedTime().asMicroseconds());
-			if (spawn_clock.getElapsedTime().asSeconds() > 2) {
-				EnemyManager::Instance().spawn();
-				spawn_clock.restart();
+		double dtime = clock.getElapsedTime().asMicroseconds();
+		accumulator += dtime;
+		if (accumulator > dt * 1000 * 1000) {
+			dtime = accumulator;
+			accumulator = 0;
+			game_state.logic();
+			if (!game_state.is_game_over()) {
+				EnemyManager::Instance().logic(dtime);
+				TileMap::Instance().logic(dtime);
+				if (spawn_clock.getElapsedTime().asSeconds() > 2) {
+					EnemyManager::Instance().spawn();
+					spawn_clock.restart();
+				}
+				SoundManager::Instance().logic();
 			}
-			SoundManager::Instance().logic();
 		}
 		//отрисовка
 		clock.restart(); // рестарт часов после логики.

@@ -2,6 +2,7 @@
 #include "TGUI/TGUI.hpp"
 #include "TGUI/Backend/SFML-Graphics.hpp"
 
+#include "guns/minigun.h"
 
 class GameState {
 public:
@@ -20,10 +21,13 @@ public:
 	void logic();
 	bool is_game_over() { return  player_hp <= 0; }
 	void player_health_add(int health);
+	void minigun_state_update(const MiniGun& minigun);
 private:
 	GameState(sf::RenderWindow& window);
 	tgui::Gui gui;
 	int player_hp = 10;
 	tgui::Label::Ptr player_health_count_widget;
 	tgui::Label::Ptr centered_message; // сообщение по центру
+
+	tgui::Label::Ptr minigun_state;
 };

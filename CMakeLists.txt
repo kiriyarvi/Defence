@@ -10,7 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 file(GLOB_RECURSE DEFENCE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/source/*cpp" )
 add_executable(defence "${DEFENCE_SOURCES}")
 
- find_package(SFML COMPONENTS system window graphics audio CONFIG REQUIRED)
+find_package(SFML COMPONENTS system window graphics audio CONFIG REQUIRED)
 target_link_libraries(defence PRIVATE sfml-system sfml-network sfml-graphics sfml-window sfml-audio)
 
 target_include_directories(defence PUBLIC headers)
@@ -20,3 +20,5 @@ target_link_libraries(defence PRIVATE glm::glm)
 
 find_package(TGUI CONFIG REQUIRED)
 target_link_libraries(defence PRIVATE TGUI::TGUI)
+
+add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)

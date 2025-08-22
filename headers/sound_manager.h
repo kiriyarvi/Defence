@@ -11,7 +11,9 @@ enum class Sounds {
 	MedBlustOfDestruction,
 	AntitankGunShot,
 	DenceBlust,
-	DoubleBlust
+	DoubleBlust,
+	MiniGunShot,
+	OverHeat
 };
 
 class SoundManager {
@@ -27,14 +29,17 @@ public:
 	SoundManager(SoundManager&&) = delete;
 	SoundManager& operator=(SoundManager&&) = delete;
 
-	void play(Sounds sound);
-	void play_request(sf::Sound&& sound);
+	void play(Sounds sound, int limit = 10, float volume = 100, float pitch = 1.);
 	sf::Sound get_sound(Sounds sound);
 	void logic();
 
 
-	std::unordered_map< Sounds, sf::SoundBuffer> sounds;
+	std::unordered_map<Sounds, sf::SoundBuffer> sounds;
 private:
 	SoundManager();
-	std::list<sf::Sound> m_requested;
+	struct Request {
+		sf::Sound sound;
+		Sounds id;
+	};
+	std::list<Request> m_requested;
 };

@@ -17,3 +17,23 @@ struct DenceBlustFramer : public ISpriteFramer {
 	DenceBlustFramer();
 	void on_frame(int frame) override;
 };
+
+struct SteamFramer : public ISpriteFramer {
+	SteamFramer();
+	void on_frame(int frame) override;
+};
+
+struct MinigunShootFramer : public ISpriteFramer {
+	MinigunShootFramer();
+	void on_frame(int frame) override;
+};
+
+struct MinigunHitFramer : public ISpriteFramer {
+	MinigunHitFramer();
+	void on_frame(int frame) override;
+};
+
+struct MinigunReboundFramer : public ISpriteFramer {
+	MinigunReboundFramer();
+	void on_frame(int frame) override;
+};

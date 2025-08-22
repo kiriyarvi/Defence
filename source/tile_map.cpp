@@ -3,6 +3,7 @@
 #include "sound_manager.h"
 #include "guns/twin_gun.h"
 #include "guns/antitank_gun.h"
+#include "guns/minigun.h"
 
 #include "glm/glm.hpp"
 
@@ -48,6 +49,9 @@ TileMap::TileMap() {
 	textures[TileTexture::AntitankGunTurret].loadFromFile("sprites/antitank_gun_turret.png");
 	textures[TileTexture::AntitankGunBarrel].loadFromFile("sprites/antitank_gun_barrel.png");
 	textures[TileTexture::AntitankGunTurretSubstrate].loadFromFile("sprites/antitank_gun_turret_substrate.png");
+
+	textures[TileTexture::MiniGun].loadFromFile("sprites/minigun.png");
+	textures[TileTexture::MiniGunEquipment].loadFromFile("sprites/minigun_equipment.png");
 	//Test Map
 	map[0][1].roads = { 1,0,1,0 };
 	map[1][1].roads = { 1,0,1,0 };
@@ -124,16 +128,16 @@ TileMap::TileMap() {
 }
 
 void TileMap::build_guns() {
-	map[3][1].building = std::make_unique<AntitankGun>();
+	map[3][1].building = std::make_unique<MiniGun>();
 
-	map[7][5].building = std::make_unique<TwinGun>();
+	map[7][5].building = std::make_unique<MiniGun>();
 
-	map[7][3].building = std::make_unique<TwinGun>();
+	map[7][3].building = std::make_unique<MiniGun>();
 
-	map[3][3].building = std::make_unique<TwinGun>();
-	map[3][4].building = std::make_unique<TwinGun>();
-	map[4][3].building = std::make_unique<TwinGun>();
-	map[4][4].building = std::make_unique<TwinGun>();
+	map[3][3].building = std::make_unique<MiniGun>();
+	map[3][4].building = std::make_unique<MiniGun>();
+	map[4][3].building = std::make_unique<MiniGun>();
+	map[4][4].building = std::make_unique<MiniGun>();
 }
 
 void TileMap::draw(sf::RenderWindow& window) {

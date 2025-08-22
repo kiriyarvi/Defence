@@ -4,6 +4,8 @@
 void Animation::start() {
 	m_state = State::Started;
 	m_elapsed_time = 0;
+	for (auto& framer : m_framers)
+		framer.last_frame = -1;
 	if (on_start) on_start();
 }
 

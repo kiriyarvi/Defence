@@ -26,13 +26,13 @@ EnemyManager::EnemyManager() {
 void EnemyManager::spawn() {
 	int enemy = rand() % 4;
 	if (enemy == 0)
-		m_enemies.push_back(std::make_unique<Tank>());
-	else if (enemy == 1)
-		m_enemies.push_back(std::make_unique<Bike>());
-	else if (enemy == 2)
 		m_enemies.push_back(std::make_unique<Solder>());
-	else 
+	else if (enemy == 1)
 		m_enemies.push_back(std::make_unique<Truck>());
+	else if (enemy == 2)
+		m_enemies.push_back(std::make_unique<Tank>());
+	else 
+		m_enemies.push_back(std::make_unique<Bike>());
 	m_enemies.back()->path_id = rand() % all_paths.size();
 	m_enemies.back()->id = ++current_max_id;
 	if (current_max_id > 32768)

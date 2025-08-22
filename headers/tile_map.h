@@ -25,7 +25,9 @@ enum class TileTexture {
 	Shot,
 	AntitankGunTurret,
 	AntitankGunBarrel,
-	AntitankGunTurretSubstrate
+	AntitankGunTurretSubstrate,
+	MiniGun,
+	MiniGunEquipment
 };
 
 class IBuilding {
