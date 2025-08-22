@@ -9,6 +9,7 @@ GameState::GameState(sf::RenderWindow& window): gui(window) {
 	player_health_count_widget->setOrigin(1, 0);
 	player_health_count_widget->setTextSize(32);
 	player_health_count_widget->ignoreMouseEvents(true);
+	player_health_count_widget->getRenderer()->setTextColor(tgui::Color::White);
 	gui.add(player_health_count_widget, "HealthCountWidget");
 
 

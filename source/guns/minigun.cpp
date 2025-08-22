@@ -40,6 +40,7 @@ MiniGun::MiniGun() {
 	m_overheat_animation.add_framer(m_steam_framer);
 	m_overheat_animation.set_loop(true);
 	m_overheat_animation.start();
+	m_overheat_animation.logic(0.0); // чтобы установить первый frame. 
 
 	sf::Sprite compass(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
 	compass.setTextureRect(sf::IntRect(16, 0, 5, 5));
@@ -160,7 +161,7 @@ void MiniGun::logic(double dtime_microseconds, int x_id, int y_id) {
 	belt_animation();
 	IRotatingGun::logic(dtime_microseconds, x_id, y_id);
 	compass_logic(x_id, y_id);
-	GameState::Instance().minigun_state_update(*this);
+	//GameState::Instance().minigun_state_update(*this);
 }
 
 void MiniGun::temperature_logic(double dtime_microseconds) {
@@ -201,7 +202,7 @@ void MiniGun::temperature_logic(double dtime_microseconds) {
 		m_state = State::CoolDown;
 		m_cooldown_timer = 0;
 		SoundManager::Instance().play(Sounds::OverHeat);
-		m_shoot_state = ShootState::Ready;
+		//m_shoot_state = ShootState::Ready;
 		m_shot_sprite->enabled = false;
 		m_critical_temperature_mod_timer = 0;
 	}

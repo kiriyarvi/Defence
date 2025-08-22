@@ -6,11 +6,11 @@
 #include "sound_manager.h"
 #include "game_state.h"
 
-
 int main() {
+
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
-	
+
 	auto& game_state = GameState::Instance(&window);
 	auto& gui = GameState::Instance().get_tgui();
 

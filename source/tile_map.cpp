@@ -130,13 +130,13 @@ TileMap::TileMap() {
 void TileMap::build_guns() {
 	map[3][1].building = std::make_unique<MiniGun>();
 
-	map[7][5].building = std::make_unique<MiniGun>();
+	map[7][5].building = std::make_unique<AntitankGun>();
 
-	map[7][3].building = std::make_unique<MiniGun>();
+	map[7][3].building = std::make_unique<AntitankGun>();
 
 	map[3][3].building = std::make_unique<MiniGun>();
-	map[3][4].building = std::make_unique<MiniGun>();
-	map[4][3].building = std::make_unique<MiniGun>();
+	map[3][4].building = std::make_unique<TwinGun>();
+	map[4][3].building = std::make_unique<TwinGun>();
 	map[4][4].building = std::make_unique<MiniGun>();
 }
 

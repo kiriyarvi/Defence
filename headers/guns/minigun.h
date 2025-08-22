@@ -56,6 +56,7 @@ private:
 
 	SpriteChain* m_belt_chain = nullptr;
 	SpriteChain* m_enemy_compass = nullptr;
+
 	Animation m_overheat_animation;
 	ISpriteFramer::Ptr m_steam_framer;
 
