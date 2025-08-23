@@ -13,7 +13,8 @@ enum class Sounds {
 	DenceBlust,
 	DoubleBlust,
 	MiniGunShot,
-	OverHeat
+	OverHeat,
+	MineBlast
 };
 
 class SoundManager {

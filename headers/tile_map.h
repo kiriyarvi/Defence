@@ -27,7 +27,9 @@ enum class TileTexture {
 	AntitankGunBarrel,
 	AntitankGunTurretSubstrate,
 	MiniGun,
-	MiniGunEquipment
+	MiniGunEquipment,
+	Mine,
+	MineBlast
 };
 
 class IBuilding {
@@ -35,6 +37,7 @@ public:
 	virtual void draw(sf::RenderWindow& window, int x, int y) = 0;
 	virtual void draw_effects(sf::RenderWindow& window, int x, int y) = 0;
 	virtual void logic(double dtime, int x, int y) = 0;
+	virtual bool is_destroyed() { return false; }
 	virtual ~IBuilding() = default;
 };
 

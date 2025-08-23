@@ -11,6 +11,7 @@ SoundManager::SoundManager() {
 	sounds[Sounds::DoubleBlust].loadFromFile("sounds/double_blust.wav");
 	sounds[Sounds::MiniGunShot].loadFromFile("sounds/minigun_shot.wav");
 	sounds[Sounds::OverHeat].loadFromFile("sounds/overheat.wav");
+	sounds[Sounds::MineBlast].loadFromFile("sounds/mine_blast.wav");
 }
 
 void SoundManager::play(Sounds sound, int limit, float volume, float pitch) {

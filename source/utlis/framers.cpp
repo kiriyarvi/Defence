@@ -79,3 +79,13 @@ MinigunReboundFramer::MinigunReboundFramer() {
 void MinigunReboundFramer::on_frame(int frame) {
 	sprite.setTextureRect(sf::IntRect(19 + 2 * frame, 22, 2, 3));
 }
+
+MineBlast::MineBlast() {
+	frames = 14;
+	sprite.setTexture(TileMap::Instance().textures[TileTexture::MineBlast]);
+	sprite.setOrigin(8,8);
+}
+
+void MineBlast::on_frame(int frame) {
+	sprite.setTextureRect(sf::IntRect(16 * (frame % 4), 16 * (frame / 4), 16, 16));
+}
