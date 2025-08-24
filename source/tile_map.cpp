@@ -55,6 +55,14 @@ TileMap::TileMap() {
 	textures[TileTexture::MiniGunEquipment].loadFromFile("sprites/minigun_equipment.png");
 	textures[TileTexture::MineBlast].loadFromFile("sprites/mine_blast.png");
 	textures[TileTexture::Mine].loadFromFile("sprites/mine.png");
+
+	textures[TileTexture::ButtonBackground].loadFromFile("sprites/button_background.png");
+	textures[TileTexture::ButtonClickedBackground].loadFromFile("sprites/button_clicked_background.png");
+	textures[TileTexture::MinigunIcon].loadFromFile("sprites/minigun_icon.png");
+	textures[TileTexture::TwingunIcon].loadFromFile("sprites/twingun_icon.png");
+	textures[TileTexture::TwingunConstructed].loadFromFile("sprites/twingun_constructed.png");
+	textures[TileTexture::AntitankGunIcon].loadFromFile("sprites/antitank_gun_icon.png");
+	textures[TileTexture::AntitankGunConstructed].loadFromFile("sprites/antitank_gun_constructed.png");
 	//Test Map
 	map[0][1].roads = { 1,0,1,0 };
 	map[1][1].roads = { 1,0,1,0 };
@@ -131,20 +139,20 @@ TileMap::TileMap() {
 }
 
 void TileMap::build_guns() {
-	//map[3][1].building = std::make_unique<MiniGun>();
+	map[3][1].building = std::make_unique<MiniGun>();
 	map[2][2].building = std::make_unique<Mine>();
 	map[2][3].building = std::make_unique<Mine>();
 	map[2][4].building = std::make_unique<Mine>();
 	map[2][5].building = std::make_unique<Mine>();
 
-	/*map[7][5].building = std::make_unique<AntitankGun>();
+	map[7][5].building = std::make_unique<AntitankGun>();
 
 	map[7][3].building = std::make_unique<AntitankGun>();
 
 	map[3][3].building = std::make_unique<MiniGun>();
 	map[3][4].building = std::make_unique<TwinGun>();
 	map[4][3].building = std::make_unique<TwinGun>();
-	map[4][4].building = std::make_unique<MiniGun>();*/
+	map[4][4].building = std::make_unique<MiniGun>();
 }
 
 void TileMap::draw(sf::RenderWindow& window) {

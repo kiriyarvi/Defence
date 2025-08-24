@@ -45,6 +45,7 @@ void EnemyManager::logic(double dtime) {
 	for (auto& enemy : m_enemies) {
 		if (enemy->health <= 0) {
 			m_destroyed_enemies.push_back(enemy->get_destroyed_enemy());
+			GameState::Instance().player_coins_add(enemy->reward);
 		}
 		else {
 			new_enemies.push_back(std::move(enemy));

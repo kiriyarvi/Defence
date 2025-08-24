@@ -29,7 +29,22 @@ enum class TileTexture {
 	MiniGun,
 	MiniGunEquipment,
 	Mine,
-	MineBlast
+	MineBlast,
+	ButtonBackground,
+	ButtonClickedBackground,
+	MinigunIcon,
+	TwingunIcon,
+	TwingunConstructed,
+	AntitankGunIcon,
+	AntitankGunConstructed
+};
+
+enum class BuildingType {
+	Mine,
+	Minigun,
+	Antitank,
+	TwinGun,
+	None
 };
 
 class IBuilding {

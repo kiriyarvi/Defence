@@ -6,6 +6,8 @@
 Solder::Solder(): m_animation(2) {
 	full_health = health = 15;
 	speed = 0.25;
+	reward = full_health * speed;
+
 	m_solder_sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::SolderWalkAnimation]);
 	m_solder_sprite.setOrigin(16, 16);
 	m_solder_sprite.setScale(0.25, 0.25);

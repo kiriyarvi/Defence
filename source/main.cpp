@@ -32,7 +32,10 @@ int main() {
 			if (event.type == sf::Event::Closed)
 				window.close();
 			if (gui.handleEvent(event));
-			else if (camera.process(event));
+			else {
+				if (!game_state.event(event, window))
+					camera.process(event);
+			}
 		}
 		// логика
 		double dtime = clock.getElapsedTime().asMicroseconds();
@@ -58,6 +61,7 @@ int main() {
 		TileMap::Instance().draw(window);
 		EnemyManager::Instance().draw(window);
 		TileMap::Instance().draw_effects(window);
+		game_state.draw(window);
 		gui.draw();
 		window.display();
 	}

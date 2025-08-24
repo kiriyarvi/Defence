@@ -1,16 +1,22 @@
 #include "game_state.h"
 
-GameState::GameState(sf::RenderWindow& window): gui(window) {
-	gui.setFont(tgui::Font("PixelSplitter-Bold.ttf"));
+#include "guns/mine.h"
+#include "guns/minigun.h"
+#include "guns/twin_gun.h"
+#include "guns/antitank_gun.h"
 
 
-	player_health_count_widget = tgui::Label::create("X" + std::to_string(player_hp));
-	player_health_count_widget->setPosition("100%", 0);
-	player_health_count_widget->setOrigin(1, 0);
-	player_health_count_widget->setTextSize(32);
-	player_health_count_widget->ignoreMouseEvents(true);
-	player_health_count_widget->getRenderer()->setTextColor(tgui::Color::White);
-	gui.add(player_health_count_widget, "HealthCountWidget");
+GameState::GameState(sf::RenderWindow& window): m_gui(window) {
+	m_gui.setFont(tgui::Font("PixelSplitter-Bold.ttf"));
+	tgui::Texture::setDefaultSmooth(false); // отключим сглаживание текстур
+
+	m_player_health_count_widget = tgui::Label::create("X" + std::to_string(m_player_hp));
+	m_player_health_count_widget->setPosition("100%", 0);
+	m_player_health_count_widget->setOrigin(1, 0);
+	m_player_health_count_widget->setTextSize(32);
+	m_player_health_count_widget->ignoreMouseEvents(true);
+	m_player_health_count_widget->getRenderer()->setTextColor(tgui::Color::White);
+	m_gui.add(m_player_health_count_widget, "HealthCountWidget");
 
 
 	tgui::Picture::Ptr heart_icon = tgui::Picture::create("sprites/heart.png");
@@ -19,61 +25,151 @@ GameState::GameState(sf::RenderWindow& window): gui(window) {
 		"(HealthCountWidget.top + 5)"       // Y: на той же высоте
 	);
 	heart_icon->setSize(32, 32);
+	heart_icon->ignoreMouseEvents(true);
+	m_gui.add(heart_icon);
 
-	gui.add(heart_icon);
+	m_player_coins_count_widget = tgui::Label::create(std::to_string(m_player_coins));
+	m_player_coins_count_widget->setTextSize(32);
+	m_player_coins_count_widget->ignoreMouseEvents(true);
+	m_player_coins_count_widget->getRenderer()->setTextColor(tgui::Color(255, 211, 3));
+	m_gui.add(m_player_coins_count_widget, "CoinsCountWidget");
+	tgui::Picture::Ptr coin_picture = tgui::Picture::create("sprites/coin.png");
+	coin_picture->setPosition(
+		"(CoinsCountWidget.right)", // X: левый край rightWidget минус ширина heart_icon
+		"(CoinsCountWidget.top + 5)"       // Y: на той же высоте
+	);
+	coin_picture->ignoreMouseEvents(true);
+	coin_picture->setSize(32, 32);
+	m_gui.add(coin_picture);
 
-	centered_message = tgui::Label::create("");
-	centered_message->setPosition("50%", "50%");
-	centered_message->setOrigin(0.5, 0.5);
-	centered_message->setTextSize(128);
-	centered_message->ignoreMouseEvents(true);
-	centered_message->getRenderer()->setTextColor(tgui::Color::Red);
+	m_centered_message = tgui::Label::create("");
+	m_centered_message->setPosition("50%", "50%");
+	m_centered_message->setOrigin(0.5, 0.5);
+	m_centered_message->setTextSize(128);
+	m_centered_message->ignoreMouseEvents(true);
+	m_centered_message->getRenderer()->setTextColor(tgui::Color::Red);
 
-	gui.add(centered_message);
+	m_gui.add(m_centered_message);
 
 
-	minigun_state = tgui::Label::create();
+	/*minigun_state = tgui::Label::create();
 	minigun_state->setPosition("0%", "0%");
 	minigun_state->setTextSize(16);
 	minigun_state->ignoreMouseEvents(true);
 	minigun_state->getRenderer()->setTextColor(tgui::Color::White);
-	gui.add(minigun_state);
+	gui.add(minigun_state);*/
+
+
+	// Нижняя панель
+
+	auto bottom_panel_group = tgui::Group::create(tgui::Layout2d("100%", "10%"));
+	bottom_panel_group->setPosition("0%", "100%");
+	bottom_panel_group->setOrigin(0, 1.);
+	m_building_buttons.push_back(std::make_unique<BuildingButton>(TileTexture::MinigunIcon, *this, BuildingButton::make_creator<MiniGun>(), BuildingButton::TileRestrictions::NoRoads, 1000));
+	m_building_buttons.push_back(std::make_unique<BuildingButton>(TileTexture::Mine, *this, BuildingButton::make_creator<Mine>(), BuildingButton::TileRestrictions::RoadOnly, 1000));
+	m_building_buttons.push_back(std::make_unique<TwinGunBuildingButton>(*this, 20000));
+	m_building_buttons.push_back(std::make_unique<AntitankGunBuildingButton>(*this, 20000));
+	for (auto& button : m_building_buttons) {
+		bottom_panel_group->add(button->button);
+	}
+	bottom_panel_group->onSizeChange([=]() {
+		const float spacing = 4.f;
+		float size = bottom_panel_group->getSize().y;
+		float x = 0;
+		for (auto& button : m_building_buttons){
+			button->button->setSize({ size, size });
+			button->button->setPosition({ x, 0 });
+			x += size + spacing;
+		}
+	});
+	m_gui.add(bottom_panel_group);
+
+	player_coins_add(10000);
 }
 
 tgui::Gui& GameState::get_tgui() {
-	return gui;
+	return m_gui;
+}
+
+bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) {
+	if (event.type == sf::Event::MouseMoved) {
+		sf::Vector2i mouse_screen_pos(event.mouseMove.x, event.mouseMove.y);
+		m_mouse_pos = current_window.mapPixelToCoords(mouse_screen_pos);
+		return false;
+	}
+	if (event.type == sf::Event::MouseButtonPressed) {
+		if (event.mouseButton.button == sf::Mouse::Button::Left) {
+			if (m_current_building_construction) {
+				bool on_map = m_mouse_pos.x < 8 * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < 8 * 32 && m_mouse_pos.y >= 0;
+				sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
+				if (on_map && m_current_building_construction->is_cell_allowed(cell_id.x, cell_id.y)) {
+					TileMap::Instance().map[cell_id.x][cell_id.y].building = m_current_building_construction->creator();
+					player_coins_add(-m_current_building_construction->cost);
+					if (m_current_building_construction->disabled) {
+						m_current_building_construction = nullptr;
+					}
+					return true;
+				}
+			}
+		}
+		else if (event.mouseButton.button == sf::Mouse::Button::Right) {
+			if (m_current_building_construction) {
+				m_current_building_construction = nullptr;
+				for (auto& btn : m_building_buttons)
+					btn->disable_selection();
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 void GameState::logic() {
 	if (is_game_over()) {
-		centered_message->setText("GAME OVER");
+		m_centered_message->setText("GAME OVER");
+		return;
+	}
+}
+
+void GameState::draw(sf::RenderWindow& current_window) {
+	bool on_map = m_mouse_pos.x < 8 * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < 8 * 32 && m_mouse_pos.y >= 0;
+	if (m_current_building_construction && on_map) {
+		sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
+		m_current_building_construction->draw_building_plan(current_window, cell_id.x, cell_id.y);
 	}
 }
 
 void GameState::player_health_add(int health) {
-	player_hp += health;
-	player_health_count_widget->setText("X" + std::to_string(player_hp));
+	m_player_hp += health;
+	m_player_health_count_widget->setText("X" + std::to_string(m_player_hp));
 }
 
-void GameState::minigun_state_update(const MiniGun& minigun) {
-	std::string message;
-	std::unordered_map<MiniGun::State, std::string> state_to_string{
-		{MiniGun::State::CoolDown, "CoolDown"},
-		{MiniGun::State::Cooling, "Cooling"},
-		{MiniGun::State::Heating, "Heating"},
-		{MiniGun::State::Ready, "Ready"}
-	};
-	std::unordered_map<MiniGun::ShootState, std::string> shoot_state_to_string{
-		{MiniGun::ShootState::CoolDown, "CoolDown"},
-		{MiniGun::ShootState::Ready, "Ready"}
-	};
-	message += "State: " + state_to_string[minigun.m_state] + "\n";
-	message += "Temperature: " + std::to_string(minigun.m_temperature / (1000 * 1000)) + "\n";
-	message += "m_cooldown_timer: " + std::to_string(minigun.m_cooldown_timer / (1000 * 1000)) + "\n";
-	message += "m_critical_temperature_mod_timer: " + std::to_string(minigun.m_critical_temperature_mod_timer / (1000 * 1000)) + "\n";
-	message += "m_shoot_timer: " + std::to_string(minigun.m_shoot_timer / (1000 * 1000)) + "\n";
-	message += "Shoot State: " + shoot_state_to_string[minigun.m_shoot_state] + "\n";
-
-	minigun_state->setText(message);
-
+void GameState::player_coins_add(int coins) {
+	m_player_coins += coins;
+	m_player_coins_count_widget->setText(std::to_string(m_player_coins));
+	for (auto& btn : m_building_buttons)
+		btn->coins_update(m_player_coins);
 }
+
+//void GameState::minigun_state_update(const MiniGun& minigun) {
+//	std::string message;
+//	std::unordered_map<MiniGun::State, std::string> state_to_string{
+//		{MiniGun::State::CoolDown, "CoolDown"},
+//		{MiniGun::State::Cooling, "Cooling"},
+//		{MiniGun::State::Heating, "Heating"},
+//		{MiniGun::State::Ready, "Ready"}
+//	};
+//	std::unordered_map<MiniGun::ShootState, std::string> shoot_state_to_string{
+//		{MiniGun::ShootState::CoolDown, "CoolDown"},
+//		{MiniGun::ShootState::Ready, "Ready"}
+//	};
+//	message += "State: " + state_to_string[minigun.m_state] + "\n";
+//	message += "Temperature: " + std::to_string(minigun.m_temperature / (1000 * 1000)) + "\n";
+//	message += "m_cooldown_timer: " + std::to_string(minigun.m_cooldown_timer / (1000 * 1000)) + "\n";
+//	message += "m_critical_temperature_mod_timer: " + std::to_string(minigun.m_critical_temperature_mod_timer / (1000 * 1000)) + "\n";
+//	message += "m_shoot_timer: " + std::to_string(minigun.m_shoot_timer / (1000 * 1000)) + "\n";
+//	message += "Shoot State: " + shoot_state_to_string[minigun.m_shoot_state] + "\n";
+//
+//	minigun_state->setText(message);
+//
+//}

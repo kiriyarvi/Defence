@@ -42,6 +42,8 @@ public:
 
 	int path_id = 0; // путь по которому движется враг.
 	bool path_is_completed = false;
+
+	int reward = 0;
 private:
 	sf::Vector2f goal; // текущая целевая точка
 	int goal_path_node = 0; // номер узла в пути, к которому враг стремиться на данный момент

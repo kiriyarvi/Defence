@@ -35,6 +35,7 @@ public:
 	Tank() : SimpleEnemy(EnemyTexturesID::Tank, EnemyTexturesID::TankDestroyed, Sounds::DoubleBlust) {
 		health = full_health = 100;
 		speed = 0.4;
+		reward = full_health * speed * 3;
 	}
 
 	IDestroyedEnemy::Ptr get_destroyed_enemy() {
@@ -50,6 +51,7 @@ public:
 	Truck() : SimpleEnemy(EnemyTexturesID::Truck, EnemyTexturesID::TruckDestroyed, Sounds::MedBlustOfDestruction) {
 		health = full_health = 50;
 		speed = 0.8;
+		reward = full_health * speed;
 	}
 };
 
@@ -77,6 +79,7 @@ public:
 	Bike() : SimpleEnemy(EnemyTexturesID::Bike, EnemyTexturesID::DestroyedBike, Sounds::MedBlustOfDestruction) {
 		health = full_health = 30;
 		speed = 1.6;
+		reward = full_health * speed * 2;
 		m_enemy_sprite.setOrigin(64, 64);
 		m_enemy_sprite.setScale(0.25, 0.25);
 	}
