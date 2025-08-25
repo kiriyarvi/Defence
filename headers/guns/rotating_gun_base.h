@@ -3,6 +3,7 @@
 
 class IEnemy;
 
+// TODO добавить возможность указания приоритета целей.
 class IRotatingGun : public IBuilding {
 public:
 	void draw(sf::RenderWindow& window, int x_id, int y_id) override;

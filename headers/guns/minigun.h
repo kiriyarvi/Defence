@@ -28,6 +28,7 @@ private:
 	float m_temperature = 0; // max = 1'000'000
 	float m_cooldown_timer = 0;
 	float m_critical_temperature_mod_timer = 0;
+	int m_penetration_upgrade = 0;
 
 	enum class State {
 		Heating,
@@ -61,4 +62,7 @@ private:
 	Animation m_enemy_hit_animation;
 	ISpriteFramer::Ptr m_enemy_hit_framer;
 	glm::vec2 m_random_hit_offset = glm::vec2(0,0);
+
+	Animation m_enemy_rebound_animation;
+	ISpriteFramer::Ptr m_enemy_rebound_framer;
 };

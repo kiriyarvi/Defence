@@ -32,7 +32,10 @@ private:
 
 class Tank : public SimpleEnemy {
 public:
-	Tank() : SimpleEnemy(EnemyTexturesID::Tank, EnemyTexturesID::TankDestroyed, Sounds::DoubleBlust, ParamsManager::Instance().params.enemies.tank) {}
+	Tank() : SimpleEnemy(EnemyTexturesID::Tank, EnemyTexturesID::TankDestroyed, Sounds::DoubleBlust, ParamsManager::Instance().params.enemies.tank) {
+		wheels = Wheels::Tracks;
+		infantry = false;
+	}
 
 	IDestroyedEnemy::Ptr get_destroyed_enemy() {
 		auto de = std::make_unique<SimpleEnemyDestroyed>(std::make_unique<DoubleBlustFramer>(), 1.4, 2.0, Sounds::DoubleBlust);
@@ -44,7 +47,10 @@ public:
 
 class Truck : public SimpleEnemy {
 public:
-	Truck() : SimpleEnemy(EnemyTexturesID::Truck, EnemyTexturesID::TruckDestroyed, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.truck) {}
+	Truck() : SimpleEnemy(EnemyTexturesID::Truck, EnemyTexturesID::TruckDestroyed, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.truck) {
+		wheels = Wheels::Wheels;
+		infantry = false;
+	}
 };
 
 class BikeDestroyed : public IDestroyedEnemy {
@@ -71,6 +77,8 @@ public:
 	Bike() : SimpleEnemy(EnemyTexturesID::Bike, EnemyTexturesID::DestroyedBike, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.bike) {
 		m_enemy_sprite.setOrigin(64, 64);
 		m_enemy_sprite.setScale(0.25, 0.25);
+		wheels = Wheels::Wheels;
+		infantry = true;
 	}
 	IDestroyedEnemy::Ptr get_destroyed_enemy() override;
 };

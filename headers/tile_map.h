@@ -41,7 +41,8 @@ enum class TileTexture {
 	SpikesT,
 	SpikesCross,
 	SpikesD,
-	SpikesIcon
+	SpikesIcon,
+	Hedgehog
 };
 
 enum class BuildingType {

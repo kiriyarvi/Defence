@@ -8,7 +8,7 @@
 
 GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	m_gui.setFont(tgui::Font("PixelSplitter-Bold.ttf"));
-	tgui::Texture::setDefaultSmooth(false); // îòêëþ÷èì ñãëàæèâàíèå òåêñòóð
+	tgui::Texture::setDefaultSmooth(false); // Ð¾Ñ‚ÐºÐ»ÑŽÑ‡Ð¸Ð¼ ÑÐ³Ð»Ð°Ð¶Ð¸Ð²Ð°Ð½Ð¸Ðµ Ñ‚ÐµÐºÑÑ‚ÑƒÑ€
 
 	m_player_health_count_widget = tgui::Label::create("X" + std::to_string(m_player_hp));
 	m_player_health_count_widget->setPosition("100%", 0);
@@ -21,8 +21,8 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 
 	tgui::Picture::Ptr heart_icon = tgui::Picture::create("sprites/heart.png");
 	heart_icon->setPosition(
-		"(HealthCountWidget.left - width)", // X: ëåâûé êðàé rightWidget ìèíóñ øèðèíà heart_icon
-		"(HealthCountWidget.top + 5)"       // Y: íà òîé æå âûñîòå
+		"(HealthCountWidget.left - width)", // X: Ð»ÐµÐ²Ñ‹Ð¹ ÐºÑ€Ð°Ð¹ rightWidget Ð¼Ð¸Ð½ÑƒÑ ÑˆÐ¸Ñ€Ð¸Ð½Ð° heart_icon
+		"(HealthCountWidget.top + 5)"       // Y: Ð½Ð° Ñ‚Ð¾Ð¹ Ð¶Ðµ Ð²Ñ‹ÑÐ¾Ñ‚Ðµ
 	);
 	heart_icon->setSize(32, 32);
 	heart_icon->ignoreMouseEvents(true);
@@ -35,8 +35,8 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	m_gui.add(m_player_coins_count_widget, "CoinsCountWidget");
 	tgui::Picture::Ptr coin_picture = tgui::Picture::create("sprites/coin.png");
 	coin_picture->setPosition(
-		"(CoinsCountWidget.right)", // X: ëåâûé êðàé rightWidget ìèíóñ øèðèíà heart_icon
-		"(CoinsCountWidget.top + 5)"       // Y: íà òîé æå âûñîòå
+		"(CoinsCountWidget.right)", // X: Ð»ÐµÐ²Ñ‹Ð¹ ÐºÑ€Ð°Ð¹ rightWidget Ð¼Ð¸Ð½ÑƒÑ ÑˆÐ¸Ñ€Ð¸Ð½Ð° heart_icon
+		"(CoinsCountWidget.top + 5)"       // Y: Ð½Ð° Ñ‚Ð¾Ð¹ Ð¶Ðµ Ð²Ñ‹ÑÐ¾Ñ‚Ðµ
 	);
 	coin_picture->ignoreMouseEvents(true);
 	coin_picture->setSize(32, 32);
@@ -51,7 +51,7 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 
 	m_gui.add(m_centered_message);
 
-	// Íèæíÿÿ ïàíåëü
+	// ÐÐ¸Ð¶Ð½ÑÑ Ð¿Ð°Ð½ÐµÐ»ÑŒ
 
 	auto bottom_panel_group = tgui::Group::create(tgui::Layout2d("100%", "10%"));
 	bottom_panel_group->setPosition("0%", "100%");
@@ -61,6 +61,7 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	m_building_buttons.push_back(std::make_unique<AntitankGunBuildingButton>(*this));
 	m_building_buttons.push_back(std::make_unique<TwinGunBuildingButton>(*this));
 	m_building_buttons.push_back(std::make_unique<SpikesBuildingButton>(*this));
+    m_building_buttons.push_back(std::make_unique<HedgeBuildingButton>(*this));
 	for (auto& button : m_building_buttons) {
 		bottom_panel_group->add(button->button);
 	}

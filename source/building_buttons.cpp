@@ -6,6 +6,7 @@
 #include "guns/minigun.h"
 #include "guns/mine.h"
 #include "guns/spikes.h"
+#include "guns/hedgehog.h"
 #include "shader_manager.h"
 
 BuildingButton::BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius)
@@ -17,6 +18,16 @@ BuildingButton::BuildingButton(TileTexture gun_icon, GameState& game_state, cons
 	button->setImage(TileMap::Instance().textures[gun_icon]);
 	button->setImageScaling(1);
 	button->setSize({ "height" , "100%" });
+
+    m_tooltip = tgui::Label::create("РѕРїРёСЃР°РЅРёРµ");
+    m_tooltip->setText("hello");
+    m_tooltip->setTextSize(20);
+    auto tooltip_renderer = m_tooltip->getRenderer();
+    tooltip_renderer->setBackgroundColor(tgui::Color::Color(50, 50, 50, 50));
+    tooltip_renderer->setTextColor(tgui::Color::White);
+    tooltip_renderer->setBorders(3);
+    tooltip_renderer->setBorderColor(tgui::Color::Black);
+    button->setToolTip(m_tooltip);
 	connect();
 }
 
@@ -37,7 +48,7 @@ BuildingButton::BuildingButton(BuildingButton&& btn) :
 	creator{ btn.creator }, restrictions{ btn.restrictions }, m_gun_icon{ btn.m_gun_icon }, m_game_state{ btn.m_game_state }, cost{ btn.cost }, m_radius{btn.m_radius}
 {
 	button = std::move(btn.button);
-	connect(); // нужно переназнывать, поскольку используем this в  lambda-функции.
+	connect(); // РЅСѓР¶РЅРѕ РїРµСЂРµРЅР°Р·РЅС‹РІР°С‚СЊ, РїРѕСЃРєРѕР»СЊРєСѓ РёСЃРїРѕР»СЊР·СѓРµРј this РІ  lambda-С„СѓРЅРєС†РёРё.
 }
 
 void BuildingButton::coins_update(int current_coins_count) {
@@ -202,4 +213,24 @@ void SpikesBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id
 	spikes.setPosition(x_id * 32 + 16, y_id * 32 + 16);
 	if (!allowed) spikes.setColor(sf::Color(255, 0, 0));
 	window.draw(spikes);
+}
+
+HedgeBuildingButton::HedgeBuildingButton(GameState& game_state):
+    BuildingButton(
+        TileTexture::Hedgehog,
+        game_state,
+        make_creator<Hedgehog>(),
+        TileRestrictions::RoadOnly,
+        ParamsManager::Instance().params.guns.spikes.cost,
+        0
+    )
+{}
+
+void HedgeBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
+    bool allowed = is_cell_allowed(x_id, y_id);
+    sf::Sprite headge(TileMap::Instance().textures[TileTexture::Hedgehog]);
+    headge.setOrigin(16, 16);
+    headge.setPosition(x_id * 32 + 16, y_id * 32 + 16);
+    if (!allowed) headge.setColor(sf::Color(255, 0, 0));
+    window.draw(headge);
 }

@@ -14,7 +14,8 @@ enum class Sounds {
 	DoubleBlust,
 	MiniGunShot,
 	OverHeat,
-	MineBlast
+	MineBlast,
+	Ricochet
 };
 
 class SoundManager {

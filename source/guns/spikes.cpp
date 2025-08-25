@@ -1,11 +1,6 @@
 #include "guns/spikes.h"
 #include "enemy_manager.h"
 
-struct Transform {
-	float rotation = 0;
-	bool sym_x = false;
-	bool sym_y = false;
-};
 
 Spikes::Spikes(): params(ParamsManager::Instance().params.guns.spikes) 
 {
@@ -23,39 +18,39 @@ sf::Sprite Spikes::get_sprite_for_tile(int x_id, int y_id) {
 	sf::Sprite sprite;
 	sprite.setOrigin(16, 16);
 	sprite.setPosition(x_id * 32 + 16, y_id * 32 + 16);
-	Transform t;
-	if (count == 4 || count == 0) { // count == 0 для того чтобы отображадся план постройки.
+	float rotation = 0;
+	if (count == 4 || count == 0) { // count == 0 РґР»СЏ С‚РѕРіРѕ С‡С‚РѕР±С‹ РѕС‚РѕР±СЂР°Р¶Р°РґСЃСЏ РїР»Р°РЅ РїРѕСЃС‚СЂРѕР№РєРё.
 		sprite.setTexture(TileMap::Instance().textures[TileTexture::SpikesCross]);
 	}
 	else if (count == 2) {
 		if (tile_id % 3 == 0) {
 			//  turn
 			if (tile_id == 3)
-				t.rotation = -90;
+				rotation = -90;
 			else if (tile_id == 12)
-				t.rotation = 90;
+				rotation = 90;
 			else if (tile_id == 9)
-				t.rotation = 180;
+				rotation = 180;
 			sprite.setTexture(TileMap::Instance().textures[TileTexture::SpikesD]);
 		}
-		else { // прямая дорога
+		else { // РїСЂСЏРјР°СЏ РґРѕСЂРѕРіР°
 			sprite.setTexture(TileMap::Instance().textures[TileTexture::SpikesRight]);
 			if (tile_id == 10) {
-				t.rotation = 90;
+				rotation = 90;
 			}
 		}
 	}
 	else if (count == 3) {
 		sprite.setTexture(TileMap::Instance().textures[TileTexture::SpikesT]);
 		if (tile_id == 14)
-			t.rotation = -90;
+			rotation = -90;
 		else if (tile_id == 11)
-			t.rotation = 90;
+			rotation = 90;
 		else if (tile_id == 13)
-			t.rotation = 180;
+			rotation = 180;
 
 	}
-	sprite.setRotation(t.rotation);
+	sprite.setRotation(rotation);
 	return sprite;
 }
 
@@ -69,9 +64,11 @@ void Spikes::draw(sf::RenderWindow& window, int x_id, int y_id) {
 void Spikes::logic(double dtime, int x_id, int y_id) {
 	glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);
 	for (auto& enemy : EnemyManager::Instance().m_enemies) {
+        if (enemy->wheels != IEnemy::Wheels::Wheels)
+            continue;
 		if (health <= 0)
 			return;
-		if (glm::length(pos - enemy->get_position()) < 0.1) {
+		if (glm::length(pos - enemy->get_position()) < 0.2 * 32) {
 			if(enemy->break_enemy(params.delay))
 				--health;
 		}

@@ -44,6 +44,7 @@ protected:
 	TileTexture m_gun_icon;
 	GameState& m_game_state;
 	float m_radius;
+	tgui::Label::Ptr m_tooltip;
 };
 
 
@@ -72,5 +73,11 @@ public:
 class SpikesBuildingButton : public BuildingButton {
 public:
 	SpikesBuildingButton(GameState& game_state);
+	void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) override;
+};
+
+class HedgeBuildingButton : public BuildingButton {
+public:
+	HedgeBuildingButton(GameState& game_state);
 	void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) override;
 };

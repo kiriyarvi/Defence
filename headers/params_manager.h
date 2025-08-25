@@ -44,13 +44,21 @@ public:
 				float critical_temperature;
 				float critical_temperature_work_duration;
 				float cost;
+				int min_armor_penetration_level;
+				int max_armor_penetration_level;
+				struct PenetrationUpgrade {
+					int min_armor_penetration_level;
+					int max_armor_penetration_level;
+					NLOHMANN_DEFINE_TYPE_INTRUSIVE(PenetrationUpgrade, min_armor_penetration_level, max_armor_penetration_level)
+				};
+				std::vector<PenetrationUpgrade> penetration_upgrades;
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Minigun,
 					radius, heating_time, cooling_time,
 					min_rotation_speed, max_rotation_speed,
 					min_damage, max_damage,
 					cooldown_duration, critical_temperature,
 					critical_temperature_work_duration,
-					cost
+					cost, penetration_upgrades
 				)
 			} minigun;
 			struct Mine {
@@ -67,14 +75,22 @@ public:
 				float cost;
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Spikes, health, delay, cost)
 			} spikes;
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Guns, antitank, twingun, minigun, mine, spikes)
+			struct Hedgehog {
+				int health;
+				float delay;
+				float cost;
+				float wheels_debuff;
+				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Hedgehog, health, delay, cost, wheels_debuff)
+			} hedgehog;
+			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Guns, antitank, twingun, minigun, mine, spikes, hedgehog)
 		} guns;
 		struct Enemies {
 			struct Enemy {
 				float speed;
 				float health;
 				float reward;
-				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Enemy, speed, health, reward)
+				int armor_level;
+				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Enemy, speed, health, reward, armor_level)
 			};
 			Enemy solder;
 			Enemy bike;

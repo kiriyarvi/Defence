@@ -24,7 +24,17 @@
       "cooldown_duration": 7, // время остывания после перегрева
       "critical_temperature": 0.7, // значение критической температуры
       "critical_temperature_work_duration": 4, //максимальное время работы при критическом нагреве.
-      "cost": 1000
+      "cost": 1000,
+      "penetration_upgrades": [
+        {
+          "min_armor_penetration_level": 0,
+          "max_armor_penetration_level": 1
+        },
+        {
+          "min_armor_penetration_level": 1,
+          "max_armor_penetration_level": 2
+        }
+      ]
     },
     "mine": {
       "damage_radius": 2,
@@ -37,28 +47,38 @@
       "health": 5, // число остановленных врагов, после которых шипы уничтожаются.
       "delay": 3.5, // на какое время остановиться враг.
       "cost": 450
+    },
+    "hedgehog": {
+      "health": 5, // число остановленных врагов, после которых шипы уничтожаются.
+      "delay": 3.5, // на какое время остановиться враг.
+      "cost": 750,
+      "wheels_debuff": 2
     }
   },
   "enemies": {
     "solder": {
       "health": 15,
       "speed": 0.25,
-      "reward": 4
+      "reward": 4,
+      "armor_level":  0
     },
     "bike": {
       "health": 30,
       "speed": 1.6,
-      "reward": 100
+      "reward": 100,
+      "armor_level": 0
     },
     "truck": {
       "health": 50,
       "speed": 0.8,
-      "reward": 40
+      "reward": 40,
+      "armor_level": 1
     },
     "tank": {
       "health": 100,
       "speed": 0.4,
-      "reward": 120
+      "reward": 120,
+      "armor_level": 2
     }
   }
 }

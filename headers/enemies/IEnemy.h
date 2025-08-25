@@ -45,7 +45,13 @@ public:
 
 	int path_id = 0; // путь по которому движется враг.
 	bool path_is_completed = false;
-
+	
+	bool infantry; // пехота (мотоциклист считается пехотой)
+	enum class Wheels {
+		None,
+		Wheels,
+		Tracks
+	} wheels;
 private:
 	sf::Vector2i last_breaking_cell = { -1, -1 };
 	sf::Vector2f goal; // текущая целевая точка

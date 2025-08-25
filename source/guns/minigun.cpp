@@ -42,7 +42,7 @@ MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
 	m_overheat_animation.add_framer(m_steam_framer);
 	m_overheat_animation.set_loop(true);
 	m_overheat_animation.start();
-	m_overheat_animation.logic(0.0); // чтобы установить первый frame. 
+	m_overheat_animation.logic(0.0); // С‡С‚РѕР±С‹ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РїРµСЂРІС‹Р№ frame. 
 
 	sf::Sprite compass(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
 	compass.setTextureRect(sf::IntRect(16, 0, 5, 5));
@@ -64,6 +64,10 @@ MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
 	m_enemy_hit_framer = std::make_unique<MinigunHitFramer>();
 	m_enemy_hit_animation.set_duration(shot_offset_time);
 	m_enemy_hit_animation.add_framer(m_enemy_hit_framer);
+
+    m_enemy_rebound_framer = std::make_unique<MinigunReboundFramer>();
+    m_enemy_rebound_animation.set_duration(shot_offset_time);
+    m_enemy_rebound_animation.add_framer(m_enemy_rebound_framer);
 }
 
 void MiniGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
@@ -86,12 +90,19 @@ void MiniGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
 }
 
 void MiniGun::draw_effects(sf::RenderWindow& window, int x, int y) {
-	if (!m_enemy_hit_animation.started()) return;
+	if (!m_enemy_hit_animation.started() && !m_enemy_rebound_animation.started()) return;
 	IEnemy* enemy = EnemyManager::Instance().get_enemy_by_id(m_shoted_enemy_id);
 	if (!enemy) return;
-	auto enemy_pos = enemy->get_position() + m_random_hit_offset;
-	m_enemy_hit_framer->sprite.setPosition(enemy_pos.x, enemy_pos.y);
-	window.draw(m_enemy_hit_framer->sprite);
+    if (m_enemy_hit_animation.started()) {
+        auto enemy_pos = enemy->get_position() + m_random_hit_offset;
+        m_enemy_hit_framer->sprite.setPosition(enemy_pos.x, enemy_pos.y);
+        window.draw(m_enemy_hit_framer->sprite);
+    }
+    if (m_enemy_rebound_animation.started()) {
+        auto enemy_pos = enemy->get_position() + m_random_hit_offset;
+        m_enemy_rebound_framer->sprite.setPosition(enemy_pos.x, enemy_pos.y);
+        window.draw(m_enemy_rebound_framer->sprite);
+    }
 }
 
 void MiniGun::on_gun_pointed() {
@@ -128,10 +139,10 @@ void MiniGun::logic(double dtime_microseconds, int x_id, int y_id) {
 	temperature_logic(dtime_microseconds);
 
 	float t = m_temperature / (1000 * 1000);
-	float rotation_speed = m_params.min_rotation_speed + t * (m_params.max_rotation_speed - m_params.min_rotation_speed); //вращение, градусов в секунду
+	float rotation_speed = m_params.min_rotation_speed + t * (m_params.max_rotation_speed - m_params.min_rotation_speed); //РІСЂР°С‰РµРЅРёРµ, РіСЂР°РґСѓСЃРѕРІ РІ СЃРµРєСѓРЅРґСѓ
 
 	if (m_shoot_state == ShootState::CoolDown) {
-		float cooldown_time = (360 / rotation_speed) / 6;// время полного оборота / 6;
+		float cooldown_time = (360 / rotation_speed) / 6;// РІСЂРµРјСЏ РїРѕР»РЅРѕРіРѕ РѕР±РѕСЂРѕС‚Р° / 6;
 		m_shoot_timer += dtime_microseconds;
 		if (m_shoot_timer >= cooldown_time * 1000 * 1000) {
 			m_shoot_state = ShootState::Ready;
@@ -142,6 +153,7 @@ void MiniGun::logic(double dtime_microseconds, int x_id, int y_id) {
 			m_shot_sprite->enabled = false;
 		}
 		m_enemy_hit_animation.logic(dtime_microseconds);
+        m_enemy_rebound_animation.logic(dtime_microseconds);
 	}
 
 	if (m_state == State::Heating)
@@ -213,38 +225,50 @@ void MiniGun::temperature_logic(double dtime_microseconds) {
 
 void MiniGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
 	if (m_shoot_state == ShootState::Ready && m_state != State::CoolDown) {
-		enemy.health -= int((m_temperature / (1000 * 1000.f)) * (m_params.max_damage - m_params.min_damage) + m_params.min_damage);
+        float t = m_temperature / (1000 * 1000.f);
+        auto& penetration_upgrade = m_params.penetration_upgrades[m_penetration_upgrade];
+        int current_penetration_level = penetration_upgrade.min_armor_penetration_level + t * (penetration_upgrade.max_armor_penetration_level - penetration_upgrade.min_armor_penetration_level + 1);
+        bool penetration = current_penetration_level >= enemy.params.armor_level;
+        if (penetration)
+            enemy.health -= int(t * (m_params.max_damage - m_params.min_damage) + m_params.min_damage);
 		m_shoot_state = ShootState::CoolDown;
 		m_shoot_timer = 0;
 		SoundManager::Instance().play(Sounds::MiniGunShot,10, 25 + (rand() % 100) / 100.f * 7, 1.0 - (rand() % 100) / 100.f * 0.05);
-		if (m_state == State::Ready)
+        if (!penetration)
+            SoundManager::Instance().play(Sounds::Ricochet, 10, 25 + (rand() % 100) / 100.f * 7, 1.0 - (rand() % 100) / 100.f * 0.05);
+        if (m_state == State::Ready)
 			m_state = State::Heating;
 		m_belt_supply = true;
 		m_belt_supply_timer = 0.0;
 
 		m_shot_sprite->enabled = true;
 		m_shot_animation.start();
-		m_shot_animation.logic(0.0); // чтобы выставить первый фрейм.
+		m_shot_animation.logic(0.0); // С‡С‚РѕР±С‹ РІС‹СЃС‚Р°РІРёС‚СЊ РїРµСЂРІС‹Р№ С„СЂРµР№Рј.
 
 		m_shoted_enemy_id = enemy.id;
-
-		m_enemy_hit_animation.start();
-		m_enemy_hit_animation.logic(0.0); // чтобы выставить первый фрейм.
-		m_random_hit_offset = glm::circularRand<float>(2);
+        if (penetration) {
+            m_enemy_hit_animation.start();
+            m_enemy_hit_animation.logic(0.0); // С‡С‚РѕР±С‹ РІС‹СЃС‚Р°РІРёС‚СЊ РїРµСЂРІС‹Р№ С„СЂРµР№Рј.
+        }
+        else {
+            m_enemy_rebound_animation.start();
+            m_enemy_rebound_animation.logic(0.0); // С‡С‚РѕР±С‹ РІС‹СЃС‚Р°РІРёС‚СЊ РїРµСЂРІС‹Р№ С„СЂРµР№Рј.
+        }
+        m_random_hit_offset = glm::circularRand<float>(2);
 	}
 }
 
 void MiniGun::compass_logic(int x_id, int y_id) {
 	if (m_is_enemy_captured) {
 		glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);
-		auto enemy = EnemyManager::Instance().get_enemy_by_id(m_captured_enemy_id); // по идее можно не беспокоиться о том, что enemy = nullptr, потому что эта функция вызывается после IRotatingBase::logic()
+		auto enemy = EnemyManager::Instance().get_enemy_by_id(m_captured_enemy_id); // РїРѕ РёРґРµРµ РјРѕР¶РЅРѕ РЅРµ Р±РµСЃРїРѕРєРѕРёС‚СЊСЃСЏ Рѕ С‚РѕРј, С‡С‚Рѕ enemy = nullptr, РїРѕС‚РѕРјСѓ С‡С‚Рѕ СЌС‚Р° С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РїРѕСЃР»Рµ IRotatingBase::logic()
 		float rotation_rad = glm::radians(rotation);
 		glm::mat2x2 A{
 			{cos(rotation_rad), sin(rotation_rad)},
 			{-sin(rotation_rad), cos(rotation_rad)}
 		};
 		glm::vec2 dir = enemy->get_position() - pos;
-		dir.y = -dir.y; // из-за того что базис изначально левый. Нужно перевести в правый, чтобы корректно отработал atan.
+		dir.y = -dir.y; // РёР·-Р·Р° С‚РѕРіРѕ С‡С‚Рѕ Р±Р°Р·РёСЃ РёР·РЅР°С‡Р°Р»СЊРЅРѕ Р»РµРІС‹Р№. РќСѓР¶РЅРѕ РїРµСЂРµРІРµСЃС‚Рё РІ РїСЂР°РІС‹Р№, С‡С‚РѕР±С‹ РєРѕСЂСЂРµРєС‚РЅРѕ РѕС‚СЂР°Р±РѕС‚Р°Р» atan.
 		dir = A * dir;
 		float angle = glm::atan(dir.y, dir.x); //[-pi, pi]
 		if (angle < 0)

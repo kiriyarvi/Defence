@@ -69,6 +69,8 @@ TileMap::TileMap() {
 	textures[TileTexture::SpikesCross].loadFromFile("sprites/spikes_cross.png");
 	textures[TileTexture::SpikesD].loadFromFile("sprites/spikes_d.png");
 	textures[TileTexture::SpikesIcon].loadFromFile("sprites/spikes_icon.png");
+
+    textures[TileTexture::Hedgehog].loadFromFile("sprites/hedgehog.png");
 	//Test Map
 	map[0][1].roads = { 1,0,1,0 };
 	map[1][1].roads = { 1,0,1,0 };
@@ -198,17 +200,17 @@ void RoadGraph::dfs(Node* current,
 	path.push_back(current);
 	visited.insert(current);
 
-	// Если достигли одного из целевых узлов — сохраняем путь
+	// Р•СЃР»Рё РґРѕСЃС‚РёРіР»Рё РѕРґРЅРѕРіРѕ РёР· С†РµР»РµРІС‹С… СѓР·Р»РѕРІ вЂ” СЃРѕС…СЂР°РЅСЏРµРј РїСѓС‚СЊ
 	if (std::find(end_nodes.begin(), end_nodes.end(), current) != end_nodes.end()) {
 		all_paths.push_back(path);
 	}
 
-	// Рекурсивно обходим соседей
+	// Р РµРєСѓСЂСЃРёРІРЅРѕ РѕР±С…РѕРґРёРј СЃРѕСЃРµРґРµР№
 	for (Node* neighbor : current->relations) {
 		dfs(neighbor, path, visited, all_paths);
 	}
 
-	// Назад (backtracking)
+	// РќР°Р·Р°Рґ (backtracking)
 	visited.erase(current);
 	path.pop_back();
 }
