@@ -1,7 +1,7 @@
 #pragma once
 #include "rotating_gun_base.h"
 #include "utils/sprite_chain.h"
-
+#include "params_manager.h"
 
 class TwinGunAnimation {
 public:
@@ -50,9 +50,9 @@ private:
 		ShotCD,
 		Ready
 	} state = State::Ready;
-	double damage = 10;
-	double cd_shot_duration = 2;
-	double cd_interleaved_duration = 0.2;
+
+	ParamsManager::Params::Guns::TwinGun& m_params;
+
 	double cd_shot = 0;
 	double cd_interleaved = 0;
 	TwinGunAnimation animation;

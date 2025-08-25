@@ -3,7 +3,7 @@
 #include "enemy_manager.h"
 #include "sound_manager.h"
 
-Mine::Mine() {
+Mine::Mine(): m_params(ParamsManager::Instance().params.guns.mine) {
 	m_mine_sprite.setTexture(TileMap::Instance().textures[TileTexture::Mine]);
 	m_mine_sprite.setOrigin(8, 8);
 
@@ -38,19 +38,19 @@ void Mine::logic(double dtime_microseconds, int x_id, int y_id) {
 		std::list<EnemyD> in_damage_radius;
 		for (auto& enemy : enemies) {
 			double distance = glm::length(enemy->get_position() - pos) / 32;
-			if (distance < 0.1) {
+			if (distance <= m_params.activation_radius) {
 				m_state = State::Activated;
 				SoundManager::Instance().play(Sounds::MineBlast);
 				m_blast_animation.start();
 				m_blast_animation.logic(0.0);
 			}
-			if (distance < m_damage_radius)
+			if (distance < m_params.damage_radius)
 				in_damage_radius.push_back(EnemyD{ enemy.get(), distance });
 		}
 		if (m_state == State::Activated) {
 			for (auto& enemy : in_damage_radius) {
-				float p = 1. - enemy.distance / m_damage_radius;
-				enemy.enemy->health -= m_min_damage + p * (m_max_damage - m_min_damage);
+				float p = 1. - std::max(enemy.distance - m_params.activation_radius, 0.0) / (m_params.damage_radius - m_params.activation_radius);
+				enemy.enemy->health -= m_params.min_damage + p * (m_params.max_damage - m_params.min_damage);
 			}
 		}
 	}

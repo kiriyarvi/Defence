@@ -8,8 +8,10 @@
 #include "glm/gtx/rotate_vector.hpp"
 #include "glm/gtc/random.hpp"
 
-MiniGun::MiniGun() {
-	radius = 2;
+MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
+	radius = m_params.radius;
+	m_heat_speed = 1. / m_params.heating_time;
+	m_cooling_speed = 1. / m_params.cooling_time;
 
 	m_minigun_sprite.sprite.setTexture(TileMap::Instance().textures[TileTexture::MiniGun]);
 	m_minigun_sprite.set_position_origin(16, 16);
@@ -49,7 +51,7 @@ MiniGun::MiniGun() {
 	m_enemy_compass->layer = 0;
 	m_enemy_compass->set_position(14,12);
 
-	float min_cooldown_time = (360 / m_max_rotation_speed) / 6;
+	float min_cooldown_time = (360 / m_params.max_rotation_speed) / 6;
 	float shot_offset_time = min_cooldown_time * 0.5;
 	m_shot_animation.set_duration(shot_offset_time);
 	m_shot_framer = std::make_unique<MinigunShootFramer>();
@@ -111,7 +113,7 @@ void MiniGun::drum_animation() {
 		it->layer = sin(angle) * 6;
 		float darkness = (1. + sin(angle)) / 2.f;
 		darkness = 0.3 + darkness * 0.7;
-		float heat = 1.f - (std::min(m_temperature, m_critical_temperature * 1000 * 1000)) / (1000 * 1000);
+		float heat = 1.f - (std::min(m_temperature, m_params.critical_temperature * 1000 * 1000)) / (1000 * 1000);
 		it->sprite.setColor(sf::Color(255.f * darkness, 255.f * darkness * heat, 255.f * darkness * heat));
 	}
 }
@@ -126,7 +128,7 @@ void MiniGun::logic(double dtime_microseconds, int x_id, int y_id) {
 	temperature_logic(dtime_microseconds);
 
 	float t = m_temperature / (1000 * 1000);
-	float rotation_speed = m_min_rotation_speed + t * (m_max_rotation_speed - m_min_rotation_speed); //вращение, градусов в секунду
+	float rotation_speed = m_params.min_rotation_speed + t * (m_params.max_rotation_speed - m_params.min_rotation_speed); //вращение, градусов в секунду
 
 	if (m_shoot_state == ShootState::CoolDown) {
 		float cooldown_time = (360 / rotation_speed) / 6;// время полного оборота / 6;
@@ -146,7 +148,7 @@ void MiniGun::logic(double dtime_microseconds, int x_id, int y_id) {
 		m_drum_angle += rotation_speed * dtime_microseconds;
 	drum_animation();
 	if (m_belt_supply) {
-		float min_cooldown_time = (360 / m_max_rotation_speed) / 6;
+		float min_cooldown_time = (360 / m_params.max_rotation_speed) / 6;
 		float shot_offset_time = min_cooldown_time * 0.5;
 		m_belt_supply_timer += dtime_microseconds;
 		float p = (m_belt_supply_timer / (shot_offset_time * 1000 * 1000));
@@ -168,13 +170,13 @@ void MiniGun::temperature_logic(double dtime_microseconds) {
 	if (m_state == State::Heating) {
 		m_temperature += dtime_microseconds * m_heat_speed;
 		m_temperature = std::min(m_temperature, 1000 * 1000.f);
-		if (m_temperature > 1000 * 1000 * m_critical_temperature) {
+		if (m_temperature > 1000 * 1000 * m_params.critical_temperature) {
 			m_critical_temperature_mod_timer += dtime_microseconds;
 		}
 	}
 	else if (m_state == State::Cooling) {
 		m_temperature -= dtime_microseconds * m_cooling_speed;
-		if (m_temperature > 1000 * 1000 * m_critical_temperature) {
+		if (m_temperature > 1000 * 1000 * m_params.critical_temperature) {
 			m_critical_temperature_mod_timer += dtime_microseconds;
 		}
 		if (m_temperature < 0) {
@@ -185,7 +187,7 @@ void MiniGun::temperature_logic(double dtime_microseconds) {
 		m_cooldown_timer += dtime_microseconds;
 		m_temperature -= dtime_microseconds * m_cooling_speed;
 		m_temperature = std::max(0.f, m_temperature);
-		if (m_cooldown_timer >= m_cooldown_duration * 1000 * 1000) {
+		if (m_cooldown_timer >= m_params.cooldown_duration * 1000 * 1000) {
 			if (!m_is_enemy_captured)
 				m_state = State::Ready;
 			else {
@@ -198,7 +200,7 @@ void MiniGun::temperature_logic(double dtime_microseconds) {
 		m_overheat_animation.logic(dtime_microseconds);
 	}
 
-	if (m_critical_temperature_mod_timer >= m_critical_temperature_work_duration * 1000 * 1000) {
+	if (m_critical_temperature_mod_timer >= m_params.critical_temperature_work_duration * 1000 * 1000) {
 		m_state = State::CoolDown;
 		m_cooldown_timer = 0;
 		SoundManager::Instance().play(Sounds::OverHeat);
@@ -211,7 +213,7 @@ void MiniGun::temperature_logic(double dtime_microseconds) {
 
 void MiniGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
 	if (m_shoot_state == ShootState::Ready && m_state != State::CoolDown) {
-		enemy.health -= int((m_temperature / (1000 * 1000.f)) * (m_max_damage - m_min_damage) + m_min_damage);
+		enemy.health -= int((m_temperature / (1000 * 1000.f)) * (m_params.max_damage - m_params.min_damage) + m_params.min_damage);
 		m_shoot_state = ShootState::CoolDown;
 		m_shoot_timer = 0;
 		SoundManager::Instance().play(Sounds::MiniGunShot,10, 25 + (rand() % 100) / 100.f * 7, 1.0 - (rand() % 100) / 100.f * 0.05);

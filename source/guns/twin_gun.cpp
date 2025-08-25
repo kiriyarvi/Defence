@@ -124,8 +124,8 @@ void TwinGunAnimation::start_barrel_animation(bool upper) {
 }
 
 
-TwinGun::TwinGun() {
-	radius = 2;
+TwinGun::TwinGun(): m_params(ParamsManager::Instance().params.guns.twingun) {
+	radius = m_params.radius;
 }
 
 void TwinGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
@@ -142,19 +142,19 @@ void TwinGun::logic(double dtime_microseconds, int x_id, int y_id) {
 	animation.logic(dtime_microseconds, false);
 	if (state == State::ShotCD) {
 		cd_shot += dtime_microseconds;
-		if (cd_shot >= cd_shot_duration * 1000 * 1000)
+		if (cd_shot >= m_params.cooldown * 1000 * 1000)
 			state = State::Ready;
 	}
 	else if (state == State::InterleavedCD) {
 		cd_interleaved += dtime_microseconds;
-		if (cd_interleaved >= cd_interleaved_duration * 1000 * 1000)
+		if (cd_interleaved >= m_params.interleaved_cooldown * 1000 * 1000)
 			state = State::InterleavedReady;
 	}
 	IRotatingGun::logic(dtime_microseconds, x_id, y_id);
 }
 
 void TwinGun::shot(int x_id, int y_id, IEnemy& enemy, bool upper_barrel) {
-	enemy.health -= damage;
+	enemy.health -= m_params.damage_per_barrel;
 	SoundManager::Instance().play(Sounds::TwinGunShot);
 	glm::vec3 gun_pos(x_id * 32 + 16, y_id * 32 + 16, 0);
 	glm::vec3 enemy_pos = glm::vec3(enemy.get_position(), 0.0);

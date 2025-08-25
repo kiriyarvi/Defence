@@ -1,6 +1,7 @@
 #pragma once
 #include "tile_map.h"
 #include "utils/animation.h"
+#include "params_manager.h"
 
 class Mine: public IBuilding {
 public:
@@ -17,9 +18,7 @@ private:
 	} m_state = State::Ready;
 	sf::Sprite m_mine_sprite;
 
-	float m_damage_radius = 2;
-	float m_min_damage = 1;
-	float m_max_damage = 40;
+	ParamsManager::Params::Guns::Mine& m_params;
 
 	Animation m_blast_animation;
 	ISpriteFramer::Ptr m_blast_framer = nullptr;

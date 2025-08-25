@@ -21,4 +21,7 @@ target_link_libraries(defence PRIVATE glm::glm)
 find_package(TGUI CONFIG REQUIRED)
 target_link_libraries(defence PRIVATE TGUI::TGUI)
 
+find_package(nlohmann_json CONFIG REQUIRED)
+target_link_libraries(defence PRIVATE nlohmann_json::nlohmann_json)
+
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)

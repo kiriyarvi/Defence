@@ -51,15 +51,6 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 
 	m_gui.add(m_centered_message);
 
-
-	/*minigun_state = tgui::Label::create();
-	minigun_state->setPosition("0%", "0%");
-	minigun_state->setTextSize(16);
-	minigun_state->ignoreMouseEvents(true);
-	minigun_state->getRenderer()->setTextColor(tgui::Color::White);
-	gui.add(minigun_state);*/
-
-
 	// Нижняя панель
 
 	auto bottom_panel_group = tgui::Group::create(tgui::Layout2d("100%", "10%"));
@@ -67,8 +58,8 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	bottom_panel_group->setOrigin(0, 1.);
 	m_building_buttons.push_back(std::make_unique<BuildingButton>(TileTexture::MinigunIcon, *this, BuildingButton::make_creator<MiniGun>(), BuildingButton::TileRestrictions::NoRoads, 1000));
 	m_building_buttons.push_back(std::make_unique<BuildingButton>(TileTexture::Mine, *this, BuildingButton::make_creator<Mine>(), BuildingButton::TileRestrictions::RoadOnly, 1000));
-	m_building_buttons.push_back(std::make_unique<TwinGunBuildingButton>(*this, 20000));
-	m_building_buttons.push_back(std::make_unique<AntitankGunBuildingButton>(*this, 20000));
+	m_building_buttons.push_back(std::make_unique<AntitankGunBuildingButton>(*this, 2000));
+	m_building_buttons.push_back(std::make_unique<TwinGunBuildingButton>(*this, 2500));
 	for (auto& button : m_building_buttons) {
 		bottom_panel_group->add(button->button);
 	}
@@ -151,25 +142,3 @@ void GameState::player_coins_add(int coins) {
 		btn->coins_update(m_player_coins);
 }
 
-//void GameState::minigun_state_update(const MiniGun& minigun) {
-//	std::string message;
-//	std::unordered_map<MiniGun::State, std::string> state_to_string{
-//		{MiniGun::State::CoolDown, "CoolDown"},
-//		{MiniGun::State::Cooling, "Cooling"},
-//		{MiniGun::State::Heating, "Heating"},
-//		{MiniGun::State::Ready, "Ready"}
-//	};
-//	std::unordered_map<MiniGun::ShootState, std::string> shoot_state_to_string{
-//		{MiniGun::ShootState::CoolDown, "CoolDown"},
-//		{MiniGun::ShootState::Ready, "Ready"}
-//	};
-//	message += "State: " + state_to_string[minigun.m_state] + "\n";
-//	message += "Temperature: " + std::to_string(minigun.m_temperature / (1000 * 1000)) + "\n";
-//	message += "m_cooldown_timer: " + std::to_string(minigun.m_cooldown_timer / (1000 * 1000)) + "\n";
-//	message += "m_critical_temperature_mod_timer: " + std::to_string(minigun.m_critical_temperature_mod_timer / (1000 * 1000)) + "\n";
-//	message += "m_shoot_timer: " + std::to_string(minigun.m_shoot_timer / (1000 * 1000)) + "\n";
-//	message += "Shoot State: " + shoot_state_to_string[minigun.m_shoot_state] + "\n";
-//
-//	minigun_state->setText(message);
-//
-//}

@@ -2,8 +2,9 @@
 #include "enemy_manager.h"
 #include "sound_manager.h"
 
-AntitankGun::AntitankGun() {
-	radius = 3;
+AntitankGun::AntitankGun(): m_params(ParamsManager::Instance().params.guns.antitank) {
+	radius = m_params.radius;
+
 	m_turret_sprite.sprite.setTexture(TileMap::Instance().textures[TileTexture::AntitankGunTurret]);
 	m_barrel = &m_turret_sprite.childs.emplace_back();
 	m_barrel->sprite.setTexture(TileMap::Instance().textures[TileTexture::AntitankGunBarrel]);
@@ -63,7 +64,7 @@ void AntitankGun::draw_effects(sf::RenderWindow& window, int x, int y) {
 void AntitankGun::logic(double dtime_microseconds, int x_id, int y_id) {
 	if (m_state == State::CoolDown) {
 		m_cd_time += dtime_microseconds;
-		if (m_cd_time >= m_cooldown * 1000 * 1000)
+		if (m_cd_time >= m_params.cooldown * 1000 * 1000)
 			m_state = State::Ready;
 	}
 	if (m_animation) {
@@ -90,7 +91,7 @@ void AntitankGun::logic(double dtime_microseconds, int x_id, int y_id) {
 
 void AntitankGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
 	if (m_state == State::Ready) {
-		enemy.health -= m_damage;
+		enemy.health -= m_params.damage;
 		SoundManager::Instance().play(Sounds::AntitankGunShot);
 		m_state = State::CoolDown;
 		m_cd_time = 0; // уходим на перезарядку.

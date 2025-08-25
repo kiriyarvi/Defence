@@ -139,7 +139,7 @@ TileMap::TileMap() {
 }
 
 void TileMap::build_guns() {
-	map[3][1].building = std::make_unique<MiniGun>();
+	/*map[3][1].building = std::make_unique<MiniGun>();
 	map[2][2].building = std::make_unique<Mine>();
 	map[2][3].building = std::make_unique<Mine>();
 	map[2][4].building = std::make_unique<Mine>();
@@ -152,7 +152,7 @@ void TileMap::build_guns() {
 	map[3][3].building = std::make_unique<MiniGun>();
 	map[3][4].building = std::make_unique<TwinGun>();
 	map[4][3].building = std::make_unique<TwinGun>();
-	map[4][4].building = std::make_unique<MiniGun>();
+	map[4][4].building = std::make_unique<MiniGun>();*/
 }
 
 void TileMap::draw(sf::RenderWindow& window) {

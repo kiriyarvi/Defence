@@ -1,6 +1,7 @@
 #pragma once
 #include "rotating_gun_base.h"
 #include "utils/sprite_chain.h"
+#include "params_manager.h"
 
 class AntitankGun: public IRotatingGun {
 public:
@@ -17,8 +18,7 @@ private:
 	void start_animation();
 	void fire_animation();
 private:
-	double m_damage = 20;
-	double m_cooldown = 2.5;
+	ParamsManager::Params::Guns::Antitank& m_params;
 
 	double m_cd_time = 0;
 

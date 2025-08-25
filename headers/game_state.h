@@ -32,7 +32,7 @@ private:
 private:
 	GameState(sf::RenderWindow& window);
 private:
-	int m_player_hp = 10;
+	int m_player_hp = 1000;
 	int m_player_coins = 0;
 private:
 	tgui::Gui m_gui;
@@ -43,6 +43,4 @@ private:
 	BuildingButton* m_current_building_construction = nullptr;
 	sf::Vector2f m_mouse_pos;
 	std::list<std::unique_ptr<BuildingButton>> m_building_buttons;
-
-	//tgui::Label::Ptr minigun_state; //TODO удалить
 };
