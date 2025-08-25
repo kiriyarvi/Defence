@@ -10,13 +10,13 @@ enum class Shader {
 
 class ShaderManager {
 public:
-	// Получение единственного экземпляра
+	// РџРѕР»СѓС‡РµРЅРёРµ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРіРѕ СЌРєР·РµРјРїР»СЏСЂР°
 	static ShaderManager& Instance() {
-		static ShaderManager instance; // Создаётся при первом вызове, потокобезопасно в C++11+
+		static ShaderManager instance; // РЎРѕР·РґР°С‘С‚СЃСЏ РїСЂРё РїРµСЂРІРѕРј РІС‹Р·РѕРІРµ, РїРѕС‚РѕРєРѕР±РµР·РѕРїР°СЃРЅРѕ РІ C++11+
 		return instance;
 	}
 
-	// Удаляем копирование и перемещение
+	// РЈРґР°Р»СЏРµРј РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РїРµСЂРµРјРµС‰РµРЅРёРµ
 	ShaderManager(const ShaderManager&) = delete;
 	ShaderManager& operator=(const ShaderManager&) = delete;
 	ShaderManager(ShaderManager&&) = delete;

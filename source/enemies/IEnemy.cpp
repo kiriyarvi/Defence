@@ -41,11 +41,11 @@ bool IEnemy::logic(double dtime) {
 		dir = dir * potential / (1000 * 1000.f);
 		position += glm::vec2(dir.x, dir.y);
 	}
-	else { // при старте goal нулевой и current_pos нулевой, поэтому попадаем сюда и выставляем начальную точку маршрута. 
+	else { // РїСЂРё СЃС‚Р°СЂС‚Рµ goal РЅСѓР»РµРІРѕР№ Рё current_pos РЅСѓР»РµРІРѕР№, РїРѕСЌС‚РѕРјСѓ РїРѕРїР°РґР°РµРј СЃСЋРґР° Рё РІС‹СЃС‚Р°РІР»СЏРµРј РЅР°С‡Р°Р»СЊРЅСѓСЋ С‚РѕС‡РєСѓ РјР°СЂС€СЂСѓС‚Р°. 
 		auto& enemy_manager = EnemyManager::Instance();
 		auto& path = enemy_manager.all_paths[path_id];
 		if (goal_path_node + 1 == path.size()) {
-			GameState::Instance().player_health_add(-1); //TODO отнимать cost
+			GameState::Instance().player_health_add(-1); //TODO РѕС‚РЅРёРјР°С‚СЊ cost
 			path_is_completed = true;
 			return true;
 		}

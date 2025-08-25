@@ -3,16 +3,16 @@
 
 class IEnemy;
 
-// TODO добавить возможность указания приоритета целей.
+// TODO РґРѕР±Р°РІРёС‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ СѓРєР°Р·Р°РЅРёСЏ РїСЂРёРѕСЂРёС‚РµС‚Р° С†РµР»РµР№.
 class IRotatingGun : public IBuilding {
 public:
 	void draw(sf::RenderWindow& window, int x_id, int y_id) override;
 	void logic(double dtime_microseconds, int x_id, int y_id) override;
 	virtual void shoot_logic(int x_id, int y_id, IEnemy& enemy) = 0;
-	double rotation = 180; //текущее вращение.
-	double rotation_speed = 90; // скорость вращения (градусы в секунду).
-	double radius; // радиус действия (указывается в клетках)
-	TileTexture base_texture = TileTexture::GunBase; // текстура основания орудия.
+	double rotation = 180; //С‚РµРєСѓС‰РµРµ РІСЂР°С‰РµРЅРёРµ.
+	double rotation_speed = 90; // СЃРєРѕСЂРѕСЃС‚СЊ РІСЂР°С‰РµРЅРёСЏ (РіСЂР°РґСѓСЃС‹ РІ СЃРµРєСѓРЅРґСѓ).
+	double radius; // СЂР°РґРёСѓСЃ РґРµР№СЃС‚РІРёСЏ (СѓРєР°Р·С‹РІР°РµС‚СЃСЏ РІ РєР»РµС‚РєР°С…)
+	TileTexture base_texture = TileTexture::GunBase; // С‚РµРєСЃС‚СѓСЂР° РѕСЃРЅРѕРІР°РЅРёСЏ РѕСЂСѓРґРёСЏ.
 protected:
 	virtual void on_gun_pointed() {}
 	virtual void on_gun_unpointed() {}

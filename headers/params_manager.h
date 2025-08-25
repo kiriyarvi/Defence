@@ -5,11 +5,11 @@
 class ParamsManager {
 public:
 	static ParamsManager& Instance() {
-		static ParamsManager instance; // Создаётся при первом вызове, потокобезопасно в C++11+
+		static ParamsManager instance; // РЎРѕР·РґР°С‘С‚СЃСЏ РїСЂРё РїРµСЂРІРѕРј РІС‹Р·РѕРІРµ, РїРѕС‚РѕРєРѕР±РµР·РѕРїР°СЃРЅРѕ РІ C++11+
 		return instance;
 	}
 
-	// Удаляем копирование и перемещение
+	// РЈРґР°Р»СЏРµРј РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РїРµСЂРµРјРµС‰РµРЅРёРµ
 	ParamsManager(const ParamsManager&) = delete;
 	ParamsManager& operator=(const ParamsManager&) = delete;
 	ParamsManager(ParamsManager&&) = delete;

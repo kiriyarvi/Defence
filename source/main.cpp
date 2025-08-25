@@ -21,7 +21,7 @@ int main() {
 	sf::Clock spawn_clock;
 
 
-	const float dt = 1.f / 60.f; // логика обновляется 60 раз в секунду
+	const float dt = 1.f / 60.f; // Р»РѕРіРёРєР° РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ 60 СЂР°Р· РІ СЃРµРєСѓРЅРґСѓ
 	float accumulator = 0.f;
 
 	int wave_number = 1;
@@ -41,7 +41,7 @@ int main() {
 					camera.process(event);
 			}
 		}
-		// логика
+		// Р»РѕРіРёРєР°
 		double dtime = clock.getElapsedTime().asMicroseconds();
 		
 		
@@ -77,8 +77,8 @@ int main() {
 				SoundManager::Instance().logic();
 			}
 		}
-		//отрисовка
-		clock.restart(); // рестарт часов после логики.
+		//РѕС‚СЂРёСЃРѕРІРєР°
+		clock.restart(); // СЂРµСЃС‚Р°СЂС‚ С‡Р°СЃРѕРІ РїРѕСЃР»Рµ Р»РѕРіРёРєРё.
 		camera.apply(window);
 		window.clear(sf::Color::Black);
 		TileMap::Instance().draw(window);

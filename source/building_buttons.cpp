@@ -20,7 +20,6 @@ BuildingButton::BuildingButton(TileTexture gun_icon, GameState& game_state, cons
 	button->setSize({ "height" , "100%" });
 
     m_tooltip = tgui::Label::create("описание");
-    m_tooltip->setText("hello");
     m_tooltip->setTextSize(20);
     auto tooltip_renderer = m_tooltip->getRenderer();
     tooltip_renderer->setBackgroundColor(tgui::Color::Color(50, 50, 50, 50));

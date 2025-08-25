@@ -22,10 +22,10 @@ public:
 	double lower_barrel_animation_dtime = 0;
 	double duration = 1.5;
 public:
-	glm::vec2 upper_shot_fire_pos; // точка попадания по врагу, относительно центра врага.
+	glm::vec2 upper_shot_fire_pos; // С‚РѕС‡РєР° РїРѕРїР°РґР°РЅРёСЏ РїРѕ РІСЂР°РіСѓ, РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ С†РµРЅС‚СЂР° РІСЂР°РіР°.
 	glm::vec2 lower_shot_fire_pos;
-	uint32_t upper_barrel_shoted_enemy_id; // id врага, по которому попало верхнее орудие
-	uint32_t lower_barrel_shoted_enemy_id; // id врага, по которому попало верхнее орудие
+	uint32_t upper_barrel_shoted_enemy_id; // id РІСЂР°РіР°, РїРѕ РєРѕС‚РѕСЂРѕРјСѓ РїРѕРїР°Р»Рѕ РІРµСЂС…РЅРµРµ РѕСЂСѓРґРёРµ
+	uint32_t lower_barrel_shoted_enemy_id; // id РІСЂР°РіР°, РїРѕ РєРѕС‚РѕСЂРѕРјСѓ РїРѕРїР°Р»Рѕ РІРµСЂС…РЅРµРµ РѕСЂСѓРґРёРµ
 private:
 	float compute_k(bool upper);
 private:

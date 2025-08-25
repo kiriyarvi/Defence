@@ -28,8 +28,8 @@ public:
 	std::pair<Animation*, Animation*> split(float quotient);
 	std::vector<Animation*> split(const std::vector<float>& times);
 
-	std::function<void()> on_start; // выполниться при старте анимации
-	std::function<void()> on_end;   // выполнится в конце анимации
+	std::function<void()> on_start; // РІС‹РїРѕР»РЅРёС‚СЊСЃСЏ РїСЂРё СЃС‚Р°СЂС‚Рµ Р°РЅРёРјР°С†РёРё
+	std::function<void()> on_end;   // РІС‹РїРѕР»РЅРёС‚СЃСЏ РІ РєРѕРЅС†Рµ Р°РЅРёРјР°С†РёРё
 	std::function<void(double)> on_progress;
 
 
@@ -47,9 +47,9 @@ private:
 		Started,
 		Finished
 	} m_state = State::WaitToStart;
-	double m_duration = 0; // время, используется чтобы конвертироать прошедшее время в progress (нужно только при вызове logic).
-	double m_elapsed_time = 0; // прошедшее время (нужно только при вызове logic).
-	bool m_loop = false; // true, тогда после того, как дойдет до Finished, запуститься снова.
+	double m_duration = 0; // РІСЂРµРјСЏ, РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‡С‚РѕР±С‹ РєРѕРЅРІРµСЂС‚РёСЂРѕР°С‚СЊ РїСЂРѕС€РµРґС€РµРµ РІСЂРµРјСЏ РІ progress (РЅСѓР¶РЅРѕ С‚РѕР»СЊРєРѕ РїСЂРё РІС‹Р·РѕРІРµ logic).
+	double m_elapsed_time = 0; // РїСЂРѕС€РµРґС€РµРµ РІСЂРµРјСЏ (РЅСѓР¶РЅРѕ С‚РѕР»СЊРєРѕ РїСЂРё РІС‹Р·РѕРІРµ logic).
+	bool m_loop = false; // true, С‚РѕРіРґР° РїРѕСЃР»Рµ С‚РѕРіРѕ, РєР°Рє РґРѕР№РґРµС‚ РґРѕ Finished, Р·Р°РїСѓСЃС‚РёС‚СЊСЃСЏ СЃРЅРѕРІР°.
 
 	struct Framer {
 		int last_frame = -1;
@@ -61,7 +61,7 @@ private:
 		SubAnimation() = default;
 		SubAnimation(SubAnimation&&) = default;
 		SubAnimation& operator=(SubAnimation&&) = default;
-		double start_progress; // прогресс родительской анимации, с которой начинае проигрываться поданимация
+		double start_progress; // РїСЂРѕРіСЂРµСЃСЃ СЂРѕРґРёС‚РµР»СЊСЃРєРѕР№ Р°РЅРёРјР°С†РёРё, СЃ РєРѕС‚РѕСЂРѕР№ РЅР°С‡РёРЅР°Рµ РїСЂРѕРёРіСЂС‹РІР°С‚СЊСЃСЏ РїРѕРґР°РЅРёРјР°С†РёСЏ
 		double end_progress;
 		std::unique_ptr<Animation> animation;
 	};

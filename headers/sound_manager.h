@@ -21,11 +21,11 @@ enum class Sounds {
 class SoundManager {
 public:
 	static SoundManager& Instance() {
-		static SoundManager instance; // Создаётся при первом вызове, потокобезопасно в C++11+
+		static SoundManager instance; // РЎРѕР·РґР°С‘С‚СЃСЏ РїСЂРё РїРµСЂРІРѕРј РІС‹Р·РѕРІРµ, РїРѕС‚РѕРєРѕР±РµР·РѕРїР°СЃРЅРѕ РІ C++11+
 		return instance;
 	}
 
-	// Удаляем копирование и перемещение
+	// РЈРґР°Р»СЏРµРј РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РїРµСЂРµРјРµС‰РµРЅРёРµ
 	SoundManager(const SoundManager&) = delete;
 	SoundManager& operator=(const SoundManager&) = delete;
 	SoundManager(SoundManager&&) = delete;

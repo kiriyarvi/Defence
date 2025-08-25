@@ -53,7 +53,7 @@ void TwinGunAnimation::fire_animation(sf::RenderWindow& window, int x_id, int y_
 		return;
 	}
 	k = k / fire_duration;
-	//TODO вообще нужно менять спрайт только один раз. Так один спрайт кучу раз устанавливается каждый кадр.
+	//TODO РІРѕРѕР±С‰Рµ РЅСѓР¶РЅРѕ РјРµРЅСЏС‚СЊ СЃРїСЂР°Р№С‚ С‚РѕР»СЊРєРѕ РѕРґРёРЅ СЂР°Р·. РўР°Рє РѕРґРёРЅ СЃРїСЂР°Р№С‚ РєСѓС‡Сѓ СЂР°Р· СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РєР°Р¶РґС‹Р№ РєР°РґСЂ.
 	sf::Sprite fire(TileMap::Instance().textures[TileTexture::Shot]);
 	if (k < 1 / 3.)
 		fire.setTextureRect(sf::IntRect(0, 0, 8, 8));
@@ -172,13 +172,13 @@ void TwinGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
 	if (state == State::Ready) {
 		animation.start_barrel_animation(true);
 		shot(x_id, y_id, enemy, true);
-		cd_interleaved = 0; //уходим на cd для подготовки ко второму выстрелу.
+		cd_interleaved = 0; //СѓС…РѕРґРёРј РЅР° cd РґР»СЏ РїРѕРґРіРѕС‚РѕРІРєРё РєРѕ РІС‚РѕСЂРѕРјСѓ РІС‹СЃС‚СЂРµР»Сѓ.
 		state = State::InterleavedCD;
 	}
 	else if (state == State::InterleavedReady) {
 		animation.start_barrel_animation(false);
 		shot(x_id, y_id, enemy, false);
-		cd_shot = 0; //вся башня уходит на перезарядку.
+		cd_shot = 0; //РІСЃСЏ Р±Р°С€РЅСЏ СѓС…РѕРґРёС‚ РЅР° РїРµСЂРµР·Р°СЂСЏРґРєСѓ.
 		state = State::ShotCD;
 	}
 }

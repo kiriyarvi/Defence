@@ -14,7 +14,7 @@ ParamsManager::ParamsManager() {
 	while (std::getline(input_stream, line)) {
 		size_t comment_pos = line.find("//");
 		if (comment_pos != std::string::npos) {
-			// Игнорируем комментарий, сохраняем только часть до //
+			// РРіРЅРѕСЂРёСЂСѓРµРј РєРѕРјРјРµРЅС‚Р°СЂРёР№, СЃРѕС…СЂР°РЅСЏРµРј С‚РѕР»СЊРєРѕ С‡Р°СЃС‚СЊ РґРѕ //
 			line = line.substr(0, comment_pos);
 		}
 		output << line << '\n';

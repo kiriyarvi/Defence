@@ -24,13 +24,13 @@ enum class EnemyTexturesID {
 class EnemyManager {
 public:
 	static EnemyManager& Instance() {
-		static EnemyManager instance; // Создаётся при первом вызове, потокобезопасно в C++11+
+		static EnemyManager instance; // РЎРѕР·РґР°С‘С‚СЃСЏ РїСЂРё РїРµСЂРІРѕРј РІС‹Р·РѕРІРµ, РїРѕС‚РѕРєРѕР±РµР·РѕРїР°СЃРЅРѕ РІ C++11+
 		return instance;
 	}
 
 	void spawn();
 
-	// Удаляем копирование и перемещение
+	// РЈРґР°Р»СЏРµРј РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РїРµСЂРµРјРµС‰РµРЅРёРµ
 	EnemyManager(const EnemyManager&) = delete;
 	EnemyManager& operator=(const EnemyManager&) = delete;
 	EnemyManager(EnemyManager&&) = delete;

@@ -8,7 +8,7 @@
 
 enum class TileTexture {
 	Grass,
-	Road1100 = 12, // 1100: 1 - дорога направо, 1 - дорога наверх, 0 - нет дорого налево, 0 - нет дороги наверх
+	Road1100 = 12, // 1100: 1 - РґРѕСЂРѕРіР° РЅР°РїСЂР°РІРѕ, 1 - РґРѕСЂРѕРіР° РЅР°РІРµСЂС…, 0 - РЅРµС‚ РґРѕСЂРѕРіРѕ РЅР°Р»РµРІРѕ, 0 - РЅРµС‚ РґРѕСЂРѕРіРё РЅР°РІРµСЂС…
 	Road0110 = 6,
 	Road0011 = 3,
 	Road1001 = 9,
@@ -86,7 +86,7 @@ public:
 	std::vector<Node*> start_nodes;
 	std::vector<Node*> end_nodes;
 
-	// Найти все пути
+	// РќР°Р№С‚Рё РІСЃРµ РїСѓС‚Рё
 	std::vector<std::vector<Node*>> find_all_paths() const;
 private:
 	void dfs(Node* current,
@@ -97,13 +97,13 @@ private:
 
 class TileMap {
 public:
-	// Получение единственного экземпляра
+	// РџРѕР»СѓС‡РµРЅРёРµ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРіРѕ СЌРєР·РµРјРїР»СЏСЂР°
 	static TileMap& Instance() {
-		static TileMap instance; // Создаётся при первом вызове, потокобезопасно в C++11+
+		static TileMap instance; // РЎРѕР·РґР°С‘С‚СЃСЏ РїСЂРё РїРµСЂРІРѕРј РІС‹Р·РѕРІРµ, РїРѕС‚РѕРєРѕР±РµР·РѕРїР°СЃРЅРѕ РІ C++11+
 		return instance;
 	}
 
-	// Удаляем копирование и перемещение
+	// РЈРґР°Р»СЏРµРј РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РїРµСЂРµРјРµС‰РµРЅРёРµ
 	TileMap(const TileMap&) = delete;
 	TileMap& operator=(const TileMap&) = delete;
 	TileMap(TileMap&&) = delete;

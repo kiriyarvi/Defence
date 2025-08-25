@@ -94,7 +94,7 @@ void AntitankGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
 		enemy.health -= m_params.damage;
 		SoundManager::Instance().play(Sounds::AntitankGunShot);
 		m_state = State::CoolDown;
-		m_cd_time = 0; // уходим на перезарядку.
+		m_cd_time = 0; // СѓС…РѕРґРёРј РЅР° РїРµСЂРµР·Р°СЂСЏРґРєСѓ.
 		start_animation();
 		m_shoted_enemy_id = enemy.id;
 	}

@@ -36,7 +36,7 @@ void EnemyManager::spawn() {
 		m_enemies.push_back(std::make_unique<Bike>());
 	m_enemies.back()->path_id = rand() % all_paths.size();
 	m_enemies.back()->id = ++current_max_id;
-	m_enemies.back()->logic(0.0); // чтобы установить верную позицию.
+	m_enemies.back()->logic(0.0); // С‡С‚РѕР±С‹ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РІРµСЂРЅСѓСЋ РїРѕР·РёС†РёСЋ.
 	if (current_max_id > 32768)
 		current_max_id = 0;
 }

@@ -22,9 +22,9 @@ private:
 private:
 	const ParamsManager::Params::Guns::Minigun& m_params;
 	SpriteChain m_minigun_sprite;
-	float m_heat_speed; // m_temperature в секунду
-	float m_cooling_speed; // m_temperature в секунду
-	float m_drum_angle = 0; // угол поворота барабана (нужно нормировать на 10^6).
+	float m_heat_speed; // m_temperature РІ СЃРµРєСѓРЅРґСѓ
+	float m_cooling_speed; // m_temperature РІ СЃРµРєСѓРЅРґСѓ
+	float m_drum_angle = 0; // СѓРіРѕР» РїРѕРІРѕСЂРѕС‚Р° Р±Р°СЂР°Р±Р°РЅР° (РЅСѓР¶РЅРѕ РЅРѕСЂРјРёСЂРѕРІР°С‚СЊ РЅР° 10^6).
 	float m_temperature = 0; // max = 1'000'000
 	float m_cooldown_timer = 0;
 	float m_critical_temperature_mod_timer = 0;

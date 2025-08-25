@@ -33,20 +33,20 @@ public:
 
 	virtual void draw(sf::RenderWindow& window) = 0;
 	void draw_effects(sf::RenderWindow& window);
-	virtual bool logic(double dtime); // true --- достиг конца пути
+	virtual bool logic(double dtime); // true --- РґРѕСЃС‚РёРі РєРѕРЅС†Р° РїСѓС‚Рё
 	virtual glm::vec2 get_position() { return position; }
 	virtual IDestroyedEnemy::Ptr get_destroyed_enemy() = 0;
-	uint32_t id; // уникальный идентификатор врага
+	uint32_t id; // СѓРЅРёРєР°Р»СЊРЅС‹Р№ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РІСЂР°РіР°
 	const ParamsManager::Params::Enemies::Enemy& params;
 
 	int health;
 	glm::vec2 position = { 0,0 };
 	float rotation = 0;
 
-	int path_id = 0; // путь по которому движется враг.
+	int path_id = 0; // РїСѓС‚СЊ РїРѕ РєРѕС‚РѕСЂРѕРјСѓ РґРІРёР¶РµС‚СЃСЏ РІСЂР°Рі.
 	bool path_is_completed = false;
 	
-	bool infantry; // пехота (мотоциклист считается пехотой)
+	bool infantry; // РїРµС…РѕС‚Р° (РјРѕС‚РѕС†РёРєР»РёСЃС‚ СЃС‡РёС‚Р°РµС‚СЃСЏ РїРµС…РѕС‚РѕР№)
 	enum class Wheels {
 		None,
 		Wheels,
@@ -54,10 +54,10 @@ public:
 	} wheels;
 private:
 	sf::Vector2i last_breaking_cell = { -1, -1 };
-	sf::Vector2f goal; // текущая целевая точка
+	sf::Vector2f goal; // С‚РµРєСѓС‰Р°СЏ С†РµР»РµРІР°СЏ С‚РѕС‡РєР°
 	bool repairing = false;
 	double repairing_timer;
 	double repairing_time;
-	int goal_path_node = 0; // номер узла в пути, к которому враг стремиться на данный момент
+	int goal_path_node = 0; // РЅРѕРјРµСЂ СѓР·Р»Р° РІ РїСѓС‚Рё, Рє РєРѕС‚РѕСЂРѕРјСѓ РІСЂР°Рі СЃС‚СЂРµРјРёС‚СЊСЃСЏ РЅР° РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚
 	std::unique_ptr<sf::Sound> engine_sound;
 };

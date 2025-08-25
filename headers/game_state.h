@@ -12,7 +12,7 @@ public:
 		static GameState instance(*window);
 		return instance;
 	}
-	// Удаляем копирование и перемещение
+	// РЈРґР°Р»СЏРµРј РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РїРµСЂРµРјРµС‰РµРЅРёРµ
 	GameState(const GameState&) = delete;
 	GameState& operator=(const GameState&) = delete;
 	GameState(GameState&&) = delete;
@@ -38,7 +38,7 @@ private:
 	tgui::Gui m_gui;
 	tgui::Label::Ptr m_player_health_count_widget;
 	tgui::Label::Ptr m_player_coins_count_widget;
-	tgui::Label::Ptr m_centered_message; // сообщение по центру
+	tgui::Label::Ptr m_centered_message; // СЃРѕРѕР±С‰РµРЅРёРµ РїРѕ С†РµРЅС‚СЂСѓ
 
 	BuildingButton* m_current_building_construction = nullptr;
 	sf::Vector2f m_mouse_pos;

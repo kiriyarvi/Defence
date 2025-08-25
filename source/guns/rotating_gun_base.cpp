@@ -15,9 +15,9 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 	IEnemy* captured_enemy = nullptr;
 
 	if (m_is_enemy_captured) {
-		// åñëè âðàã áûë ðàíåå çàõâà÷åí, òî íóæíî ïðîâåðèòü, æèâ ëè îí äî ñèõ ïîð.
+		// ÐµÑÐ»Ð¸ Ð²Ñ€Ð°Ð³ Ð±Ñ‹Ð» Ñ€Ð°Ð½ÐµÐµ Ð·Ð°Ñ…Ð²Ð°Ñ‡ÐµÐ½, Ñ‚Ð¾ Ð½ÑƒÐ¶Ð½Ð¾ Ð¿Ñ€Ð¾Ð²ÐµÑ€Ð¸Ñ‚ÑŒ, Ð¶Ð¸Ð² Ð»Ð¸ Ð¾Ð½ Ð´Ð¾ ÑÐ¸Ñ… Ð¿Ð¾Ñ€.
 		captured_enemy = EnemyManager::Instance().get_enemy_by_id(m_captured_enemy_id);
-		if (!captured_enemy) { // çàõâà÷åííûé âðàã ïðîïàë, âèäèìî îí áûë óäàëåí ñ ïîëÿ áîÿ.
+		if (!captured_enemy) { // Ð·Ð°Ñ…Ð²Ð°Ñ‡ÐµÐ½Ð½Ñ‹Ð¹ Ð²Ñ€Ð°Ð³ Ð¿Ñ€Ð¾Ð¿Ð°Ð», Ð²Ð¸Ð´Ð¸Ð¼Ð¾ Ð¾Ð½ Ð±Ñ‹Ð» ÑƒÐ´Ð°Ð»ÐµÐ½ Ñ Ð¿Ð¾Ð»Ñ Ð±Ð¾Ñ.
 			m_is_enemy_captured = false;
 			captured_enemy = false;
 			if (m_is_gun_pointed) {
@@ -27,7 +27,7 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 		}
 		else {
 			double dist = glm::length(captured_enemy->get_position() - gun_pos);
-			if (dist > radius * 32) { // âðàã âíå çîíû äîñèãàåìîñòè.
+			if (dist > radius * 32) { // Ð²Ñ€Ð°Ð³ Ð²Ð½Ðµ Ð·Ð¾Ð½Ñ‹ Ð´Ð¾ÑÐ¸Ð³Ð°ÐµÐ¼Ð¾ÑÑ‚Ð¸.
 				m_is_enemy_captured = false;
 				captured_enemy = false;
 				if (m_is_gun_pointed) {
@@ -38,13 +38,13 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 		}
 	}
 
-	// åñëè íåò çàõâà÷åííîãî âðàãà, íàéäåì åãî.
+	// ÐµÑÐ»Ð¸ Ð½ÐµÑ‚ Ð·Ð°Ñ…Ð²Ð°Ñ‡ÐµÐ½Ð½Ð¾Ð³Ð¾ Ð²Ñ€Ð°Ð³Ð°, Ð½Ð°Ð¹Ð´ÐµÐ¼ ÐµÐ³Ð¾.
 	if (!m_is_enemy_captured) {
-		// çàõâàòûâàåì öåëü. Èùåì áëèæàéøåãî âðàãà.
+		// Ð·Ð°Ñ…Ð²Ð°Ñ‚Ñ‹Ð²Ð°ÐµÐ¼ Ñ†ÐµÐ»ÑŒ. Ð˜Ñ‰ÐµÐ¼ Ð±Ð»Ð¸Ð¶Ð°Ð¹ÑˆÐµÐ³Ð¾ Ð²Ñ€Ð°Ð³Ð°.
 		auto& enemies = EnemyManager::Instance().m_enemies;
-		if (enemies.empty()) return; // âðàãîâ íåò
+		if (enemies.empty()) return; // Ð²Ñ€Ð°Ð³Ð¾Ð² Ð½ÐµÑ‚
 		
-		// èùåì áëèæàéøåãî âðàãà â ðàäèóñå äåéñòâèÿ
+		// Ð¸Ñ‰ÐµÐ¼ Ð±Ð»Ð¸Ð¶Ð°Ð¹ÑˆÐµÐ³Ð¾ Ð²Ñ€Ð°Ð³Ð° Ð² Ñ€Ð°Ð´Ð¸ÑƒÑÐµ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ
 		double best_dist = 0;
 		for (auto& enemy : enemies) {
 			double dist = glm::length(enemy->get_position() - gun_pos);
@@ -64,7 +64,7 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 			m_captured_enemy_id = captured_enemy->id;
 		}
 	}
-	// åñëè âðàã çàõâà÷åí, íóæíî îñóùåñòâèòü ïîâîðîò ê íåìó.
+	// ÐµÑÐ»Ð¸ Ð²Ñ€Ð°Ð³ Ð·Ð°Ñ…Ð²Ð°Ñ‡ÐµÐ½, Ð½ÑƒÐ¶Ð½Ð¾ Ð¾ÑÑƒÑ‰ÐµÑÑ‚Ð²Ð¸Ñ‚ÑŒ Ð¿Ð¾Ð²Ð¾Ñ€Ð¾Ñ‚ Ðº Ð½ÐµÐ¼Ñƒ.
 	if (captured_enemy) {
 		glm::vec2 enemy_pos = captured_enemy->get_position();
 		glm::vec2 direction = enemy_pos - gun_pos;
