@@ -7,7 +7,9 @@
 
 
 GameState::GameState(sf::RenderWindow& window): m_gui(window) {
-	m_gui.setFont(tgui::Font("PixelSplitter-Bold.ttf"));
+    GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" };
+    PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };
+	m_gui.setFont(PixelSplitter_Bold_font);
 	tgui::Texture::setDefaultSmooth(false); // отключим сглаживание текстур
 
 	m_player_health_count_widget = tgui::Label::create("X" + std::to_string(m_player_hp));

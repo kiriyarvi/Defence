@@ -44,7 +44,7 @@ protected:
 	TileTexture m_gun_icon;
 	GameState& m_game_state;
 	float m_radius;
-	tgui::Label::Ptr m_tooltip;
+	tgui::Panel::Ptr m_tooltip;
 };
 
 

@@ -21,7 +21,7 @@ public:
 				float radius;
 				float damage;
 				float cooldown;
-				float cost;
+                int cost;
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Antitank, radius, damage, cooldown, cost)
 			} antitank;
 			struct TwinGun {
@@ -29,7 +29,7 @@ public:
 				float damage_per_barrel;
 				float cooldown;
 				float interleaved_cooldown;
-				float cost;
+                int cost;
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(TwinGun, radius, damage_per_barrel, cooldown, interleaved_cooldown, cost)
 			} twingun;
 			struct Minigun {
@@ -38,12 +38,12 @@ public:
 				float cooling_time;
 				float min_rotation_speed;
 				float max_rotation_speed;
-				float min_damage;
-				float max_damage;
+				int min_damage;
+				int max_damage;
 				float cooldown_duration;
 				float critical_temperature;
 				float critical_temperature_work_duration;
-				float cost;
+				int cost;
 				int min_armor_penetration_level;
 				int max_armor_penetration_level;
 				struct PenetrationUpgrade {
@@ -66,19 +66,19 @@ public:
 				float activation_radius;
 				float min_damage;
 				float max_damage;
-				float cost;
+                int cost;
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Mine, damage_radius, activation_radius, min_damage, max_damage, cost)
 			} mine;
 			struct Spikes {
 				int health;
 				float delay;
-				float cost;
+                int cost;
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Spikes, health, delay, cost)
 			} spikes;
 			struct Hedgehog {
 				int health;
 				float delay;
-				float cost;
+                int cost;
 				float wheels_debuff;
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Hedgehog, health, delay, cost, wheels_debuff)
 			} hedgehog;

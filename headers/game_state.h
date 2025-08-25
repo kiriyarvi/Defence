@@ -43,4 +43,7 @@ private:
 	BuildingButton* m_current_building_construction = nullptr;
 	sf::Vector2f m_mouse_pos;
 	std::list<std::unique_ptr<BuildingButton>> m_building_buttons;
+public:
+    tgui::Font GOSTtypeA_font;
+    tgui::Font PixelSplitter_Bold_font; // расположены здесь, чтобы уничтожались первее (иначе ошибка в tgui).
 };

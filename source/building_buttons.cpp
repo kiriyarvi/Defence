@@ -19,14 +19,18 @@ BuildingButton::BuildingButton(TileTexture gun_icon, GameState& game_state, cons
 	button->setImageScaling(1);
 	button->setSize({ "height" , "100%" });
 
-    m_tooltip = tgui::Label::create("описание");
-    m_tooltip->setTextSize(20);
+    m_tooltip = tgui::Panel::create();
+    m_tooltip->setTextSize(30);
+    m_tooltip->setVisible(false);
     auto tooltip_renderer = m_tooltip->getRenderer();
-    tooltip_renderer->setBackgroundColor(tgui::Color::Color(50, 50, 50, 50));
-    tooltip_renderer->setTextColor(tgui::Color::White);
+    tooltip_renderer->setBackgroundColor(tgui::Color::Color(50, 50, 50, 200));
     tooltip_renderer->setBorders(3);
     tooltip_renderer->setBorderColor(tgui::Color::Black);
-    button->setToolTip(m_tooltip);
+    tooltip_renderer->setFont(game_state.GOSTtypeA_font);
+    m_tooltip->setPosition("100%", "HealthCountWidget.height");
+    m_tooltip->setOrigin(1., 0);
+    m_tooltip->setSize("35%", "80%");
+    m_game_state.get_tgui().add(m_tooltip);
 	connect();
 }
 
@@ -40,6 +44,7 @@ void BuildingButton::connect() {
 			if (button.get() != this)
 				button->disable_selection();
 		}
+        m_tooltip->setVisible(true);
 	});
 }
 
@@ -109,8 +114,10 @@ void BuildingButton::draw_radius(sf::RenderWindow& window, int x_id, int y_id) {
 }
 
 void BuildingButton::disable_selection() {
-	if (!disabled)
-		button->getRenderer()->setTexture(TileMap::Instance().textures[TileTexture::ButtonBackground]);
+    if (!disabled) {
+        button->getRenderer()->setTexture(TileMap::Instance().textures[TileTexture::ButtonBackground]);
+        m_tooltip->setVisible(false);
+    }
 }
 
 
@@ -123,7 +130,39 @@ MinigunBuildingButton::MinigunBuildingButton(GameState& game_state):
 		ParamsManager::Instance().params.guns.minigun.cost,
 		ParamsManager::Instance().params.guns.minigun.radius
 	)
-{}
+{
+    auto& params = ParamsManager::Instance().params.guns.minigun;
+    auto label = tgui::RichTextLabel::create();
+
+    label->getRenderer()->setTextColor(tgui::Color::White);
+    std::string description =
+        "<color=#ffd303>Пулемёт</color>\n"
+        "<b>Описание:</b> Первоначальное, доволько капризное орудие. При стрельбе пулемет нагревается. "
+        "Существует критическая температура. Время работы пулемета при нагреве выше критичесокой температуры ограничено. "
+        "При превышении ограничения наступает перегрев: пулемет перестает стрелять до тех пор, пока не охладиться. "
+        "Урон бронепробиваемость и скорострельность пулемета растут с повышением температуры.\n"
+        "<color=#ffd303>Стоимость:" + std::to_string(params.cost) + "</color>\n"
+        "<b>Характеристики:</b>\n"
+        "радиус действия: " + std::to_string(params.radius) + "\n"
+        "урон при наименьшем нагреве: " + std::to_string(params.min_damage) + "\n"
+        "урон при максимальном нагреве: " + std::to_string(params.max_damage) + "\n"
+        "бронепробиваемость при наименьшем нагреве: " + std::to_string(params.penetration_upgrades[0].min_armor_penetration_level) + "\n"
+        "бронепробиваемость при наибольшем нагреве: " + std::to_string(params.penetration_upgrades[0].max_armor_penetration_level) + "\n"
+        "частота выстрелов в секунду при минимальном нагреве:" + std::to_string(params.min_rotation_speed / 60.) + "\n"
+        "частота выстрелов в секунду при максимальном нагреве:" + std::to_string(params.max_rotation_speed / 60.) + "\n"
+        "время до максимального нагрева: " + std::to_string((int)params.heating_time) + "\n"
+        "время охлажения с максимлаьного нагрева до холодного состояния: " + std::to_string((int)params.cooling_time) + "\n"
+        "минимальная температура: 0\n"
+        "максимальная температура: 1000\n"
+        "значение критической температуры: " + std::to_string((int)params.critical_temperature * 1000) + "\n"
+        "время работы при критической температуре (до перегрева): " + std::to_string((int)params.critical_temperature_work_duration) + "\n"
+        "время воосстановления после перегрева: " + std::to_string((int)params.cooldown_duration) + "\n";
+    label->setText(description);
+    label->setSize("100%", "100%");
+
+    m_tooltip->add(label);
+
+}
 
 MineBuildingButton::MineBuildingButton(GameState& game_state):
 	BuildingButton(
