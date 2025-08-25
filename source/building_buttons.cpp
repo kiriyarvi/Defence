@@ -3,10 +3,13 @@
 
 #include "guns/twin_gun.h"
 #include "guns/antitank_gun.h"
+#include "guns/minigun.h"
+#include "guns/mine.h"
+#include "guns/spikes.h"
 #include "shader_manager.h"
 
-BuildingButton::BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost)
-	: creator{ creator }, restrictions{ restrictions }, m_gun_icon{ gun_icon }, m_game_state{ game_state }, cost{cost} {
+BuildingButton::BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius)
+	: creator{ creator }, restrictions{ restrictions }, m_gun_icon{ gun_icon }, m_game_state{ game_state }, cost{cost}, m_radius(radius) {
 	button = tgui::BitmapButton::create();
 	auto button_renderer = button->getRenderer();
 	button_renderer->setTexture(TileMap::Instance().textures[TileTexture::ButtonBackground]);
@@ -31,7 +34,7 @@ void BuildingButton::connect() {
 }
 
 BuildingButton::BuildingButton(BuildingButton&& btn) :
-	creator{ btn.creator }, restrictions{ btn.restrictions }, m_gun_icon{ btn.m_gun_icon }, m_game_state{ btn.m_game_state }, cost{ btn.cost }
+	creator{ btn.creator }, restrictions{ btn.restrictions }, m_gun_icon{ btn.m_gun_icon }, m_game_state{ btn.m_game_state }, cost{ btn.cost }, m_radius{btn.m_radius}
 {
 	button = std::move(btn.button);
 	connect(); // нужно переназнывать, поскольку используем this в  lambda-функции.
@@ -73,6 +76,9 @@ bool BuildingButton::is_cell_allowed(int x_id, int y_id) {
 
 void BuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
 	bool allowed = is_cell_allowed(x_id, y_id);
+	if (allowed) {
+		draw_radius(window, x_id, y_id);
+	}
 	auto& gun_texture = TileMap::Instance().textures[m_gun_icon];
 	sf::Sprite gun(gun_texture);
 	gun.setOrigin(gun_texture.getSize().x / 2.f, gun_texture.getSize().y / 2.f);
@@ -82,18 +88,60 @@ void BuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int 
 	window.draw(gun);
 }
 
+void BuildingButton::draw_radius(sf::RenderWindow& window, int x_id, int y_id) {
+	sf::CircleShape circle(m_radius * 32, 30);
+	circle.setFillColor(sf::Color(0, 255, 0, 40));
+	circle.setOutlineThickness(2);
+	circle.setOutlineColor(sf::Color(0, 255, 0, 140));
+	circle.setPosition(x_id * 32 + 16, y_id * 32 + 16);
+	circle.setOrigin(m_radius * 32, m_radius * 32);
+	window.draw(circle);
+}
+
 void BuildingButton::disable_selection() {
 	if (!disabled)
 		button->getRenderer()->setTexture(TileMap::Instance().textures[TileTexture::ButtonBackground]);
 }
 
 
-TwinGunBuildingButton::TwinGunBuildingButton(GameState& game_state, int cost) :
-	BuildingButton(TileTexture::TwingunIcon, game_state, make_creator<TwinGun>(), TileRestrictions::NoRoads, cost)
+MinigunBuildingButton::MinigunBuildingButton(GameState& game_state):
+	BuildingButton(
+		TileTexture::MinigunIcon,
+		game_state,
+		make_creator<MiniGun>(),
+		TileRestrictions::NoRoads,
+		ParamsManager::Instance().params.guns.minigun.cost,
+		ParamsManager::Instance().params.guns.minigun.radius
+	)
+{}
+
+MineBuildingButton::MineBuildingButton(GameState& game_state):
+	BuildingButton(
+		TileTexture::Mine,
+		game_state,
+		make_creator<Mine>(),
+		TileRestrictions::RoadOnly,
+		ParamsManager::Instance().params.guns.mine.cost,
+		ParamsManager::Instance().params.guns.mine.damage_radius
+	) 
+{}
+
+TwinGunBuildingButton::TwinGunBuildingButton(GameState& game_state) :
+	BuildingButton(
+		TileTexture::TwingunIcon,
+		game_state,
+		make_creator<TwinGun>(),
+		TileRestrictions::NoRoads,
+		ParamsManager::Instance().params.guns.twingun.cost,
+		ParamsManager::Instance().params.guns.twingun.radius
+	)
 {}
 
 void TwinGunBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
 	bool allowed = is_cell_allowed(x_id, y_id);
+	if (allowed) {
+		draw_radius(window, x_id, y_id);
+	}
 	sf::Sprite base(TileMap::Instance().textures[TileTexture::GunBase]);
 	base.setPosition(x_id * 32, y_id * 32);
 	if (!allowed) base.setColor(sf::Color(255, 0, 0));
@@ -107,12 +155,22 @@ void TwinGunBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_i
 	window.draw(gun);
 }
 
-AntitankGunBuildingButton::AntitankGunBuildingButton(GameState& game_state, int cost) :
-	BuildingButton(TileTexture::AntitankGunIcon, game_state, make_creator<AntitankGun>(), TileRestrictions::NoRoads, cost)
+AntitankGunBuildingButton::AntitankGunBuildingButton(GameState& game_state) :
+	BuildingButton(
+		TileTexture::AntitankGunIcon,
+		game_state,
+		make_creator<AntitankGun>(),
+		TileRestrictions::NoRoads,
+		ParamsManager::Instance().params.guns.antitank.cost,
+		ParamsManager::Instance().params.guns.antitank.radius
+	)
 {}
 
 void AntitankGunBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
 	bool allowed = is_cell_allowed(x_id, y_id);
+	if (allowed) {
+		draw_radius(window, x_id, y_id);
+	}
 	sf::Sprite base(TileMap::Instance().textures[TileTexture::GunBase]);
 	base.setPosition(x_id * 32, y_id * 32);
 	if (!allowed) base.setColor(sf::Color(255, 0, 0));
@@ -124,4 +182,24 @@ void AntitankGunBuildingButton::draw_building_plan(sf::RenderWindow& window, int
 	gun.setPosition(x_id * 32 + 16, y_id * 32 + 16);
 	if (!allowed) gun.setColor(sf::Color(255, 0, 0));
 	window.draw(gun);
+}
+
+SpikesBuildingButton::SpikesBuildingButton(GameState& game_state) :
+	BuildingButton(
+		TileTexture::SpikesIcon,
+		game_state,
+		make_creator<Spikes>(),
+		TileRestrictions::RoadOnly,
+		ParamsManager::Instance().params.guns.spikes.cost,
+		0
+	) {
+
+}
+void SpikesBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
+	bool allowed = is_cell_allowed(x_id, y_id);
+	sf::Sprite spikes = Spikes::get_sprite_for_tile(x_id, y_id);
+	spikes.setOrigin(16, 16);
+	spikes.setPosition(x_id * 32 + 16, y_id * 32 + 16);
+	if (!allowed) spikes.setColor(sf::Color(255, 0, 0));
+	window.draw(spikes);
 }

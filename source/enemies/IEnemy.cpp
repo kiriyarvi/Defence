@@ -18,13 +18,23 @@ void HealthIndicator::draw(sf::RenderWindow& window, float x, float y, float max
 	window.draw(rectangle);
 }
 
+IEnemy::IEnemy(const ParamsManager::Params::Enemies::Enemy& p) : params{ p } {
+	health = params.health;
+};
+
 bool IEnemy::logic(double dtime) {
+	if (repairing) {
+		repairing_timer += dtime;
+		if (repairing_timer >= repairing_time * 1000 * 1000)
+			repairing = false;
+		return false;
+	}
 	sf::Vector2f current_pos(position.x, position.y);
 	auto sf_dir = goal - current_pos;
 	glm::vec2 dir = { sf_dir.x, sf_dir.y };
 	float dist = glm::length(dir);
 	dir = dir / dist;
-	float potential = dtime * speed * 32;
+	float potential = dtime * params.speed * 32;
 	if (dist * 1000 * 1000 > potential) {
 		float angle = glm::degrees(glm::atan(dir.y, dir.x));
 		rotation = angle;
@@ -44,4 +54,25 @@ bool IEnemy::logic(double dtime) {
 		goal = sf::Vector2f(path[goal_path_node]->x * 32 + 16, path[goal_path_node]->y * 32 + 16);
 	}
 	return false;
+}
+
+bool IEnemy::break_enemy(double repairing_time) {
+	sf::Vector2i current_cell(position.x / 32, position.y / 32);
+	if (current_cell == last_breaking_cell)
+		return false;
+	repairing = true;
+	this->repairing_time = repairing_time;
+	repairing_timer = 0;
+	last_breaking_cell = current_cell;
+	return true;
+}
+
+void IEnemy::draw_effects(sf::RenderWindow& window) {
+	if (!repairing)
+		return;
+	sf::Sprite repairing_wrench(EnemyManager::Instance().enemy_textures[EnemyTexturesID::RepairWrench]);
+	repairing_wrench.setOrigin(16, 16);
+	repairing_wrench.setPosition(position.x, position.y);
+	repairing_wrench.setScale(0.3, 0.3);
+	window.draw(repairing_wrench);
 }

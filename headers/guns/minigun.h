@@ -20,7 +20,7 @@ private:
 	void belt_animation();
 	void compass_logic(int x_id, int y_id);
 private:
-	ParamsManager::Params::Guns::Minigun& m_params;
+	const ParamsManager::Params::Guns::Minigun& m_params;
 	SpriteChain m_minigun_sprite;
 	float m_heat_speed; // m_temperature в секунду
 	float m_cooling_speed; // m_temperature в секунду

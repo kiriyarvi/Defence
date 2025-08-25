@@ -18,7 +18,7 @@ private:
 	} m_state = State::Ready;
 	sf::Sprite m_mine_sprite;
 
-	ParamsManager::Params::Guns::Mine& m_params;
+	const ParamsManager::Params::Guns::Mine& m_params;
 
 	Animation m_blast_animation;
 	ISpriteFramer::Ptr m_blast_framer = nullptr;

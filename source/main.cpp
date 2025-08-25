@@ -20,7 +20,6 @@ int main() {
 	
 	sf::Clock spawn_clock;
 
-	TileMap::Instance().build_guns();
 
 	const float dt = 1.f / 60.f; // логика обновляется 60 раз в секунду
 	float accumulator = 0.f;

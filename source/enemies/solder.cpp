@@ -3,11 +3,7 @@
 
 #include <iostream>
 
-Solder::Solder(): m_animation(2) {
-	full_health = health = 15;
-	speed = 0.25;
-	reward = full_health * speed;
-
+Solder::Solder(): m_animation(2), IEnemy(ParamsManager::Instance().params.enemies.solder) {
 	m_solder_sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::SolderWalkAnimation]);
 	m_solder_sprite.setOrigin(16, 16);
 	m_solder_sprite.setScale(0.25, 0.25);
@@ -35,7 +31,7 @@ void Solder::draw(sf::RenderWindow& window) {
 	m_solder_ammunition.setRotation(rotation);
 	window.draw(m_solder_sprite);
 	window.draw(m_solder_ammunition);
-	m_health_indicator.draw(window, position.x, position.y - 8, full_health, health);
+	m_health_indicator.draw(window, position.x, position.y - 8, params.health, health);
 }
 
 class DestroyedSolder: public IDestroyedEnemy {

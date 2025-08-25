@@ -56,10 +56,11 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	auto bottom_panel_group = tgui::Group::create(tgui::Layout2d("100%", "10%"));
 	bottom_panel_group->setPosition("0%", "100%");
 	bottom_panel_group->setOrigin(0, 1.);
-	m_building_buttons.push_back(std::make_unique<BuildingButton>(TileTexture::MinigunIcon, *this, BuildingButton::make_creator<MiniGun>(), BuildingButton::TileRestrictions::NoRoads, 1000));
-	m_building_buttons.push_back(std::make_unique<BuildingButton>(TileTexture::Mine, *this, BuildingButton::make_creator<Mine>(), BuildingButton::TileRestrictions::RoadOnly, 1000));
-	m_building_buttons.push_back(std::make_unique<AntitankGunBuildingButton>(*this, 2000));
-	m_building_buttons.push_back(std::make_unique<TwinGunBuildingButton>(*this, 2500));
+	m_building_buttons.push_back(std::make_unique<MineBuildingButton>(*this));
+	m_building_buttons.push_back(std::make_unique<MinigunBuildingButton>(*this));
+	m_building_buttons.push_back(std::make_unique<AntitankGunBuildingButton>(*this));
+	m_building_buttons.push_back(std::make_unique<TwinGunBuildingButton>(*this));
+	m_building_buttons.push_back(std::make_unique<SpikesBuildingButton>(*this));
 	for (auto& button : m_building_buttons) {
 		bottom_panel_group->add(button->button);
 	}

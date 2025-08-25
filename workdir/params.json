@@ -3,13 +3,15 @@
     "antitank": {
       "radius": 3,
       "damage": 20,
-      "cooldown": 2.5
+      "cooldown": 2.5,
+      "cost": 2000
     },
     "twingun": {
       "radius": 2,
       "damage_per_barrel": 10,
       "cooldown": 2,
-      "interleaved_cooldown": 0.2
+      "interleaved_cooldown": 0.2,
+      "cost": 2500
     },
     "minigun": {
       "radius": 2,
@@ -21,14 +23,42 @@
       "max_damage": 1,
       "cooldown_duration": 7, // время остывания после перегрева
       "critical_temperature": 0.7, // значение критической температуры
-      "critical_temperature_work_duration": 4 //максимальное время работы при критическом нагреве.
+      "critical_temperature_work_duration": 4, //максимальное время работы при критическом нагреве.
+      "cost": 1000
     },
     "mine": {
       "damage_radius": 2,
       "activation_radius": 0.1,
       "min_damage": 1, // урон на радиусе действия
-      "max_damage": 40 // урон в эпицентре
+      "max_damage": 40, // урон в эпицентре
+      "cost": 250
+    },
+    "spikes": {
+      "health": 5, // число остановленных врагов, после которых шипы уничтожаются.
+      "delay": 3.5, // на какое время остановиться враг.
+      "cost": 450
+    }
+  },
+  "enemies": {
+    "solder": {
+      "health": 15,
+      "speed": 0.25,
+      "reward": 4
+    },
+    "bike": {
+      "health": 30,
+      "speed": 1.6,
+      "reward": 100
+    },
+    "truck": {
+      "health": 50,
+      "speed": 0.8,
+      "reward": 40
+    },
+    "tank": {
+      "health": 100,
+      "speed": 0.4,
+      "reward": 120
     }
   }
-
 }

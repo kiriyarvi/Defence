@@ -21,6 +21,7 @@ EnemyManager::EnemyManager() {
 	enemy_textures[EnemyTexturesID::DestroyedBike].loadFromFile("sprites/destroyed_bike.png");
 	enemy_textures[EnemyTexturesID::DoubleBlust].loadFromFile("sprites/double_blust.png");
 	enemy_textures[EnemyTexturesID::Blusts16x16].loadFromFile("sprites/16x16_blusts.png");
+	enemy_textures[EnemyTexturesID::RepairWrench].loadFromFile("sprites/repair_wrench.png");
 }
 
 void EnemyManager::spawn() {
@@ -45,7 +46,7 @@ void EnemyManager::logic(double dtime) {
 	for (auto& enemy : m_enemies) {
 		if (enemy->health <= 0) {
 			m_destroyed_enemies.push_back(enemy->get_destroyed_enemy());
-			GameState::Instance().player_coins_add(enemy->reward);
+			GameState::Instance().player_coins_add(enemy->params.reward);
 		}
 		else {
 			new_enemies.push_back(std::move(enemy));

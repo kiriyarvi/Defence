@@ -51,7 +51,7 @@ private:
 		Ready
 	} state = State::Ready;
 
-	ParamsManager::Params::Guns::TwinGun& m_params;
+	const ParamsManager::Params::Guns::TwinGun& m_params;
 
 	double cd_shot = 0;
 	double cd_interleaved = 0;

@@ -8,7 +8,7 @@
 
 enum class TileTexture {
 	Grass,
-	Road1100 = 12,
+	Road1100 = 12, // 1100: 1 - дорога направо, 1 - дорога наверх, 0 - нет дорого налево, 0 - нет дороги наверх
 	Road0110 = 6,
 	Road0011 = 3,
 	Road1001 = 9,
@@ -36,7 +36,12 @@ enum class TileTexture {
 	TwingunIcon,
 	TwingunConstructed,
 	AntitankGunIcon,
-	AntitankGunConstructed
+	AntitankGunConstructed,
+	SpikesRight,
+	SpikesT,
+	SpikesCross,
+	SpikesD,
+	SpikesIcon
 };
 
 enum class BuildingType {
@@ -49,9 +54,9 @@ enum class BuildingType {
 
 class IBuilding {
 public:
-	virtual void draw(sf::RenderWindow& window, int x, int y) = 0;
-	virtual void draw_effects(sf::RenderWindow& window, int x, int y) = 0;
-	virtual void logic(double dtime, int x, int y) = 0;
+	virtual void draw(sf::RenderWindow& window, int x_id, int y_id) = 0;
+	virtual void draw_effects(sf::RenderWindow& window, int x_id, int y_id) = 0;
+	virtual void logic(double dtime, int x_id, int y_id) = 0;
 	virtual bool is_destroyed() { return false; }
 	virtual ~IBuilding() = default;
 };
@@ -108,7 +113,6 @@ public:
 	std::array<std::array<Tile, 8>, 8> map;
 	std::unordered_map<TileTexture, sf::Texture> textures;
 	const RoadGraph& get_road_graph() { return m_road_graph; }
-	void build_guns();
 private:
 	TileMap();
 	RoadGraph m_road_graph;

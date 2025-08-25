@@ -18,7 +18,7 @@ private:
 	void start_animation();
 	void fire_animation();
 private:
-	ParamsManager::Params::Guns::Antitank& m_params;
+	const ParamsManager::Params::Guns::Antitank& m_params;
 
 	double m_cd_time = 0;
 

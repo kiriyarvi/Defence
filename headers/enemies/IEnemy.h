@@ -2,7 +2,7 @@
 #include "SFML/Graphics.hpp"
 #include "SFML/Audio.hpp"
 #include "glm/glm.hpp"
-
+#include "params_manager.h"
 
 
 class HealthIndicator {
@@ -22,30 +22,36 @@ public:
 class IEnemy {
 public:
 	using Ptr = std::unique_ptr<IEnemy>;
-	IEnemy() = default;
+	IEnemy(const ParamsManager::Params::Enemies::Enemy& p);
 	IEnemy(const IEnemy&) = delete;
 	IEnemy& operator=(const IEnemy&) = delete;
 	IEnemy(IEnemy&&) = default;
 	IEnemy& operator=(IEnemy&&) = default;
 	virtual ~IEnemy() = default;
 
+	bool break_enemy(double repairing_time);
+
 	virtual void draw(sf::RenderWindow& window) = 0;
+	void draw_effects(sf::RenderWindow& window);
 	virtual bool logic(double dtime); // true --- достиг конца пути
 	virtual glm::vec2 get_position() { return position; }
 	virtual IDestroyedEnemy::Ptr get_destroyed_enemy() = 0;
 	uint32_t id; // уникальный идентификатор врага
-	float speed;
+	const ParamsManager::Params::Enemies::Enemy& params;
+
 	int health;
-	int full_health;
 	glm::vec2 position = { 0,0 };
 	float rotation = 0;
 
 	int path_id = 0; // путь по которому движется враг.
 	bool path_is_completed = false;
 
-	int reward = 0;
 private:
+	sf::Vector2i last_breaking_cell = { -1, -1 };
 	sf::Vector2f goal; // текущая целевая точка
+	bool repairing = false;
+	double repairing_timer;
+	double repairing_time;
 	int goal_path_node = 0; // номер узла в пути, к которому враг стремиться на данный момент
 	std::unique_ptr<sf::Sound> engine_sound;
 };

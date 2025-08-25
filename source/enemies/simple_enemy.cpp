@@ -1,9 +1,10 @@
 #include "enemies/simple_enemy.h"
 #include "glm/gtc/random.hpp"
 
-SimpleEnemy::SimpleEnemy(EnemyTexturesID enemy_texture, EnemyTexturesID destroyed_enemy_texture, Sounds destruction_sound):
+SimpleEnemy::SimpleEnemy(EnemyTexturesID enemy_texture, EnemyTexturesID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params):
 	m_destroyed_enemy_texture(destroyed_enemy_texture),
-	m_destruction_sound(destruction_sound)
+	m_destruction_sound(destruction_sound),
+	IEnemy(params)
 {
 	m_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[enemy_texture]);
 	m_enemy_sprite.setOrigin(16, 16);
@@ -13,7 +14,8 @@ void SimpleEnemy::draw(sf::RenderWindow& window) {
 	m_enemy_sprite.setPosition(position.x, position.y);
 	m_enemy_sprite.setRotation(rotation);
 	window.draw(m_enemy_sprite);
-	m_indicator.draw(window, position.x, position.y - 8, full_health, health);
+	draw_effects(window);
+	m_indicator.draw(window, position.x, position.y - 8, params.health, health);
 }
 
 IDestroyedEnemy::Ptr SimpleEnemy::get_destroyed_enemy() {

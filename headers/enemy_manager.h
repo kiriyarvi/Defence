@@ -16,7 +16,8 @@ enum class EnemyTexturesID {
 	DeadSolder,
 	DestroyedBike,
 	DoubleBlust,
-	Blusts16x16
+	Blusts16x16,
+	RepairWrench
 };
 
 
