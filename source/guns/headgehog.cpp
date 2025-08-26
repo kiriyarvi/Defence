@@ -25,7 +25,7 @@ void Hedgehog::logic(double dtime, int x_id, int y_id) {
                 health = 0;
                 return;
             }
-            if (enemy->break_enemy(params.delay * debuff))
+            if (enemy->break_enemy(params.delay * debuff) && enemy->wheels == IEnemy::Wheels::Tracks)
                 --health;
         }
     }

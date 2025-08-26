@@ -13,22 +13,15 @@ int main() {
 
 	auto& game_state = GameState::Instance(&window);
 	auto& gui = GameState::Instance().get_tgui();
+    EnemyManager::Instance().init();
 
 	Camera camera(window);
 
 	sf::Clock clock;
+
 	
-	sf::Clock spawn_clock;
-
-
 	const float dt = 1.f / 60.f; // логика обновляется 60 раз в секунду
 	float accumulator = 0.f;
-
-	int wave_number = 1;
-	int wave_enemies_count = 4;
-	int spawned = 0;
-	double wave_delay = 5;
-	bool wave = false;
 
 	while (window.isOpen()) {
 		sf::Event event;
@@ -43,9 +36,6 @@ int main() {
 		}
 		// логика
 		double dtime = clock.getElapsedTime().asMicroseconds();
-		
-		
-
 		accumulator += dtime;
 		if (accumulator > dt * 1000 * 1000) {
 			dtime = accumulator;
@@ -54,26 +44,6 @@ int main() {
 			if (!game_state.is_game_over()) {
 				EnemyManager::Instance().logic(dtime);
 				TileMap::Instance().logic(dtime);
-				if (!wave) {
-					if (spawn_clock.getElapsedTime().asSeconds() > wave_delay) {
-						wave = true;
-						spawned = 0;
-						spawn_clock.restart();
-					}
-				}
-				else {
-					if (spawn_clock.getElapsedTime().asSeconds() > 10.f / wave_enemies_count) {
-						EnemyManager::Instance().spawn();
-						spawn_clock.restart();
-						++spawned;
-						if (spawned >= wave_enemies_count) {
-							++wave_number;
-							wave_enemies_count += wave_number;
-							wave = false;
-						}
-					}
-				}
-				
 				SoundManager::Instance().logic();
 			}
 		}

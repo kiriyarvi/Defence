@@ -17,6 +17,8 @@ Solder::Solder(): m_animation(2), IEnemy(ParamsManager::Instance().params.enemie
 	m_animation.start();
 
 	m_health_indicator.width = 8;
+    infantry = true;
+    wheels = Wheels::None;
 }
 
 bool Solder::logic(double dtime) {

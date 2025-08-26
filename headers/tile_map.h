@@ -119,5 +119,6 @@ public:
 	const RoadGraph& get_road_graph() { return m_road_graph; }
 private:
 	TileMap();
+private:
 	RoadGraph m_road_graph;
 };

@@ -6,6 +6,7 @@
 #include "enemies/simple_enemy.h"
 #include "enemies/solder.h"
 
+
 EnemyManager::EnemyManager() {
 	all_paths = TileMap::Instance().get_road_graph().find_all_paths();
 	enemy_textures[EnemyTexturesID::Tank].loadFromFile("sprites/tank.png");
@@ -32,24 +33,35 @@ EnemyManager::EnemyManager() {
     enemy_textures[EnemyTexturesID::CruiserIEquipment].loadFromFile("sprites/cruiser_I_equipment.png");
 }
 
-void EnemyManager::spawn() {
-	int enemy = rand() % 7;
-    enemy = 1;
-	if (enemy == 0)
-		m_enemies.push_back(std::make_unique<Solder>());
-	else if (enemy == 1)
-		m_enemies.push_back(std::make_unique<Bike>());
-	else if (enemy == 2)
-		m_enemies.push_back(std::make_unique<Pickup>());
-	else if (enemy == 3)
-		m_enemies.push_back(std::make_unique<Truck>());
-    else if (enemy == 4)
+void EnemyManager::init() {
+    m_wave_controller = std::make_unique<WaveController>();
+}
+
+void EnemyManager::spawn(EnemyType type, int path) {
+    switch (type) {
+    case EnemyType::Solder:
+        m_enemies.push_back(std::make_unique<Solder>());
+        break;
+    case EnemyType::Bike:
+        m_enemies.push_back(std::make_unique<Bike>());
+        break;
+    case EnemyType::Pickup:
+        m_enemies.push_back(std::make_unique<Pickup>());
+        break;
+    case EnemyType::Truck:
+        m_enemies.push_back(std::make_unique<Truck>());
+        break;
+    case EnemyType::BTR:
         m_enemies.push_back(std::make_unique<BTR>());
-    else if (enemy == 5)
+        break;
+    case EnemyType::Tank:
         m_enemies.push_back(std::make_unique<Tank>());
-    else if (enemy == 6)
+        break;
+    case EnemyType::CruiserI:
         m_enemies.push_back(std::make_unique<CruiserI>());
-	m_enemies.back()->path_id = rand() % all_paths.size();
+        break;
+    }
+	m_enemies.back()->path_id = path;
 	m_enemies.back()->id = ++current_max_id;
 	m_enemies.back()->logic(0.0); // чтобы установить верную позицию.
 	if (current_max_id > 32768)
@@ -79,6 +91,14 @@ void EnemyManager::logic(double dtime) {
 	for (auto& destroyed_enemy : m_destroyed_enemies)
 		destroyed_enemy->logic(dtime);
 	m_destroyed_enemies.remove_if([](IDestroyedEnemy::Ptr& enemy) { return enemy->is_ready(); });
+
+    m_wave_controller->logic(dtime);
+    if (m_enemies.empty()) {
+        if (!m_wave_controller->next_wave()) {
+            GameState::Instance().win();
+        }
+    }
+
 }
 
 

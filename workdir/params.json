@@ -98,7 +98,7 @@
     "CruiserI": {
       "health": 500,
       "speed": 0.2,
-      "reward": 10000,
+      "reward": 1000,
       "armor_level": 2
     }
   }

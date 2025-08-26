@@ -28,6 +28,8 @@ void Tile::draw(sf::RenderWindow& window, int x, int y) {
 	}
 }
 
+
+
 TileMap::TileMap() {
 	textures[TileTexture::Grass].loadFromFile("tiles/grass.png");
 	textures[TileTexture::Road1100].loadFromFile("tiles/road1100.png");

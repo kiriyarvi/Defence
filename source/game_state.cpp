@@ -79,7 +79,7 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	});
 	m_gui.add(bottom_panel_group);
 
-	player_coins_add(10000);
+	player_coins_add(2000);
 }
 
 tgui::Gui& GameState::get_tgui() {
@@ -118,10 +118,14 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 }
 
 void GameState::logic() {
-	if (is_game_over()) {
+	if (is_player_defeated()) {
 		m_centered_message->setText("GAME OVER");
 		return;
 	}
+    if (m_win) {
+        m_centered_message->setText("WIN, WIN, WIN!");
+        return;
+    }
 }
 
 void GameState::draw(sf::RenderWindow& current_window) {
@@ -136,6 +140,10 @@ void GameState::enemy_defeated(EnemyType type) {
     AchievementSystem::Instance().defeated(type);
     for (auto& btn : m_building_buttons)
         btn->defeat_event();
+}
+
+void GameState::win() {
+    m_win = true;
 }
 
 void GameState::player_health_add(int health) {
