@@ -22,18 +22,20 @@ EnemyManager::EnemyManager() {
 	enemy_textures[EnemyTexturesID::DoubleBlust].loadFromFile("sprites/double_blust.png");
 	enemy_textures[EnemyTexturesID::Blusts16x16].loadFromFile("sprites/16x16_blusts.png");
 	enemy_textures[EnemyTexturesID::RepairWrench].loadFromFile("sprites/repair_wrench.png");
+    enemy_textures[EnemyTexturesID::Pickup].loadFromFile("sprites/pickup.png");
+    enemy_textures[EnemyTexturesID::PickupDestroyed].loadFromFile("sprites/pickup_destroyed.png");
 }
 
 void EnemyManager::spawn() {
 	int enemy = rand() % 4;
 	if (enemy == 0)
-		m_enemies.push_back(std::make_unique<Solder>());
+		m_enemies.push_back(std::make_unique<Pickup>());
 	else if (enemy == 1)
-		m_enemies.push_back(std::make_unique<Truck>());
+		m_enemies.push_back(std::make_unique<Pickup>());
 	else if (enemy == 2)
-		m_enemies.push_back(std::make_unique<Tank>());
+		m_enemies.push_back(std::make_unique<Pickup>());
 	else 
-		m_enemies.push_back(std::make_unique<Bike>());
+		m_enemies.push_back(std::make_unique<Pickup>());
 	m_enemies.back()->path_id = rand() % all_paths.size();
 	m_enemies.back()->id = ++current_max_id;
 	m_enemies.back()->logic(0.0); // чтобы установить верную позицию.

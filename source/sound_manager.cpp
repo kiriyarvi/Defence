@@ -13,6 +13,7 @@ SoundManager::SoundManager() {
 	sounds[Sounds::OverHeat].loadFromFile("sounds/overheat.wav");
 	sounds[Sounds::MineBlast].loadFromFile("sounds/mine_blast.wav");
     sounds[Sounds::Ricochet].loadFromFile("sounds/ricochet.wav");
+    sounds[Sounds::PickupDestruction].loadFromFile("sounds/pickup_destruction.wav");
 }
 
 void SoundManager::play(Sounds sound, int limit, float volume, float pitch) {

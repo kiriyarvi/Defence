@@ -15,7 +15,8 @@ enum class Sounds {
 	MiniGunShot,
 	OverHeat,
 	MineBlast,
-	Ricochet
+	Ricochet,
+    PickupDestruction
 };
 
 class SoundManager {

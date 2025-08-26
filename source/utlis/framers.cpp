@@ -80,12 +80,23 @@ void MinigunReboundFramer::on_frame(int frame) {
 	sprite.setTextureRect(sf::IntRect(19 + 2 * frame, 22, 2, 3));
 }
 
-MineBlast::MineBlast() {
+MineBlastFramer::MineBlastFramer() {
 	frames = 14;
 	sprite.setTexture(TileMap::Instance().textures[TileTexture::MineBlast]);
 	sprite.setOrigin(8,8);
 }
 
-void MineBlast::on_frame(int frame) {
+void MineBlastFramer::on_frame(int frame) {
 	sprite.setTextureRect(sf::IntRect(16 * (frame % 4), 16 * (frame / 4), 16, 16));
+}
+
+PickupBlastFramer::PickupBlastFramer() {
+    frames = 12;
+    sprite.setOrigin(8, 8);
+    sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Blusts16x16]);
+}
+
+void PickupBlastFramer::on_frame(int frame) {
+    frame += 16;
+    sprite.setTextureRect(sf::IntRect(16 * (frame % 8), 16 * (frame / 8), 16, 16));
 }

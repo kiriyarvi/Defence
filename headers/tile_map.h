@@ -45,13 +45,7 @@ enum class TileTexture {
 	Hedgehog
 };
 
-enum class BuildingType {
-	Mine,
-	Minigun,
-	Antitank,
-	TwinGun,
-	None
-};
+
 
 class IBuilding {
 public:

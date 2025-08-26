@@ -62,7 +62,7 @@
       "health": 15,
       "speed": 0.25,
       "reward": 4,
-      "armor_level":  0
+      "armor_level": 0
     },
     "bike": {
       "health": 30,
@@ -74,13 +74,19 @@
       "health": 50,
       "speed": 0.8,
       "reward": 40,
-      "armor_level": 1
+      "armor_level": 0
     },
     "tank": {
       "health": 100,
       "speed": 0.4,
       "reward": 120,
       "armor_level": 2
+    },
+    "pickup": {
+      "health": 40,
+      "speed": 1.0,
+      "reward": 40,
+      "armor_level": 0
     }
   }
 }

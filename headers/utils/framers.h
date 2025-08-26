@@ -38,7 +38,13 @@ struct MinigunReboundFramer : public ISpriteFramer {
 	void on_frame(int frame) override;
 };
 
-struct MineBlast : public ISpriteFramer {
-	MineBlast();
+struct MineBlastFramer : public ISpriteFramer {
+	MineBlastFramer();
 	void on_frame(int frame) override;
 };
+
+struct PickupBlastFramer : public ISpriteFramer {
+    PickupBlastFramer();
+    void on_frame(int frame) override;
+};
+

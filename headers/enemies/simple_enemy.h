@@ -82,3 +82,17 @@ public:
 	}
 	IDestroyedEnemy::Ptr get_destroyed_enemy() override;
 };
+
+class Pickup : public SimpleEnemy {
+public:
+    Pickup() : SimpleEnemy(EnemyTexturesID::Pickup, EnemyTexturesID::PickupDestroyed, Sounds::PickupDestruction, ParamsManager::Instance().params.enemies.pickup) {
+        wheels = Wheels::Wheels;
+        infantry = false;
+    }
+    IDestroyedEnemy::Ptr get_destroyed_enemy() {
+        auto de = std::make_unique<SimpleEnemyDestroyed>(std::make_unique<PickupBlastFramer>(), 1.4, 2.0, Sounds::PickupDestruction);
+        de->destroyed_enemy_sprite = m_enemy_sprite;
+        de->destroyed_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[m_destroyed_enemy_texture]);
+        return de;
+    }
+};

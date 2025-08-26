@@ -7,7 +7,7 @@ Mine::Mine(): m_params(ParamsManager::Instance().params.guns.mine) {
 	m_mine_sprite.setTexture(TileMap::Instance().textures[TileTexture::Mine]);
 	m_mine_sprite.setOrigin(8, 8);
 
-	m_blast_framer = std::make_unique<MineBlast>();
+	m_blast_framer = std::make_unique<MineBlastFramer>();
 	m_blast_animation.set_duration(1.0);
 	m_blast_animation.add_framer(m_blast_framer);
 }
