@@ -4,7 +4,8 @@
       "radius": 3,
       "damage": 20,
       "cooldown": 2.5,
-      "cost": 2000
+      "cost": 2000,
+      "armor_penetration_level": 2
     },
     "twingun": {
       "radius": 2,
@@ -41,7 +42,8 @@
       "activation_radius": 0.1,
       "min_damage": 1, // урон на радиусе действия
       "max_damage": 40, // урон в эпицентре
-      "cost": 250
+      "cost": 250,
+      "armor_penetration_level": 2
     },
     "spikes": {
       "health": 5, // число остановленных врагов, после которых шипы уничтожаются.

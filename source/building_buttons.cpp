@@ -120,6 +120,11 @@ void BuildingButton::disable_selection() {
     }
 }
 
+std::string to_string_2(double number) {
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(2) << number;
+    return out.str();
+}
 
 MinigunBuildingButton::MinigunBuildingButton(GameState& game_state):
 	BuildingButton(
@@ -133,7 +138,6 @@ MinigunBuildingButton::MinigunBuildingButton(GameState& game_state):
 {
     auto& params = ParamsManager::Instance().params.guns.minigun;
     auto label = tgui::RichTextLabel::create();
-
     label->getRenderer()->setTextColor(tgui::Color::White);
     std::string description =
         "<color=#ffd303>Пулемёт</color>\n"
@@ -143,23 +147,22 @@ MinigunBuildingButton::MinigunBuildingButton(GameState& game_state):
         "Урон бронепробиваемость и скорострельность пулемета растут с повышением температуры.\n"
         "<color=#ffd303>Стоимость:" + std::to_string(params.cost) + "</color>\n"
         "<b>Характеристики:</b>\n"
-        "радиус действия: " + std::to_string(params.radius) + "\n"
+        "радиус поражения: " + to_string_2(params.radius) + "\n"
         "урон при наименьшем нагреве: " + std::to_string(params.min_damage) + "\n"
         "урон при максимальном нагреве: " + std::to_string(params.max_damage) + "\n"
         "бронепробиваемость при наименьшем нагреве: " + std::to_string(params.penetration_upgrades[0].min_armor_penetration_level) + "\n"
         "бронепробиваемость при наибольшем нагреве: " + std::to_string(params.penetration_upgrades[0].max_armor_penetration_level) + "\n"
-        "частота выстрелов в секунду при минимальном нагреве:" + std::to_string(params.min_rotation_speed / 60.) + "\n"
-        "частота выстрелов в секунду при максимальном нагреве:" + std::to_string(params.max_rotation_speed / 60.) + "\n"
-        "время до максимального нагрева: " + std::to_string((int)params.heating_time) + "\n"
-        "время охлажения с максимлаьного нагрева до холодного состояния: " + std::to_string((int)params.cooling_time) + "\n"
+        "частота выстрелов в секунду при минимальном нагреве:" + to_string_2(params.min_rotation_speed / 60.) + "\n"
+        "частота выстрелов в секунду при максимальном нагреве:" + to_string_2(params.max_rotation_speed / 60.) + "\n"
+        "время до максимального нагрева: " + to_string_2(params.heating_time) + "\n"
+        "время охлажения с максимлаьного нагрева до холодного состояния: " + to_string_2(params.cooling_time) + "\n"
         "минимальная температура: 0\n"
         "максимальная температура: 1000\n"
-        "значение критической температуры: " + std::to_string((int)params.critical_temperature * 1000) + "\n"
-        "время работы при критической температуре (до перегрева): " + std::to_string((int)params.critical_temperature_work_duration) + "\n"
-        "время воосстановления после перегрева: " + std::to_string((int)params.cooldown_duration) + "\n";
+        "значение критической температуры: " + to_string_2(params.critical_temperature * 1000) + "\n"
+        "время работы при критической температуре (до перегрева): " + to_string_2(params.critical_temperature_work_duration) + "\n"
+        "время воосстановления после перегрева: " + to_string_2(params.cooldown_duration) + "\n";
     label->setText(description);
     label->setSize("100%", "100%");
-
     m_tooltip->add(label);
 
 }
@@ -173,7 +176,25 @@ MineBuildingButton::MineBuildingButton(GameState& game_state):
 		ParamsManager::Instance().params.guns.mine.cost,
 		ParamsManager::Instance().params.guns.mine.damage_radius
 	) 
-{}
+{
+    auto& params = ParamsManager::Instance().params.guns.mine;
+    auto label = tgui::RichTextLabel::create();
+    label->getRenderer()->setTextColor(tgui::Color::White);
+    std::string description =
+        "<color=#ffd303>Мина</color>\n"
+        "<b>Описание:</b> при активации взрывается, нанося всем противникам урон в радиусе поражения. "
+        "Чем дальше противник от эпицентра взрыва, тем меньший урон он получит.\n"
+        "<color=#ffd303>Стоимость:" + std::to_string(params.cost) + "</color>\n"
+        "<b>Характеристики:</b>\n"
+        "радиус поражения: " + to_string_2(params.damage_radius) + "\n"
+        "урон в эпицентре: " + std::to_string(params.max_damage) + "\n"
+        "урон на радиусе: " + std::to_string(params.min_damage) + "\n";
+        "бронепробиваемость" + std::to_string(params.armor_penetration_level) + "\n";
+    label->setText(description);
+    label->setSize("100%", "100%");
+    m_tooltip->add(label);
+
+}
 
 TwinGunBuildingButton::TwinGunBuildingButton(GameState& game_state) :
 	BuildingButton(
@@ -213,7 +234,24 @@ AntitankGunBuildingButton::AntitankGunBuildingButton(GameState& game_state) :
 		ParamsManager::Instance().params.guns.antitank.cost,
 		ParamsManager::Instance().params.guns.antitank.radius
 	)
-{}
+{
+    auto& params = ParamsManager::Instance().params.guns.antitank;
+    auto label = tgui::RichTextLabel::create();
+    label->getRenderer()->setTextColor(tgui::Color::White);
+    std::string description =
+        "<color=#ffd303>Противотанковая пушка</color>\n"
+        "<b>Описание:</b> Мощное орудие, имеющее высокий уровень бронепробиваемости и широкий радиус поражения. \n"
+        "<color=#ffd303>Стоимость:" + std::to_string(params.cost) + "</color>\n"
+        "<b>Характеристики:</b>\n"
+        "радиус поражения: " + to_string_2(params.radius) + "\n"
+        "урон: " + std::to_string(params.damage) + "\n"
+        "время преезарядки: " + to_string_2(params.cooldown) + "\n"
+        "бронепробиваемость: " + std::to_string(params.armor_penetration_level) + "\n";
+    label->setText(description);
+    label->setSize("100%", "100%");
+    m_tooltip->add(label);
+
+}
 
 void AntitankGunBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
 	bool allowed = is_cell_allowed(x_id, y_id);
@@ -242,7 +280,21 @@ SpikesBuildingButton::SpikesBuildingButton(GameState& game_state) :
 		ParamsManager::Instance().params.guns.spikes.cost,
 		0
 	) {
-
+    auto& params = ParamsManager::Instance().params.guns.spikes;
+    auto label = tgui::RichTextLabel::create();
+    label->getRenderer()->setTextColor(tgui::Color::White);
+    std::string description =
+        "<color=#ffd303>Шипы</color>\n"
+        "<b>Описание:</b> Прокалывает колеса, в результате чего противник останавливается не некоторое время. "
+        "Шипы теряют прочность каждый раз, когда останавливают противника. При достижении нулевой прочности шипы ломаются. "
+        "Бесполезны против пехоты и гусенечной техники. \n"
+        "<color=#ffd303>Стоимость:" + std::to_string(params.cost) + "</color>\n"
+        "<b>Характеристики:</b>\n"
+        "длительность остановки противника: " + to_string_2(params.delay) + "\n"
+        "прочность: " + std::to_string(params.health) + "\n";
+    label->setText(description);
+    label->setSize("100%", "100%");
+    m_tooltip->add(label);
 }
 void SpikesBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
 	bool allowed = is_cell_allowed(x_id, y_id);
@@ -253,6 +305,7 @@ void SpikesBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id
 	window.draw(spikes);
 }
 
+
 HedgeBuildingButton::HedgeBuildingButton(GameState& game_state):
     BuildingButton(
         TileTexture::Hedgehog,
@@ -262,7 +315,25 @@ HedgeBuildingButton::HedgeBuildingButton(GameState& game_state):
         ParamsManager::Instance().params.guns.spikes.cost,
         0
     )
-{}
+{
+    auto& params = ParamsManager::Instance().params.guns.hedgehog;
+    auto label = tgui::RichTextLabel::create();
+    label->getRenderer()->setTextColor(tgui::Color::White);
+    std::string description =
+        "<color=#ffd303>Противотанковые ежи</color>\n"
+        "<b>Описание:</b> Останавливают крупную колесную и гусенечную технику на некоторое время."
+        "Теряют прочность каждый раз, когда останавливают противника. При достижении нулевой прочности ломаются."
+        "Колесная техника останавливается на большее время. Бесполезны против пехоты и мотоциклистов.\n"
+        "<color=#ffd303>Стоимость:" + std::to_string(params.cost) + "</color>\n"
+        "<b>Характеристики:</b>\n"
+        "длительность остановки гусенечной техники: " + to_string_2(params.delay) + "\n"
+        "длительность остановки колесной техники: " + to_string_2(params.delay * params.wheels_debuff) + "\n"
+        "прочность: " + std::to_string(params.health) + "\n";
+    label->setText(description);
+    label->setSize("100%", "100%");
+
+    m_tooltip->add(label);
+}
 
 void HedgeBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
     bool allowed = is_cell_allowed(x_id, y_id);

@@ -91,8 +91,13 @@ void AntitankGun::logic(double dtime_microseconds, int x_id, int y_id) {
 
 void AntitankGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
 	if (m_state == State::Ready) {
-		enemy.health -= m_params.damage;
-		SoundManager::Instance().play(Sounds::AntitankGunShot);
+        if (enemy.params.armor_level <= m_params.armor_penetration_level) {
+            enemy.health -= m_params.damage;
+            SoundManager::Instance().play(Sounds::AntitankGunShot);
+        }
+        else {
+            SoundManager::Instance().play(Sounds::Ricochet);
+        }
 		m_state = State::CoolDown;
 		m_cd_time = 0; // уходим на перезарядку.
 		start_animation();

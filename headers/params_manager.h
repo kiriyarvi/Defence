@@ -22,7 +22,8 @@ public:
 				float damage;
 				float cooldown;
                 int cost;
-				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Antitank, radius, damage, cooldown, cost)
+                int armor_penetration_level;
+				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Antitank, radius, damage, cooldown, cost, armor_penetration_level)
 			} antitank;
 			struct TwinGun {
 				float radius;
@@ -64,10 +65,11 @@ public:
 			struct Mine {
 				float damage_radius;
 				float activation_radius;
-				float min_damage;
-				float max_damage;
+				int min_damage;
+				int max_damage;
+                int armor_penetration_level;
                 int cost;
-				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Mine, damage_radius, activation_radius, min_damage, max_damage, cost)
+				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Mine, damage_radius, activation_radius, min_damage, max_damage, cost, armor_penetration_level)
 			} mine;
 			struct Spikes {
 				int health;

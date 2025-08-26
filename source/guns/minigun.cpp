@@ -228,6 +228,7 @@ void MiniGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
         float t = m_temperature / (1000 * 1000.f);
         auto& penetration_upgrade = m_params.penetration_upgrades[m_penetration_upgrade];
         int current_penetration_level = penetration_upgrade.min_armor_penetration_level + t * (penetration_upgrade.max_armor_penetration_level - penetration_upgrade.min_armor_penetration_level + 1);
+        current_penetration_level = std::min(current_penetration_level, penetration_upgrade.max_armor_penetration_level);
         bool penetration = current_penetration_level >= enemy.params.armor_level;
         if (penetration)
             enemy.health -= int(t * (m_params.max_damage - m_params.min_damage) + m_params.min_damage);

@@ -49,6 +49,8 @@ void Mine::logic(double dtime_microseconds, int x_id, int y_id) {
 		}
 		if (m_state == State::Activated) {
 			for (auto& enemy : in_damage_radius) {
+                if (enemy.enemy->params.armor_level > m_params.armor_penetration_level)
+                    return;
 				float p = 1. - std::max(enemy.distance - m_params.activation_radius, 0.0) / (m_params.damage_radius - m_params.activation_radius);
 				enemy.enemy->health -= m_params.min_damage + p * (m_params.max_damage - m_params.min_damage);
 			}
