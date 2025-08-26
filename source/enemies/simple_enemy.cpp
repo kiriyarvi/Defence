@@ -1,5 +1,6 @@
 #include "enemies/simple_enemy.h"
 #include "glm/gtc/random.hpp"
+#include "shader_manager.h"
 
 SimpleEnemy::SimpleEnemy(EnemyTexturesID enemy_texture, EnemyTexturesID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params):
 	m_destroyed_enemy_texture(destroyed_enemy_texture),
@@ -112,4 +113,57 @@ IDestroyedEnemy::Ptr Bike::get_destroyed_enemy() {
 	de->destroyed_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[m_destroyed_enemy_texture]);
 	de->destroyed_enemy_sprite.setScale(0.3, 0.3);
 	return de;
+}
+
+
+BTR::BTR(): IEnemy(ParamsManager::Instance().params.enemies.BTR) {
+    wheels = Wheels::Tracks;
+    infantry = false;
+    m_btr.sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::BTR]);
+    m_btr.set_position_origin(16, 16);
+    m_btr.set_rotation_origin(16, 16);
+    m_upper_truck = &m_btr.childs.emplace_back();
+    m_lower_truck = &m_btr.childs.emplace_back();
+
+    auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
+
+    m_upper_truck->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Trucks]);
+    m_upper_truck->sprite.setTextureRect(sf::IntRect(0, 0, 60, 7));
+    m_upper_truck->sprite.setScale(2 / 7.f, 2 / 7.f);
+    m_upper_truck->set_position(9, 10);
+    m_upper_truck->shader = &shader;
+
+    m_lower_truck->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Trucks]);
+    m_lower_truck->sprite.setTextureRect(sf::IntRect(0, 0, 60, 7));
+    m_lower_truck->sprite.setScale(2 / 7.f, 2 / 7.f);
+    m_lower_truck->set_position(9, 20);
+    m_lower_truck->shader = &shader;
+
+}
+
+void BTR::draw(sf::RenderWindow& window) {
+    auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
+    shader.setUniform("texture", sf::Shader::CurrentTexture);
+    shader.setUniform("offset", -(float)m_trucks_offset / (1000 * 1000));
+    m_btr.set_rotation(rotation);
+    m_btr.set_position(position.x, position.y);
+    m_btr.draw(window);
+    m_indicator.draw(window, position.x, position.y - 8, params.health, health);
+}
+
+bool BTR::logic(double dtime_microseconds) {
+    m_trucks_offset += params.speed * dtime_microseconds;
+    if (m_trucks_offset >= 1000 * 1000)
+        m_trucks_offset = 0;
+    return IEnemy::logic(dtime_microseconds);
+}
+
+IDestroyedEnemy::Ptr BTR::get_destroyed_enemy() {
+    auto de = std::make_unique<SimpleEnemyDestroyed>(std::make_unique<DenceBlustFramer>(), 1.4, 2.0, Sounds::DenceBlust);
+    de->destroyed_enemy_sprite;
+    de->destroyed_enemy_sprite.setOrigin(16, 16);
+    de->destroyed_enemy_sprite.setPosition(position.x, position.y);
+    de->destroyed_enemy_sprite.setRotation(rotation);
+    de->destroyed_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::BTRDestroyed]);
+    return de;
 }

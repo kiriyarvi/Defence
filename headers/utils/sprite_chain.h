@@ -18,9 +18,11 @@ public:
 	bool enabled = true;
 	sf::Sprite sprite;
 	std::list<SpriteChain> childs;
+    sf::Shader* shader = nullptr;
 private:
 	struct Element {
 		sf::Sprite* sprite;
+        sf::Shader* shader;
 		int layer;
 		sf::Transform transform;
 	};

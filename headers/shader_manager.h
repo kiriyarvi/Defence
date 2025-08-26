@@ -5,7 +5,8 @@
 
 
 enum class Shader {
-	GrayScale
+	GrayScale,
+    Scroll
 };
 
 class ShaderManager {

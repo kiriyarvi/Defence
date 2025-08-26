@@ -24,18 +24,22 @@ EnemyManager::EnemyManager() {
 	enemy_textures[EnemyTexturesID::RepairWrench].loadFromFile("sprites/repair_wrench.png");
     enemy_textures[EnemyTexturesID::Pickup].loadFromFile("sprites/pickup.png");
     enemy_textures[EnemyTexturesID::PickupDestroyed].loadFromFile("sprites/pickup_destroyed.png");
+    enemy_textures[EnemyTexturesID::BTR].loadFromFile("sprites/BTR.png");
+    enemy_textures[EnemyTexturesID::Trucks].loadFromFile("sprites/Trucks.png");
+    enemy_textures[EnemyTexturesID::Trucks].setRepeated(true);
+    enemy_textures[EnemyTexturesID::BTRDestroyed].loadFromFile("sprites/BTR_destroyed.png");
 }
 
 void EnemyManager::spawn() {
 	int enemy = rand() % 4;
 	if (enemy == 0)
-		m_enemies.push_back(std::make_unique<Pickup>());
+		m_enemies.push_back(std::make_unique<BTR>());
 	else if (enemy == 1)
-		m_enemies.push_back(std::make_unique<Pickup>());
+		m_enemies.push_back(std::make_unique<BTR>());
 	else if (enemy == 2)
-		m_enemies.push_back(std::make_unique<Pickup>());
+		m_enemies.push_back(std::make_unique<BTR>());
 	else 
-		m_enemies.push_back(std::make_unique<Pickup>());
+		m_enemies.push_back(std::make_unique<BTR>());
 	m_enemies.back()->path_id = rand() % all_paths.size();
 	m_enemies.back()->id = ++current_max_id;
 	m_enemies.back()->logic(0.0); // чтобы установить верную позицию.

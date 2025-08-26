@@ -19,7 +19,10 @@ enum class EnemyTexturesID {
 	Blusts16x16,
 	RepairWrench,
     Pickup,
-    PickupDestroyed
+    PickupDestroyed,
+    BTR,
+    BTRDestroyed,
+    Trucks
 };
 
 

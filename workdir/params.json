@@ -87,6 +87,12 @@
       "speed": 1.0,
       "reward": 40,
       "armor_level": 0
+    },
+    "BTR": {
+      "health": 85,
+      "speed": 0.5,
+      "reward": 100,
+      "armor_level": 1
     }
   }
 }
