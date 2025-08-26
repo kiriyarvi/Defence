@@ -7,7 +7,7 @@
 
 class SimpleEnemy : public IEnemy {
 public:
-	SimpleEnemy(EnemyTexturesID enemy_texture, EnemyTexturesID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params);
+	SimpleEnemy(EnemyTexturesID enemy_texture, EnemyTexturesID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params, EnemyType t);
 	IDestroyedEnemy::Ptr get_destroyed_enemy() override;
 	void draw(sf::RenderWindow& window) override;
 protected:
@@ -33,7 +33,7 @@ private:
 
 class Tank : public SimpleEnemy {
 public:
-	Tank() : SimpleEnemy(EnemyTexturesID::Tank, EnemyTexturesID::TankDestroyed, Sounds::DoubleBlust, ParamsManager::Instance().params.enemies.tank) {
+	Tank() : SimpleEnemy(EnemyTexturesID::Tank, EnemyTexturesID::TankDestroyed, Sounds::DoubleBlust, ParamsManager::Instance().params.enemies.tank, EnemyType::Tank) {
 		wheels = Wheels::Tracks;
 		infantry = false;
 	}
@@ -48,7 +48,7 @@ public:
 
 class Truck : public SimpleEnemy {
 public:
-	Truck() : SimpleEnemy(EnemyTexturesID::Truck, EnemyTexturesID::TruckDestroyed, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.truck) {
+	Truck() : SimpleEnemy(EnemyTexturesID::Truck, EnemyTexturesID::TruckDestroyed, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.truck, EnemyType::Truck) {
 		wheels = Wheels::Wheels;
 		infantry = false;
 	}
@@ -75,7 +75,7 @@ private:
 
 class Bike : public SimpleEnemy {
 public:
-	Bike() : SimpleEnemy(EnemyTexturesID::Bike, EnemyTexturesID::DestroyedBike, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.bike) {
+	Bike() : SimpleEnemy(EnemyTexturesID::Bike, EnemyTexturesID::DestroyedBike, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.bike, EnemyType::Bike) {
 		m_enemy_sprite.setOrigin(64, 64);
 		m_enemy_sprite.setScale(0.25, 0.25);
 		wheels = Wheels::Wheels;
@@ -86,7 +86,7 @@ public:
 
 class Pickup : public SimpleEnemy {
 public:
-    Pickup() : SimpleEnemy(EnemyTexturesID::Pickup, EnemyTexturesID::PickupDestroyed, Sounds::PickupDestruction, ParamsManager::Instance().params.enemies.pickup) {
+    Pickup() : SimpleEnemy(EnemyTexturesID::Pickup, EnemyTexturesID::PickupDestroyed, Sounds::PickupDestruction, ParamsManager::Instance().params.enemies.pickup, EnemyType::Pickup) {
         wheels = Wheels::Wheels;
         infantry = false;
     }

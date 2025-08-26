@@ -2,10 +2,10 @@
 #include "glm/gtc/random.hpp"
 #include "shader_manager.h"
 
-SimpleEnemy::SimpleEnemy(EnemyTexturesID enemy_texture, EnemyTexturesID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params):
+SimpleEnemy::SimpleEnemy(EnemyTexturesID enemy_texture, EnemyTexturesID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params, EnemyType t):
 	m_destroyed_enemy_texture(destroyed_enemy_texture),
 	m_destruction_sound(destruction_sound),
-	IEnemy(params)
+	IEnemy(params, t)
 {
 	m_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[enemy_texture]);
 	m_enemy_sprite.setOrigin(16, 16);
@@ -116,7 +116,7 @@ IDestroyedEnemy::Ptr Bike::get_destroyed_enemy() {
 }
 
 
-BTR::BTR(): IEnemy(ParamsManager::Instance().params.enemies.BTR) {
+BTR::BTR(): IEnemy(ParamsManager::Instance().params.enemies.BTR, EnemyType::BTR) {
     wheels = Wheels::Tracks;
     infantry = false;
     m_btr.sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::BTR]);
@@ -169,7 +169,7 @@ IDestroyedEnemy::Ptr BTR::get_destroyed_enemy() {
 }
 
 
-CruiserI::CruiserI(): IEnemy(ParamsManager::Instance().params.enemies.CruiserI) {
+CruiserI::CruiserI(): IEnemy(ParamsManager::Instance().params.enemies.CruiserI, EnemyType::CruiserI) {
     wheels = Wheels::HeavyTracks;
     infantry = false;
     m_btr.sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::CruiserIBase]);
@@ -186,7 +186,7 @@ CruiserI::CruiserI(): IEnemy(ParamsManager::Instance().params.enemies.CruiserI) 
     m_upper_truck->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Trucks]);
     m_upper_truck->sprite.setTextureRect(sf::IntRect(0, 0, 56, 7));
     m_upper_truck->sprite.setScale(5 / 14.f, 5 / 14.f);
-    m_upper_truck->set_position(10/2., 18/2.);
+    m_upper_truck->set_position(10/2., 16/2.);
     m_upper_truck->shader = &shader;
     m_upper_truck->layer = 1;
 

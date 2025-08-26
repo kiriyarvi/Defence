@@ -46,6 +46,14 @@ enum class TileTexture {
 };
 
 
+enum class BuildingType {
+    Minigun,
+    Spikes,
+    Mine,
+    Hedgehogs,
+    AntitankGun,
+    TwinGun
+};
 
 class IBuilding {
 public:

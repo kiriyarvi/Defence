@@ -4,6 +4,17 @@
 #include "glm/glm.hpp"
 #include "params_manager.h"
 
+enum class EnemyType {
+    Solder,
+    Bike,
+    Pickup,
+    Truck,
+    BTR,
+    Tank,
+    CruiserI
+};
+
+std::string to_string(EnemyType type);
 
 class HealthIndicator {
 public:
@@ -23,7 +34,7 @@ public:
 class IEnemy {
 public:
 	using Ptr = std::unique_ptr<IEnemy>;
-	IEnemy(const ParamsManager::Params::Enemies::Enemy& p);
+	IEnemy(const ParamsManager::Params::Enemies::Enemy& p, EnemyType t);
 	IEnemy(const IEnemy&) = delete;
 	IEnemy& operator=(const IEnemy&) = delete;
 	IEnemy(IEnemy&&) = default;
@@ -48,6 +59,7 @@ public:
 	bool path_is_completed = false;
 	
 	bool infantry; // пехота (мотоциклист считается пехотой)
+    EnemyType type;
 	enum class Wheels {
 		None,
 		Wheels,

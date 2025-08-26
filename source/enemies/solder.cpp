@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-Solder::Solder(): m_animation(2), IEnemy(ParamsManager::Instance().params.enemies.solder) {
+Solder::Solder(): m_animation(2), IEnemy(ParamsManager::Instance().params.enemies.solder, EnemyType::Solder) {
 	m_solder_sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::SolderWalkAnimation]);
 	m_solder_sprite.setOrigin(16, 16);
 	m_solder_sprite.setScale(0.25, 0.25);

@@ -5,6 +5,7 @@
 
 #include "enemies/simple_enemy.h"
 #include "enemies/solder.h"
+#include "achievement_system.h"
 
 EnemyManager::EnemyManager() {
 	all_paths = TileMap::Instance().get_road_graph().find_all_paths();
@@ -34,7 +35,6 @@ EnemyManager::EnemyManager() {
 
 void EnemyManager::spawn() {
 	int enemy = rand() % 7;
-    enemy = 6;
 	if (enemy == 0)
 		m_enemies.push_back(std::make_unique<Solder>());
 	else if (enemy == 1)
@@ -60,6 +60,7 @@ void EnemyManager::logic(double dtime) {
 	std::vector<IEnemy::Ptr> new_enemies;
 	for (auto& enemy : m_enemies) {
 		if (enemy->health <= 0) {
+            AchievementSystem::Instance().defeated(enemy->type);
 			m_destroyed_enemies.push_back(enemy->get_destroyed_enemy());
 			GameState::Instance().player_coins_add(enemy->params.reward);
 		}

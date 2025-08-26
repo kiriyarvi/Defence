@@ -2,6 +2,19 @@
 #include "game_state.h"
 #include "enemy_manager.h"
 
+std::string to_string(EnemyType type) {
+    std::unordered_map<EnemyType, std::string> m{
+        {EnemyType::Solder, "Пехотинец"},
+        {EnemyType::Bike, "Мотоциклист"},
+        {EnemyType::BTR, "БТР"},
+        {EnemyType::CruiserI, "Наземный крейсер-I"},
+        {EnemyType::Pickup, "Пикап"},
+        {EnemyType::Truck, "Грузовик"},
+        {EnemyType::Tank, "Танк"}
+    };
+    return m[type];
+}
+
 void HealthIndicator::draw(sf::RenderWindow& window, float x, float y, float max_healf, float current_healf) {
 	sf::RectangleShape rectangle(sf::Vector2f(width, 1));
 	rectangle.setPosition(x, y);
@@ -18,7 +31,7 @@ void HealthIndicator::draw(sf::RenderWindow& window, float x, float y, float max
 	window.draw(rectangle);
 }
 
-IEnemy::IEnemy(const ParamsManager::Params::Enemies::Enemy& p) : params{ p } {
+IEnemy::IEnemy(const ParamsManager::Params::Enemies::Enemy& p, EnemyType t) : params{ p }, type{t} {
 	health = params.health;
 };
 
