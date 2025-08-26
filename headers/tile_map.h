@@ -42,7 +42,8 @@ enum class TileTexture {
 	SpikesCross,
 	SpikesD,
 	SpikesIcon,
-	Hedgehog
+	Hedgehog,
+    Locked
 };
 
 

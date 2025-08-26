@@ -52,6 +52,7 @@ public:
 					int max_armor_penetration_level;
 					NLOHMANN_DEFINE_TYPE_INTRUSIVE(PenetrationUpgrade, min_armor_penetration_level, max_armor_penetration_level)
 				};
+                float rotation_speed;
 				std::vector<PenetrationUpgrade> penetration_upgrades;
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Minigun,
 					radius, heating_time, cooling_time,
@@ -59,7 +60,7 @@ public:
 					min_damage, max_damage,
 					cooldown_duration, critical_temperature,
 					critical_temperature_work_duration,
-					cost, penetration_upgrades
+					cost, penetration_upgrades, rotation_speed
 				)
 			} minigun;
 			struct Mine {

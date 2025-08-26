@@ -19,7 +19,7 @@ public:
 		RoadOnly
 	} restrictions;
 
-	BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius);
+	BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type);
 	BuildingButton(BuildingButton&& btn);
 	BuildingCreator creator;
 	template <typename T>
@@ -30,21 +30,36 @@ public:
 	}
 	bool is_cell_allowed(int x_id, int y_id);
 	virtual void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id);
-	void disable_selection();
+	void unselect();
 	void coins_update(int current_coins_count);
+    void defeat_event();
+    enum class State {
+        Locked,
+        Active,
+        Selected,
+        Disabled,
+    };
+    State get_state() const { return m_state; }
 public:
+    tgui::Group::Ptr group;
 	tgui::BitmapButton::Ptr button;
+    tgui::Picture::Ptr lock;
 	int cost;
-	bool disabled = false;
 private:
 	void connect();
+    State m_state = State::Locked;
 protected:
 	void draw_radius(sf::RenderWindow& window, int x_id, int y_id);
+    void lock_button(bool lock);
+    void set_state(State state);
+private:
+    void set_grayscale();
 protected:
 	TileTexture m_gun_icon;
 	GameState& m_game_state;
 	float m_radius;
 	tgui::Panel::Ptr m_tooltip;
+    BuildingType m_type;
 };
 
 

@@ -4,7 +4,7 @@
 #include "guns/minigun.h"
 #include "guns/twin_gun.h"
 #include "guns/antitank_gun.h"
-
+#include "achievement_system.h"
 
 GameState::GameState(sf::RenderWindow& window): m_gui(window) {
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" };
@@ -65,15 +65,15 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	m_building_buttons.push_back(std::make_unique<SpikesBuildingButton>(*this));
     m_building_buttons.push_back(std::make_unique<HedgeBuildingButton>(*this));
 	for (auto& button : m_building_buttons) {
-		bottom_panel_group->add(button->button);
+		bottom_panel_group->add(button->group);
 	}
 	bottom_panel_group->onSizeChange([=]() {
 		const float spacing = 4.f;
 		float size = bottom_panel_group->getSize().y;
 		float x = 0;
 		for (auto& button : m_building_buttons){
-			button->button->setSize({ size, size });
-			button->button->setPosition({ x, 0 });
+			button->group->setSize({ size, size });
+			button->group->setPosition({ x, 0 });
 			x += size + spacing;
 		}
 	});
@@ -100,7 +100,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 				if (on_map && m_current_building_construction->is_cell_allowed(cell_id.x, cell_id.y)) {
 					TileMap::Instance().map[cell_id.x][cell_id.y].building = m_current_building_construction->creator();
 					player_coins_add(-m_current_building_construction->cost);
-					if (m_current_building_construction->disabled) {
+					if (m_current_building_construction->get_state() == BuildingButton::State::Disabled) {
 						m_current_building_construction = nullptr;
 					}
 					return true;
@@ -110,7 +110,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 		else if (event.mouseButton.button == sf::Mouse::Button::Right) {
 			m_current_building_construction = nullptr;
 			for (auto& btn : m_building_buttons)
-				btn->disable_selection();
+				btn->unselect();
 			return true;
 		}
 	}
@@ -130,6 +130,12 @@ void GameState::draw(sf::RenderWindow& current_window) {
 		sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
 		m_current_building_construction->draw_building_plan(current_window, cell_id.x, cell_id.y);
 	}
+}
+
+void GameState::enemy_defeated(EnemyType type) {
+    AchievementSystem::Instance().defeated(type);
+    for (auto& btn : m_building_buttons)
+        btn->defeat_event();
 }
 
 void GameState::player_health_add(int health) {

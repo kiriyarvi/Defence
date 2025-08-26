@@ -64,15 +64,15 @@ void Spikes::draw(sf::RenderWindow& window, int x_id, int y_id) {
 void Spikes::logic(double dtime, int x_id, int y_id) {
 	glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);
 	for (auto& enemy : EnemyManager::Instance().m_enemies) {
-        if (enemy->wheels == IEnemy::Wheels::HeavyTracks) {
-            health = 0;
-            return;
-        }
-        if (enemy->wheels != IEnemy::Wheels::Wheels)
+        if (enemy->wheels == IEnemy::Wheels::None || enemy->wheels == IEnemy::Wheels::Tracks)
             continue;
 		if (health <= 0)
 			return;
 		if (glm::length(pos - enemy->get_position()) < 0.2 * 32) {
+            if (enemy->wheels == IEnemy::Wheels::HeavyTracks) {
+                health = 0;
+                return;
+            }
 			if(enemy->break_enemy(params.delay))
 				--health;
 		}

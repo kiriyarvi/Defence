@@ -71,6 +71,8 @@ TileMap::TileMap() {
 	textures[TileTexture::SpikesIcon].loadFromFile("sprites/spikes_icon.png");
 
     textures[TileTexture::Hedgehog].loadFromFile("sprites/hedgehog.png");
+
+    textures[TileTexture::Locked].loadFromFile("sprites/lock.png");
 	//Test Map
 	map[0][1].roads = { 1,0,1,0 };
 	map[1][1].roads = { 1,0,1,0 };

@@ -18,7 +18,7 @@
       "radius": 2,
       "heating_time": 12, // секунд для нагрева с минимальной температуры до максимальной.
       "cooling_time": 7, //секунд для остывания с максимальной температуры до минимальной.
-      "min_rotation_speed": 10, // минимальная скорость вращения (градусов в секунду)
+      "min_rotation_speed": 180, // минимальная скорость вращения (градусов в секунду)
       "max_rotation_speed": 720, // максимальная скорость вращения
       "min_damage": 1,
       "max_damage": 1,
@@ -35,7 +35,8 @@
           "min_armor_penetration_level": 1,
           "max_armor_penetration_level": 2
         }
-      ]
+      ],
+      "rotation_speed": 180
     },
     "mine": {
       "damage_radius": 2,

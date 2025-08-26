@@ -5,6 +5,7 @@
 #include "tile_map.h"
 #include <functional>
 #include "building_buttons.h"
+#include "enemies/IEnemy.h"
 
 class GameState {
 public:
@@ -26,6 +27,7 @@ public:
 	bool is_game_over() { return  m_player_hp <= 0; }
 	void player_health_add(int health);
 	void player_coins_add(int coins);
+    void enemy_defeated(EnemyType type);
 	//void minigun_state_update(const MiniGun& minigun);
 private:
 	friend class BuildingButton;	

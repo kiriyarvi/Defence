@@ -9,6 +9,7 @@
 #include "glm/gtc/random.hpp"
 
 MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
+    rotation_speed = m_params.rotation_speed;
 	radius = m_params.radius;
 	m_heat_speed = 1. / m_params.heating_time;
 	m_cooling_speed = 1. / m_params.cooling_time;
