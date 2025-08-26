@@ -111,3 +111,17 @@ private:
     SpriteChain* m_lower_truck;
     HealthIndicator m_indicator;
 };
+
+class CruiserI : public IEnemy {
+public:
+    CruiserI();
+    void draw(sf::RenderWindow& window) override;
+    bool logic(double dtime_microseconds) override;
+    IDestroyedEnemy::Ptr get_destroyed_enemy();
+private:
+    double m_trucks_offset = 0;
+    SpriteChain m_btr;
+    SpriteChain* m_upper_truck;
+    SpriteChain* m_lower_truck;
+    HealthIndicator m_indicator;
+};

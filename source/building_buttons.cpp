@@ -37,14 +37,15 @@ BuildingButton::BuildingButton(TileTexture gun_icon, GameState& game_state, cons
 void BuildingButton::connect() {
 	button->onPress.disconnectAll();
 	button->onPress.connect([&]() {
-		if (disabled) return;
-		m_game_state.m_current_building_construction = this;
-		this->button->getRenderer()->setTexture(TileMap::Instance().textures[TileTexture::ButtonClickedBackground]);
-		for (auto& button : m_game_state.m_building_buttons) {
-			if (button.get() != this)
-				button->disable_selection();
-		}
         m_tooltip->setVisible(true);
+        for (auto& button : m_game_state.m_building_buttons) {
+            if (button.get() != this)
+                button->disable_selection();
+        }
+        if (!disabled) {
+            m_game_state.m_current_building_construction = this;
+            this->button->getRenderer()->setTexture(TileMap::Instance().textures[TileTexture::ButtonClickedBackground]);
+        }
 	});
 }
 
@@ -114,9 +115,9 @@ void BuildingButton::draw_radius(sf::RenderWindow& window, int x_id, int y_id) {
 }
 
 void BuildingButton::disable_selection() {
+    m_tooltip->setVisible(false);
     if (!disabled) {
         button->getRenderer()->setTexture(TileMap::Instance().textures[TileTexture::ButtonBackground]);
-        m_tooltip->setVisible(false);
     }
 }
 
@@ -287,6 +288,7 @@ SpikesBuildingButton::SpikesBuildingButton(GameState& game_state) :
         "<color=#ffd303>Шипы</color>\n"
         "<b>Описание:</b> Прокалывает колеса, в результате чего противник останавливается не некоторое время. "
         "Шипы теряют прочность каждый раз, когда останавливают противника. При достижении нулевой прочности шипы ломаются. "
+        "Техника с тяжелыми гусеницами моментально уничтожает шипы. "
         "Бесполезны против пехоты и гусенечной техники. \n"
         "<color=#ffd303>Стоимость:" + std::to_string(params.cost) + "</color>\n"
         "<b>Характеристики:</b>\n"
@@ -323,6 +325,7 @@ HedgeBuildingButton::HedgeBuildingButton(GameState& game_state):
         "<color=#ffd303>Противотанковые ежи</color>\n"
         "<b>Описание:</b> Останавливают крупную колесную и гусенечную технику на некоторое время."
         "Теряют прочность каждый раз, когда останавливают противника. При достижении нулевой прочности ломаются."
+        "Техника с тяжелыми гусеницами моментально уничтожает противотанковые ежи. "
         "Колесная техника останавливается на большее время. Бесполезны против пехоты и мотоциклистов.\n"
         "<color=#ffd303>Стоимость:" + std::to_string(params.cost) + "</color>\n"
         "<b>Характеристики:</b>\n"

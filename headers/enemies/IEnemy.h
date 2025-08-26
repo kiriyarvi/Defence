@@ -9,6 +9,7 @@ class HealthIndicator {
 public:
 	void draw(sf::RenderWindow& window, float x, float y, float max_healf, float current_healf);
 	float width = 16;
+    sf::Color fill_color = sf::Color::Red;
 };
 
 class IDestroyedEnemy {
@@ -50,7 +51,8 @@ public:
 	enum class Wheels {
 		None,
 		Wheels,
-		Tracks
+		Tracks,
+        HeavyTracks
 	} wheels;
 private:
 	sf::Vector2i last_breaking_cell = { -1, -1 };

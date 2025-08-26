@@ -22,7 +22,9 @@ enum class EnemyTexturesID {
     PickupDestroyed,
     BTR,
     BTRDestroyed,
-    Trucks
+    Trucks,
+    CruiserIBase,
+    CruiserIEquipment
 };
 
 

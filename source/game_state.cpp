@@ -108,12 +108,10 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 			}
 		}
 		else if (event.mouseButton.button == sf::Mouse::Button::Right) {
-			if (m_current_building_construction) {
-				m_current_building_construction = nullptr;
-				for (auto& btn : m_building_buttons)
-					btn->disable_selection();
-				return true;
-			}
+			m_current_building_construction = nullptr;
+			for (auto& btn : m_building_buttons)
+				btn->disable_selection();
+			return true;
 		}
 	}
 	return false;

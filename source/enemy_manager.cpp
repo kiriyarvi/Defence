@@ -28,18 +28,27 @@ EnemyManager::EnemyManager() {
     enemy_textures[EnemyTexturesID::Trucks].loadFromFile("sprites/Trucks.png");
     enemy_textures[EnemyTexturesID::Trucks].setRepeated(true);
     enemy_textures[EnemyTexturesID::BTRDestroyed].loadFromFile("sprites/BTR_destroyed.png");
+    enemy_textures[EnemyTexturesID::CruiserIBase].loadFromFile("sprites/cruiser_I_base.png");
+    enemy_textures[EnemyTexturesID::CruiserIEquipment].loadFromFile("sprites/cruiser_I_equipment.png");
 }
 
 void EnemyManager::spawn() {
-	int enemy = rand() % 4;
+	int enemy = rand() % 7;
+    enemy = 6;
 	if (enemy == 0)
-		m_enemies.push_back(std::make_unique<BTR>());
+		m_enemies.push_back(std::make_unique<Solder>());
 	else if (enemy == 1)
-		m_enemies.push_back(std::make_unique<BTR>());
+		m_enemies.push_back(std::make_unique<Bike>());
 	else if (enemy == 2)
-		m_enemies.push_back(std::make_unique<BTR>());
-	else 
-		m_enemies.push_back(std::make_unique<BTR>());
+		m_enemies.push_back(std::make_unique<Pickup>());
+	else if (enemy == 3)
+		m_enemies.push_back(std::make_unique<Truck>());
+    else if (enemy == 4)
+        m_enemies.push_back(std::make_unique<BTR>());
+    else if (enemy == 5)
+        m_enemies.push_back(std::make_unique<Tank>());
+    else if (enemy == 6)
+        m_enemies.push_back(std::make_unique<CruiserI>());
 	m_enemies.back()->path_id = rand() % all_paths.size();
 	m_enemies.back()->id = ++current_max_id;
 	m_enemies.back()->logic(0.0); // чтобы установить верную позицию.

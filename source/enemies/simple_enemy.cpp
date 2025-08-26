@@ -167,3 +167,68 @@ IDestroyedEnemy::Ptr BTR::get_destroyed_enemy() {
     de->destroyed_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::BTRDestroyed]);
     return de;
 }
+
+
+CruiserI::CruiserI(): IEnemy(ParamsManager::Instance().params.enemies.CruiserI) {
+    wheels = Wheels::HeavyTracks;
+    infantry = false;
+    m_btr.sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::CruiserIBase]);
+    m_btr.sprite.setScale(0.5, 0.5);
+    m_btr.layer = 0;
+    m_btr.set_position_origin(16, 16);
+    m_btr.set_rotation_origin(16, 16);
+    m_upper_truck = &m_btr.childs.emplace_back();
+    m_lower_truck = &m_btr.childs.emplace_back();
+
+
+    auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
+
+    m_upper_truck->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Trucks]);
+    m_upper_truck->sprite.setTextureRect(sf::IntRect(0, 0, 56, 7));
+    m_upper_truck->sprite.setScale(5 / 14.f, 5 / 14.f);
+    m_upper_truck->set_position(10/2., 18/2.);
+    m_upper_truck->shader = &shader;
+    m_upper_truck->layer = 1;
+
+    m_lower_truck->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Trucks]);
+    m_lower_truck->sprite.setTextureRect(sf::IntRect(0, 0, 56, 7));
+    m_lower_truck->sprite.setScale(5 / 14.f, 5 / 14.f);
+    m_lower_truck->set_position(10/2., 44/2.);
+    m_lower_truck->shader = &shader;
+    m_lower_truck->layer = 1;
+
+    auto& eq = m_btr.childs.emplace_back();
+    eq.sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::CruiserIEquipment]);
+    eq.sprite.setScale(0.5, 0.5);
+    eq.layer = 2;
+
+    m_indicator.width = 32;
+    m_indicator.fill_color = sf::Color::Magenta;
+}
+
+void CruiserI::draw(sf::RenderWindow& window) {
+    auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
+    shader.setUniform("texture", sf::Shader::CurrentTexture);
+    shader.setUniform("offset", -(float)m_trucks_offset / (1000 * 1000));
+    m_btr.set_rotation(rotation);
+    m_btr.set_position(position.x, position.y);
+    m_btr.draw(window);
+    m_indicator.draw(window, position.x, position.y - 8, params.health, health);
+}
+
+bool CruiserI::logic(double dtime_microseconds) {
+    m_trucks_offset += params.speed * dtime_microseconds;
+    if (m_trucks_offset >= 1000 * 1000)
+        m_trucks_offset = 0;
+    return IEnemy::logic(dtime_microseconds);
+}
+
+IDestroyedEnemy::Ptr CruiserI::get_destroyed_enemy() {
+    auto de = std::make_unique<SimpleEnemyDestroyed>(std::make_unique<DenceBlustFramer>(), 1.4, 2.0, Sounds::DenceBlust);
+    de->destroyed_enemy_sprite;
+    de->destroyed_enemy_sprite.setOrigin(16, 16);
+    de->destroyed_enemy_sprite.setPosition(position.x, position.y);
+    de->destroyed_enemy_sprite.setRotation(rotation);
+    de->destroyed_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::BTRDestroyed]);
+    return de;
+}

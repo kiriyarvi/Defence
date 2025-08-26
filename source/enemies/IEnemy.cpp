@@ -10,7 +10,7 @@ void HealthIndicator::draw(sf::RenderWindow& window, float x, float y, float max
 	rectangle.setOutlineThickness(0.5f);
 	rectangle.setOrigin(width / 2, 0.5);
 	window.draw(rectangle);
-	rectangle.setFillColor(sf::Color::Red);
+	rectangle.setFillColor(fill_color);
 	rectangle.setOutlineColor(sf::Color::Transparent);
 	rectangle.setSize(sf::Vector2f(width * current_healf / max_healf, 1.f));
 	rectangle.setOrigin(0, 0.5);

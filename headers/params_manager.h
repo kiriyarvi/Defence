@@ -100,7 +100,8 @@ public:
 			Enemy tank;
             Enemy pickup;
             Enemy BTR;
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Enemies, solder, bike, truck, tank, pickup, BTR)
+            Enemy CruiserI;
+			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Enemies, solder, bike, truck, tank, pickup, BTR, CruiserI)
 		} enemies;
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(Params, guns, enemies)
 	} params;
