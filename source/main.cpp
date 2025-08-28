@@ -41,7 +41,7 @@ int main() {
 			dtime = accumulator;
 			accumulator = 0;
 			game_state.logic();
-			if (!game_state.is_game_over()) {
+			if (!game_state.is_game_over() && !game_state.is_help_displayed()) {
 				EnemyManager::Instance().logic(dtime);
 				TileMap::Instance().logic(dtime);
 				SoundManager::Instance().logic();

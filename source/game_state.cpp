@@ -12,13 +12,15 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	m_gui.setFont(PixelSplitter_Bold_font);
 	tgui::Texture::setDefaultSmooth(false); // отключим сглаживание текстур
 
+    m_ui = tgui::Group::create();
+
 	m_player_health_count_widget = tgui::Label::create("X" + std::to_string(m_player_hp));
 	m_player_health_count_widget->setPosition("100%", 0);
 	m_player_health_count_widget->setOrigin(1, 0);
 	m_player_health_count_widget->setTextSize(32);
 	m_player_health_count_widget->ignoreMouseEvents(true);
 	m_player_health_count_widget->getRenderer()->setTextColor(tgui::Color::White);
-	m_gui.add(m_player_health_count_widget, "HealthCountWidget");
+    m_ui->add(m_player_health_count_widget, "HealthCountWidget");
 
 
 	tgui::Picture::Ptr heart_icon = tgui::Picture::create("sprites/heart.png");
@@ -28,13 +30,13 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	);
 	heart_icon->setSize(32, 32);
 	heart_icon->ignoreMouseEvents(true);
-	m_gui.add(heart_icon);
+    m_ui->add(heart_icon);
 
 	m_player_coins_count_widget = tgui::Label::create(std::to_string(m_player_coins));
 	m_player_coins_count_widget->setTextSize(32);
 	m_player_coins_count_widget->ignoreMouseEvents(true);
 	m_player_coins_count_widget->getRenderer()->setTextColor(tgui::Color(255, 211, 3));
-	m_gui.add(m_player_coins_count_widget, "CoinsCountWidget");
+    m_ui->add(m_player_coins_count_widget, "CoinsCountWidget");
 	tgui::Picture::Ptr coin_picture = tgui::Picture::create("sprites/coin.png");
 	coin_picture->setPosition(
 		"(CoinsCountWidget.right)", // X: левый край rightWidget минус ширина heart_icon
@@ -42,7 +44,7 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	);
 	coin_picture->ignoreMouseEvents(true);
 	coin_picture->setSize(32, 32);
-	m_gui.add(coin_picture);
+    m_ui->add(coin_picture);
 
 	m_centered_message = tgui::Label::create("");
 	m_centered_message->setPosition("50%", "50%");
@@ -51,7 +53,7 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	m_centered_message->ignoreMouseEvents(true);
 	m_centered_message->getRenderer()->setTextColor(tgui::Color::Red);
 
-	m_gui.add(m_centered_message);
+	m_ui->add(m_centered_message);
 
 	// Нижняя панель
 
@@ -67,6 +69,15 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	for (auto& button : m_building_buttons) {
 		bottom_panel_group->add(button->group);
 	}
+
+    auto help_button = tgui::Button::create("?");
+    help_button->onClick.connect([&]() {
+        display_help(true);
+    });
+    help_button->setOrigin(1., 0.);
+    help_button->setPosition("100%", 0);
+    bottom_panel_group->add(help_button);
+
 	bottom_panel_group->onSizeChange([=]() {
 		const float spacing = 4.f;
 		float size = bottom_panel_group->getSize().y;
@@ -76,10 +87,33 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 			button->group->setPosition({ x, 0 });
 			x += size + spacing;
 		}
+        help_button->setSize({ size, size });
 	});
-	m_gui.add(bottom_panel_group);
+
+ 
+
+    m_ui->add(bottom_panel_group);
 
 	player_coins_add(2000);
+
+    m_panel = tgui::Panel::create();
+    m_panel->setTextSize(30);
+    m_panel->setVisible(false);
+    auto tooltip_renderer = m_panel->getRenderer();
+    tooltip_renderer->setBackgroundColor(tgui::Color::Color(50, 50, 50, 200));
+    tooltip_renderer->setBorders(3);
+    tooltip_renderer->setBorderColor(tgui::Color::Black);
+    tooltip_renderer->setFont(GOSTtypeA_font);
+    m_panel->setPosition("100%", "HealthCountWidget.height");
+    m_panel->setOrigin(1., 0);
+    m_panel->setSize("25%", "80%");
+
+    m_ui->add(m_panel);
+    m_gui.add(m_ui);
+
+    m_help.get_content()->getRenderer()->setFont(GOSTtypeA_font);
+    m_help.get_content()->setTextSize(30);
+
 }
 
 tgui::Gui& GameState::get_tgui() {
@@ -144,6 +178,26 @@ void GameState::enemy_defeated(EnemyType type) {
 
 void GameState::win() {
     m_win = true;
+}
+
+void GameState::display_help(bool help) {
+    m_is_help_displayed = help;
+    m_gui.removeAllWidgets();
+    if (help)
+        m_gui.add(m_help.get_content());
+    else
+        m_gui.add(m_ui);
+}
+
+void GameState::set_panel_content(tgui::Widget::Ptr content) {
+    m_panel->removeAllWidgets();
+    if (content) {
+        m_panel->add(content);
+        m_panel->setVisible(true);
+    }
+    else {
+        m_panel->setVisible(false);
+    }
 }
 
 void GameState::player_health_add(int health) {

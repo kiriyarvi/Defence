@@ -4,8 +4,9 @@
 
 #include "tile_map.h"
 #include <functional>
-#include "building_buttons.h"
+#include "gui/building_buttons.h"
 #include "enemies/IEnemy.h"
+#include "gui/help.h"
 
 class GameState {
 public:
@@ -30,6 +31,11 @@ public:
 	void player_coins_add(int coins);
     void enemy_defeated(EnemyType type);
     void win();
+    void set_panel_content(tgui::Widget::Ptr content);
+    void display_help(bool help);
+    bool is_help_displayed() {
+        return m_is_help_displayed;
+    }
 	//void minigun_state_update(const MiniGun& minigun);
 private:
 	friend class BuildingButton;	
@@ -39,8 +45,11 @@ private:
 	int m_player_hp = 10;
 	int m_player_coins = 0;
 private:
-    bool m_win = false;
 	tgui::Gui m_gui;
+    tgui::Group::Ptr m_ui;
+    Help m_help;
+    bool m_win = false;
+    bool m_is_help_displayed = false;
 	tgui::Label::Ptr m_player_health_count_widget;
 	tgui::Label::Ptr m_player_coins_count_widget;
 	tgui::Label::Ptr m_centered_message; // сообщение по центру
@@ -48,6 +57,7 @@ private:
 	BuildingButton* m_current_building_construction = nullptr;
 	sf::Vector2f m_mouse_pos;
 	std::list<std::unique_ptr<BuildingButton>> m_building_buttons;
+    tgui::Panel::Ptr m_panel = nullptr;
 public:
     tgui::Font GOSTtypeA_font;
     tgui::Font PixelSplitter_Bold_font; // расположены здесь, чтобы уничтожались первее (иначе ошибка в tgui).
