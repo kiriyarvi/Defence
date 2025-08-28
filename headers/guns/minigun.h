@@ -15,6 +15,9 @@ public:
 	void on_gun_pointed() override;
 	void on_gun_unpointed() override;
     ACCEPT(Minigun)
+	int m_penetration_upgrade = 0;
+	int m_cooling_upgrade = 0;
+	int m_lubricant_upgrade = 0;
 private:
 	void temperature_logic(double dtime_microseconds);
 	void drum_animation();
@@ -29,7 +32,6 @@ private:
 	float m_temperature = 0; // max = 1'000'000
 	float m_cooldown_timer = 0;
 	float m_critical_temperature_mod_timer = 0;
-	int m_penetration_upgrade = 0;
 
 	enum class State {
 		Heating,

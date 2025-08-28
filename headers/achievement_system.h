@@ -16,13 +16,20 @@ public:
     AchievementSystem& operator=(const AchievementSystem&) = delete;
     AchievementSystem(AchievementSystem&&) = delete;
     AchievementSystem& operator=(AchievementSystem&&) = delete;
-    void defeated(EnemyType enemy_type);
+    bool defeated(EnemyType enemy_type);
     bool is_unlocked(BuildingType type);
     std::string get_achievement_description(BuildingType type);
+
+    struct MinigunUpgrades {
+        int penetration_upgrade = 0;
+        int cooling_upgrade = 0;
+        int lubricant_update = 0;
+    } minigun_upgrades;
+
 private:
     AchievementSystem();
     std::unordered_map<EnemyType, BuildingType> m_achievements;
 private:
     std::unordered_map<BuildingType, bool> m_unlocked_buildings;
-
+    std::map<EnemyType, std::function<void()>> m_general_achievements;
 };

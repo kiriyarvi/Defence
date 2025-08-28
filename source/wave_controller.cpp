@@ -8,10 +8,10 @@ WaveController::WaveController() {
     {
         Route r1;
         r1.route = rand() % all_paths;
-        r1.spawner.push_back({ EnemyType::CruiserI, 0, false });
-        r1.spawner.push_back({ EnemyType::CruiserI, 4, true });
-        /*r1.spawner.push_back({ EnemyType::Solder, 1 });
-        r1.spawner.push_back({ EnemyType::Solder, 1 });*/
+        //r1.spawner.push_back({ EnemyType::CruiserI, 0, false });
+        //r1.spawner.push_back({ EnemyType::CruiserI, 4, true });
+        r1.spawner.push_back({ EnemyType::Pickup, 1 });
+        r1.spawner.push_back({ EnemyType::Pickup, 1 });
         Wave w;
         w.prepairing_time = 3;
         w.routes.push_back(r1);

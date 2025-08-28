@@ -12,7 +12,7 @@
 #include "gui/info_panel.h"
 
 BuildingButton::BuildingButton(TextureID gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name)
-    : creator{ creator }, restrictions{ restrictions }, m_game_state{ game_state }, cost{ cost }, m_radius(radius), m_type{ type }, m_name{name}, IconButton(gun_icon) {
+    : creator{ creator }, restrictions{ restrictions }, m_game_state{ game_state }, cost{ cost }, m_radius(radius), m_type{ type }, m_name{name}, IconButton(gun_icon, TextureID::ButtonBackground, TextureID::ButtonClickedBackground) {
     connect();
 }
 
@@ -28,9 +28,11 @@ void BuildingButton::connect() {
             m_game_state.m_current_building_construction = this;
         }
 	});
+    m_group->onMouseEnter.disconnectAll();
     m_group->onMouseEnter([&]() {
         show_info_content();
     });
+    m_group->onMouseLeave.disconnectAll();
     m_group->onMouseLeave([&]() {
         m_game_state.set_tooltip_content("");
     });

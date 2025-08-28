@@ -7,6 +7,7 @@
 #include "gui/building_buttons.h"
 #include "enemies/IEnemy.h"
 #include "gui/help.h"
+#include "gui/upgrade_panel.h"
 
 class GameState {
 public:
@@ -30,6 +31,7 @@ public:
 	void player_health_add(int health);
     void kill_player();
 	void player_coins_add(int coins);
+    int get_player_coins() const { return m_player_coins; }
     void enemy_defeated(EnemyType type);
     void win();
     void set_panel_content(tgui::Widget::Ptr content);
@@ -37,9 +39,10 @@ public:
     bool is_help_displayed() {
         return m_is_help_displayed;
     }
-    void set_tooltip_content(const std::string& content);
+    void set_tooltip_content(const std::string& content, sf::Vector2f origin = {0.,1.});
 
 	//void minigun_state_update(const MiniGun& minigun);
+    sf::Window& window;
 private:
 	friend class BuildingButton;	
 private:
@@ -62,6 +65,7 @@ private:
 	std::list<std::unique_ptr<BuildingButton>> m_building_buttons;
     tgui::Panel::Ptr m_panel = nullptr;
     tgui::RichTextLabel::Ptr m_mouse_tooltip;
+    UpgradePanelCreator m_upgrade_panel_creator;
 public:
     tgui::Font GOSTtypeA_font;
     tgui::Font PixelSplitter_Bold_font; // расположены здесь, чтобы уничтожались первее (иначе ошибка в tgui).

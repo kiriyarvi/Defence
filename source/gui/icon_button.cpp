@@ -1,7 +1,8 @@
 #include "gui/icon_button.h"
 #include "shader_manager.h"
 
-IconButton::IconButton(TextureID icon): m_icon(icon) {
+IconButton::IconButton(TextureID icon, TextureID active_backgound, TextureID selected_background):
+    m_icon(icon), m_active_background(active_backgound), m_selected_background(selected_background) {
 	m_group = tgui::Group::create();
 	m_group->setSize({ "height" , "100%" });
 
@@ -30,7 +31,7 @@ void IconButton::set_state(State state) {
 	}
 	case IconButton::State::Active: {
 		m_lock->setVisible(false);
-		tgui::Texture background(TextureManager::Instance().textures[TextureID::ButtonBackground]);
+		tgui::Texture background(TextureManager::Instance().textures[m_active_background]);
 		tgui::Texture icon(TextureManager::Instance().textures[m_icon]);
 		m_button->getSharedRenderer()->setTexture(background);
 		m_button->setImage(icon);
@@ -38,7 +39,7 @@ void IconButton::set_state(State state) {
 	}
 	case IconButton::State::Selected: {
 		m_lock->setVisible(false);
-		tgui::Texture background(TextureManager::Instance().textures[TextureID::ButtonClickedBackground]);
+		tgui::Texture background(TextureManager::Instance().textures[m_selected_background]);
 		tgui::Texture icon(TextureManager::Instance().textures[m_icon]);
 		m_button->getSharedRenderer()->setTexture(background);
 		m_button->setImage(icon);
@@ -54,7 +55,7 @@ void IconButton::set_state(State state) {
 }
 
 void IconButton::set_grayscale() {
-	tgui::Texture background(TextureManager::Instance().textures[TextureID::ButtonBackground]);
+	tgui::Texture background(TextureManager::Instance().textures[m_active_background]);
 	tgui::Texture icon(TextureManager::Instance().textures[m_icon]);
 	background.setShader(&ShaderManager::Instance().shaders[Shader::GrayScale]);
 	icon.setShader(&ShaderManager::Instance().shaders[Shader::GrayScale]);

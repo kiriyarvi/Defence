@@ -69,4 +69,10 @@ TextureManager::TextureManager() {
     textures[TextureID::BTRDestroyed].loadFromFile("sprites/BTR_destroyed.png");
     textures[TextureID::CruiserIBase].loadFromFile("sprites/cruiser_I_base.png");
     textures[TextureID::CruiserIEquipment].loadFromFile("sprites/cruiser_I_equipment.png");
+
+    textures[TextureID::UpgradeButtonBackground].loadFromFile("sprites/upgrade_button.png");
+    textures[TextureID::UpgradeButtonBackgroundCompleted].loadFromFile("sprites/upgrade_button_completed.png");
+    textures[TextureID::MinigunShellsUpgradeI].loadFromFile("sprites/minigun_shells_upgrade_I.png");
+    textures[TextureID::MinigunCoolingUpgradeI].loadFromFile("sprites/minigun_cooling_upgrade_I.png");
+    textures[TextureID::MinigunLubricantUpgradeI].loadFromFile("sprites/minigun_lubricant_upgrade_I.png");
 }

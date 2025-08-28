@@ -4,7 +4,7 @@
 
 class IconButton {
 public:
-    IconButton(TextureID icon);
+    IconButton(TextureID icon, TextureID active_backgound, TextureID selected_background);
     enum class State {
         Locked,
         Active,
@@ -12,7 +12,6 @@ public:
         Disabled,
     };
     State get_state() const { return m_state; }
-protected:
     void set_state(State state);
 public:
     tgui::Group::Ptr m_group;
@@ -22,5 +21,7 @@ private:
     void set_grayscale();
 protected:
     State m_state;
+    TextureID m_active_background;
+    TextureID m_selected_background;
     TextureID m_icon;
 };

@@ -6,7 +6,7 @@
 #include "guns/antitank_gun.h"
 #include "achievement_system.h"
 
-GameState::GameState(sf::RenderWindow& window): m_gui(window) {
+GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" };
     PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };
 	m_gui.setFont(PixelSplitter_Bold_font);
@@ -94,7 +94,7 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 
     m_ui->add(bottom_panel_group);
 
-	player_coins_add(2000);
+	player_coins_add(20000);
 
     m_panel = tgui::Panel::create();
     m_panel->setTextSize(30);
@@ -131,8 +131,9 @@ tgui::Gui& GameState::get_tgui() {
 	return m_gui;
 }
 
-void GameState::set_tooltip_content(const std::string& content) {
+void GameState::set_tooltip_content(const std::string& content, sf::Vector2f origin) {
     if (!content.empty()) {
+        m_mouse_tooltip->setOrigin(origin.x, origin.y);
         m_mouse_tooltip->setText(content);
         m_mouse_tooltip->setVisible(true);
     }
@@ -171,13 +172,18 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
             }
             else { // если не строили, значит запросили открыть окно постройки
                 sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
-                bool on_map = m_mouse_pos.x < 8 && m_mouse_pos.x >= 0 && m_mouse_pos.y < 8 && m_mouse_pos.y >= 0;
-                if (!on_map)
+                bool on_map = cell_id.x < 8 && cell_id.x >= 0 && cell_id.y < 8 && cell_id.y >= 0;
+                if (!on_map) {
+                    set_panel_content(nullptr);
                     return false;
+                }
                 auto& cell = TileMap::Instance().map[cell_id.x][cell_id.y];
-                if (!cell.building)
+                if (!cell.building) {
+                    set_panel_content(nullptr);
                     return false;
-                
+                }
+                cell.building->accept(m_upgrade_panel_creator);
+                set_panel_content(m_upgrade_panel_creator.panel);
             }
 			return true;
 		}
@@ -205,9 +211,12 @@ void GameState::draw(sf::RenderWindow& current_window) {
 }
 
 void GameState::enemy_defeated(EnemyType type) {
-    AchievementSystem::Instance().defeated(type);
+    bool achievement = AchievementSystem::Instance().defeated(type);
+    if (!achievement)
+        return;
     for (auto& btn : m_building_buttons)
         btn->defeat_event();
+    m_upgrade_panel_creator.achievement_event();
 }
 
 void GameState::win() {

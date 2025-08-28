@@ -8,13 +8,26 @@ AchievementSystem::AchievementSystem() {
     m_achievements[EnemyType::BTR] = BuildingType::Hedgehogs;
     m_achievements[EnemyType::Tank] = BuildingType::AntitankGun;
     m_achievements[EnemyType::CruiserI] = BuildingType::TwinGun;
+
+    m_general_achievements[EnemyType::Pickup] = [&]() {
+        minigun_upgrades.penetration_upgrade = 1;
+    };
 }
 
-void AchievementSystem::defeated(EnemyType enemy_type) {
+bool AchievementSystem::defeated(EnemyType enemy_type) {
+    bool achievement = false;
     auto it = m_achievements.find(enemy_type);
     if (it != m_achievements.end()) {
         m_unlocked_buildings[it->second] = true;
+        achievement = true;
     }
+    auto g_it = m_general_achievements.find(enemy_type);
+    if (g_it != m_general_achievements.end()) {
+        g_it->second();
+        m_general_achievements.erase(g_it);
+        achievement = true;
+    }
+    return achievement;
 }
 
 bool AchievementSystem::is_unlocked(BuildingType type) {

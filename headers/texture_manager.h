@@ -60,7 +60,12 @@ enum class TextureID {
     BTRDestroyed,
     Trucks,
     CruiserIBase,
-    CruiserIEquipment
+    CruiserIEquipment,
+    UpgradeButtonBackground,
+    UpgradeButtonBackgroundCompleted,
+    MinigunShellsUpgradeI,
+    MinigunCoolingUpgradeI,
+    MinigunLubricantUpgradeI
 };
 
 class TextureManager {
