@@ -12,9 +12,7 @@
 MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
     rotation_speed = m_params.rotation_speed;
 	radius = m_params.radius;
-	m_heat_speed = 1. / m_params.heating_time;
-	m_cooling_speed = 1. / m_params.cooling_time;
-
+	
 	m_minigun_sprite.sprite.setTexture(TextureManager::Instance().textures[TextureID::MiniGun]);
 	m_minigun_sprite.set_position_origin(16, 16);
 	m_minigun_sprite.set_rotation_origin(16, 16);
@@ -71,6 +69,7 @@ MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
     m_enemy_rebound_animation.set_duration(shot_offset_time);
     m_enemy_rebound_animation.add_framer(m_enemy_rebound_framer);
 }
+
 
 void MiniGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
 	IRotatingGun::draw(window, x_id, y_id);
@@ -181,27 +180,32 @@ void MiniGun::logic(double dtime_microseconds, int x_id, int y_id) {
 }
 
 void MiniGun::temperature_logic(double dtime_microseconds) {
+    float heat_speed = 1.f / m_params.lubricant_upgrades[m_lubricant_upgrade].heating_time;
+    float cooling_speed = 1.f / m_params.cooling_upgrades[m_cooling_upgrade].cooling_time;
 	if (m_state == State::Heating) {
-		m_temperature += dtime_microseconds * m_heat_speed;
+		m_temperature += dtime_microseconds * heat_speed;
 		m_temperature = std::min(m_temperature, 1000 * 1000.f);
 		if (m_temperature > 1000 * 1000 * m_params.critical_temperature) {
 			m_critical_temperature_mod_timer += dtime_microseconds;
 		}
 	}
 	else if (m_state == State::Cooling) {
-		m_temperature -= dtime_microseconds * m_cooling_speed;
+		m_temperature -= dtime_microseconds * cooling_speed;
 		if (m_temperature > 1000 * 1000 * m_params.critical_temperature) {
 			m_critical_temperature_mod_timer += dtime_microseconds;
-		}
-		if (m_temperature < 0) {
+        }
+        else
+            m_critical_temperature_mod_timer = 0;
+		if (m_temperature <= 0) {
+            m_temperature = 0;
 			m_state = State::Ready;
 		}
 	}
 	else if (m_state == State::CoolDown) {
 		m_cooldown_timer += dtime_microseconds;
-		m_temperature -= dtime_microseconds * m_cooling_speed;
+		m_temperature -= dtime_microseconds * cooling_speed;
 		m_temperature = std::max(0.f, m_temperature);
-		if (m_cooldown_timer >= m_params.cooldown_duration * 1000 * 1000) {
+		if (m_cooldown_timer >= m_params.cooling_upgrades[m_cooling_upgrade].cooldown_duration * 1000 * 1000) {
 			if (!m_is_enemy_captured)
 				m_state = State::Ready;
 			else {
@@ -214,7 +218,7 @@ void MiniGun::temperature_logic(double dtime_microseconds) {
 		m_overheat_animation.logic(dtime_microseconds);
 	}
 
-	if (m_critical_temperature_mod_timer >= m_params.critical_temperature_work_duration * 1000 * 1000) {
+	if (m_critical_temperature_mod_timer >= m_params.cooling_upgrades[m_cooling_upgrade].critical_temperature_work_duration * 1000 * 1000) {
 		m_state = State::CoolDown;
 		m_cooldown_timer = 0;
 		SoundManager::Instance().play(Sounds::OverHeat);
@@ -233,7 +237,7 @@ void MiniGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
         current_penetration_level = std::min(current_penetration_level, penetration_upgrade.max_armor_penetration_level);
         bool penetration = current_penetration_level >= enemy.params.armor_level;
         if (penetration)
-            enemy.health -= int(t * (m_params.max_damage - m_params.min_damage) + m_params.min_damage);
+            enemy.health -= std::min(int(t * (penetration_upgrade.max_damage - penetration_upgrade.min_damage + 1) + penetration_upgrade.min_damage), penetration_upgrade.max_damage);
 		m_shoot_state = ShootState::CoolDown;
 		m_shoot_timer = 0;
 		SoundManager::Instance().play(Sounds::MiniGunShot,10, 25 + (rand() % 100) / 100.f * 7, 1.0 - (rand() % 100) / 100.f * 0.05);

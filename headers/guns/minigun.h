@@ -25,9 +25,7 @@ private:
 	void compass_logic(int x_id, int y_id);
 private:
 	const ParamsManager::Params::Guns::Minigun& m_params;
-	SpriteChain m_minigun_sprite;
-	float m_heat_speed; // m_temperature в секунду
-	float m_cooling_speed; // m_temperature в секунду
+    SpriteChain m_minigun_sprite;
 	float m_drum_angle = 0; // угол поворота барабана (нужно нормировать на 10^6).
 	float m_temperature = 0; // max = 1'000'000
 	float m_cooldown_timer = 0;

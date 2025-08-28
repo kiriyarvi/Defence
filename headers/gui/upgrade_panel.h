@@ -14,10 +14,9 @@ public:
 	UpgradeButton(UpgradeButton&& btn);
 	UpgradeButton(const UpgradeButton&) = delete;
 	UpgradeButton& operator=(const UpgradeButton&) = delete;
-	void coins_update(int current_coins_count);
-	void achievement_event();
-	std::function<void()> on_upgrade;
-	std::function<bool()> unlock_condition;
+    void update();
+	std::function<void()> on_mouse_enter;
+	std::function<void()> on_mouse_leave;
 private:
 	void connect();
 	int m_cost;
@@ -25,13 +24,14 @@ private:
 	int& m_achievement_system_upgrade;
 	int m_goal_upgrade_value;
 	std::string m_name;
+    std::string m_reason;
 };
 
 
 class  UpgradePanelCreator : public IBuildingVisitor {
 public:
 	UpgradePanelCreator();
-	void achievement_event();
+	void update();
 	virtual void visit(MiniGun& minigun);
 	virtual void visit(Spikes& spikes);
 	virtual void visit(Hedgehog& headgehogs);
@@ -39,6 +39,7 @@ public:
 	virtual void visit(TwinGun& twingun);
 	virtual void visit(Mine& mine);
 	tgui::Group::Ptr panel;
+    tgui::Group::Ptr info;
 private:
 	std::vector<std::vector<UpgradeButton>> m_buttons;
 };

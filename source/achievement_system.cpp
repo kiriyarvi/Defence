@@ -11,7 +11,12 @@ AchievementSystem::AchievementSystem() {
 
     m_general_achievements[EnemyType::Pickup] = [&]() {
         minigun_upgrades.penetration_upgrade = 1;
+        minigun_upgrades.penetration_upgrade = 3;
+        minigun_upgrades.lubricant_update = 3;
+        minigun_upgrades.cooling_upgrade = 3;
     };
+    m_unlocked_buildings[BuildingType::Minigun] = true;
+    m_unlocked_buildings[BuildingType::Mine] = true;
 }
 
 bool AchievementSystem::defeated(EnemyType enemy_type) {

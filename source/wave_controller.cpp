@@ -12,6 +12,7 @@ WaveController::WaveController() {
         //r1.spawner.push_back({ EnemyType::CruiserI, 4, true });
         r1.spawner.push_back({ EnemyType::Pickup, 1 });
         r1.spawner.push_back({ EnemyType::Pickup, 1 });
+        r1.spawner.push_back({ EnemyType::CruiserI, 1 });
         Wave w;
         w.prepairing_time = 3;
         w.routes.push_back(r1);

@@ -35,32 +35,35 @@ public:
 			} twingun;
 			struct Minigun {
 				float radius;
-				float heating_time;
-				float cooling_time;
 				float min_rotation_speed;
 				float max_rotation_speed;
-				int min_damage;
-				int max_damage;
-				float cooldown_duration;
 				float critical_temperature;
-				float critical_temperature_work_duration;
 				int cost;
-				int min_armor_penetration_level;
-				int max_armor_penetration_level;
 				struct PenetrationUpgrade {
 					int min_armor_penetration_level;
 					int max_armor_penetration_level;
-					NLOHMANN_DEFINE_TYPE_INTRUSIVE(PenetrationUpgrade, min_armor_penetration_level, max_armor_penetration_level)
+                    int min_damage;
+                    int max_damage;
+					NLOHMANN_DEFINE_TYPE_INTRUSIVE(PenetrationUpgrade, min_armor_penetration_level, max_armor_penetration_level, min_damage, max_damage)
 				};
-                float rotation_speed;
 				std::vector<PenetrationUpgrade> penetration_upgrades;
+                struct CoolingUpgrade {
+                    float critical_temperature_work_duration;
+                    float cooling_time;
+                    float cooldown_duration;
+                    NLOHMANN_DEFINE_TYPE_INTRUSIVE(CoolingUpgrade, critical_temperature_work_duration, cooling_time, cooldown_duration)
+                };
+                std::vector<CoolingUpgrade> cooling_upgrades;
+                struct LubricantUpgrade {
+                    float heating_time;
+                    NLOHMANN_DEFINE_TYPE_INTRUSIVE(LubricantUpgrade, heating_time)
+                };
+                std::vector<LubricantUpgrade> lubricant_upgrades;
+
+                float rotation_speed;
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Minigun,
-					radius, heating_time, cooling_time,
-					min_rotation_speed, max_rotation_speed,
-					min_damage, max_damage,
-					cooldown_duration, critical_temperature,
-					critical_temperature_work_duration,
-					cost, penetration_upgrades, rotation_speed
+					radius, min_rotation_speed, max_rotation_speed, critical_temperature,
+					cost, penetration_upgrades, cooling_upgrades, lubricant_upgrades, rotation_speed
 				)
 			} minigun;
 			struct Mine {

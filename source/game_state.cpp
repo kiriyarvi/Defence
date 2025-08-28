@@ -216,7 +216,7 @@ void GameState::enemy_defeated(EnemyType type) {
         return;
     for (auto& btn : m_building_buttons)
         btn->defeat_event();
-    m_upgrade_panel_creator.achievement_event();
+    m_upgrade_panel_creator.update();
 }
 
 void GameState::win() {
@@ -230,6 +230,10 @@ void GameState::display_help(bool help) {
         m_gui.add(m_help.get_content());
     else
         m_gui.add(m_ui);
+}
+
+void GameState::update_upgrade_panel() {
+    m_upgrade_panel_creator.update();
 }
 
 void GameState::set_panel_content(tgui::Widget::Ptr content) {

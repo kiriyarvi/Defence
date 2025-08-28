@@ -83,19 +83,19 @@ Help::Help() {
             "Урон бронепробиваемость и скорострельность пулемета растут с повышением температуры."
         );
         panel.add_char("радиус поражения", params.radius);
-        panel.add_char("урон при минимальном нагреве", params.min_damage);
-        panel.add_char("урон при максимальном нагреве", params.max_damage);
+        panel.add_char("урон при минимальном нагреве", params.penetration_upgrades[0].min_damage);
+        panel.add_char("урон при максимальном нагреве", params.penetration_upgrades[0].max_damage);
         panel.add_char("бронепробиваемость при наименьшем нагреве", params.penetration_upgrades[0].min_armor_penetration_level);
         panel.add_char("бронепробиваемость при наибольшем нагреве", params.penetration_upgrades[0].max_armor_penetration_level);
         panel.add_char("частота выстрелов в секунду при минимальном нагреве", params.min_rotation_speed / 60.f);
         panel.add_char("частота выстрелов в секунду при максимальном нагреве", params.max_rotation_speed / 60.f);
-        panel.add_char("время до максимального нагрева", params.heating_time);
-        panel.add_char("время охлажения с максимлаьного нагрева до холодного состояния", params.cooling_time);
+        panel.add_char("время до максимального нагрева", params.lubricant_upgrades[0].heating_time);
+        panel.add_char("время охлажения с максимлаьного нагрева до холодного состояния", params.cooling_upgrades[0].cooling_time);
         panel.add_char("минимальная температура", 0);
         panel.add_char("максимальная температура", 1000);
         panel.add_char("значение критической температуры", params.critical_temperature * 1000);
-        panel.add_char("время работы при критической температуре (до перегрева)", params.critical_temperature_work_duration);
-        panel.add_char("время востановления после перегрева", params.cooldown_duration);
+        panel.add_char("время работы при критической температуре (до перегрева)", params.cooling_upgrades[0].critical_temperature_work_duration);
+        panel.add_char("время востановления после перегрева", params.cooling_upgrades[0].cooldown_duration);
 
         m_guns_tabs.create_tab("Пулемёт", panel.create());
     }

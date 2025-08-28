@@ -14,6 +14,8 @@
 BuildingButton::BuildingButton(TextureID gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name)
     : creator{ creator }, restrictions{ restrictions }, m_game_state{ game_state }, cost{ cost }, m_radius(radius), m_type{ type }, m_name{name}, IconButton(gun_icon, TextureID::ButtonBackground, TextureID::ButtonClickedBackground) {
     connect();
+    if (AchievementSystem::Instance().is_unlocked(m_type))
+        lock_button(false);
 }
 
 void BuildingButton::connect() {
@@ -137,9 +139,7 @@ MinigunBuildingButton::MinigunBuildingButton(GameState& game_state):
         BuildingType::Minigun,
         "Пулемёт"
 	)
-{
-    lock_button(false);
-}
+{}
 
 
 MineBuildingButton::MineBuildingButton(GameState& game_state):

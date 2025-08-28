@@ -39,6 +39,7 @@ public:
     bool is_help_displayed() {
         return m_is_help_displayed;
     }
+    void update_upgrade_panel();
     void set_tooltip_content(const std::string& content, sf::Vector2f origin = {0.,1.});
 
 	//void minigun_state_update(const MiniGun& minigun);

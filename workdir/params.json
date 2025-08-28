@@ -16,24 +16,70 @@
     },
     "minigun": {
       "radius": 2,
-      "heating_time": 12, // секунд для нагрева с минимальной температуры до максимальной.
-      "cooling_time": 7, //секунд для остывания с максимальной температуры до минимальной.
       "min_rotation_speed": 180, // минимальная скорость вращения (градусов в секунду)
       "max_rotation_speed": 720, // максимальная скорость вращения
-      "min_damage": 1,
-      "max_damage": 1,
-      "cooldown_duration": 7, // время остывания после перегрева
       "critical_temperature": 0.7, // значение критической температуры
-      "critical_temperature_work_duration": 4, //максимальное время работы при критическом нагреве.
       "cost": 1000,
       "penetration_upgrades": [
         {
+          "min_damage": 1,
+          "max_damage": 1,
           "min_armor_penetration_level": 0,
           "max_armor_penetration_level": 1
         },
         {
+          "min_damage": 1,
+          "max_damage": 1,
           "min_armor_penetration_level": 1,
           "max_armor_penetration_level": 2
+        },
+        {
+          "min_damage": 1,
+          "max_damage": 2,
+          "min_armor_penetration_level": 1,
+          "max_armor_penetration_level": 3
+        },
+        {
+          "min_damage": 2,
+          "max_damage": 4,
+          "min_armor_penetration_level": 2,
+          "max_armor_penetration_level": 4
+        }
+      ],
+      "cooling_upgrades": [
+        {
+          "critical_temperature_work_duration": 4, //максимальное время работы при критическом нагреве.
+          "cooling_time": 7, //секунд для остывания с максимальной температуры до минимальной.
+          "cooldown_duration": 7 // время остывания после перегрева
+        },
+        {
+          "critical_temperature_work_duration": 8, //максимальное время работы при критическом нагреве.
+          "cooling_time": 5, //секунд для остывания с максимальной температуры до минимальной.
+          "cooldown_duration": 5 // время остывания после перегрева
+        },
+        {
+          "critical_temperature_work_duration": 16, //максимальное время работы при критическом нагреве.
+          "cooling_time": 3, //секунд для остывания с максимальной температуры до минимальной.
+          "cooldown_duration": 3 // время остывания после перегрева
+        },
+        {
+          "critical_temperature_work_duration": 20, //максимальное время работы при критическом нагреве.
+          "cooling_time": 2, //секунд для остывания с максимальной температуры до минимальной.
+          "cooldown_duration": 2 // время остывания после перегрева
+        }
+      ],
+      "lubricant_upgrades": [
+        {
+          "heating_time": 12 // секунд для нагрева с минимальной температуры до максимальной.
+        },
+        {
+          "heating_time": 8
+        },
+        {
+          "heating_time": 4
+        },
+        {
+          "heating_time": 1
         }
       ],
       "rotation_speed": 180
