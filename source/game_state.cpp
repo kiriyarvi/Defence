@@ -114,16 +114,38 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
     m_help.get_content()->getRenderer()->setFont(GOSTtypeA_font);
     m_help.get_content()->setTextSize(30);
 
+    m_mouse_tooltip = tgui::RichTextLabel::create();
+    m_mouse_tooltip->setVisible(false);
+    m_mouse_tooltip->setTextSize(30);
+    m_mouse_tooltip->setOrigin(0, 1);
+    m_mouse_tooltip->ignoreMouseEvents(true);
+    auto mouse_tooltip_renderer = m_mouse_tooltip->getRenderer();
+    mouse_tooltip_renderer->setFont(GOSTtypeA_font);
+    mouse_tooltip_renderer->setBackgroundColor(sf::Color(50, 50, 50, 255));
+    mouse_tooltip_renderer->setTextColor(sf::Color::White);
+
+    m_ui->add(m_mouse_tooltip);
 }
 
 tgui::Gui& GameState::get_tgui() {
 	return m_gui;
 }
 
+void GameState::set_tooltip_content(const std::string& content) {
+    if (!content.empty()) {
+        m_mouse_tooltip->setText(content);
+        m_mouse_tooltip->setVisible(true);
+    }
+    else {
+        m_mouse_tooltip->setVisible(false);
+    }
+}
+
 bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) {
 	if (event.type == sf::Event::MouseMoved) {
 		sf::Vector2i mouse_screen_pos(event.mouseMove.x, event.mouseMove.y);
 		m_mouse_pos = current_window.mapPixelToCoords(mouse_screen_pos);
+        m_mouse_tooltip->setPosition(mouse_screen_pos.x, mouse_screen_pos.y);
 		return false;
 	}
 	if (event.type == sf::Event::MouseButtonPressed) {

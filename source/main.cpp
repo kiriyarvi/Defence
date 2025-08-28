@@ -28,11 +28,11 @@ int main() {
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				window.close();
-			if (gui.handleEvent(event));
-			else {
-				if (!game_state.event(event, window))
-					camera.process(event);
-			}
+            if (!gui.handleEvent(event)) {
+				camera.process(event);
+            }
+            game_state.event(event, window);
+			
 		}
 		// логика
 		double dtime = clock.getElapsedTime().asMicroseconds();

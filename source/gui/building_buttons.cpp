@@ -11,8 +11,8 @@
 #include "achievement_system.h"
 #include "gui/info_panel.h"
 
-BuildingButton::BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type)
-    : creator{ creator }, restrictions{ restrictions }, m_gun_icon{ gun_icon }, m_game_state{ game_state }, cost{ cost }, m_radius(radius), m_type{ type } {
+BuildingButton::BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name)
+    : creator{ creator }, restrictions{ restrictions }, m_gun_icon{ gun_icon }, m_game_state{ game_state }, cost{ cost }, m_radius(radius), m_type{ type }, m_name{name} {
 
     group = tgui::Group::create();
     group->setSize({ "height" , "100%" });
@@ -47,17 +47,25 @@ void BuildingButton::connect() {
             m_game_state.m_current_building_construction = this;
         }
 	});
-    button->onMouseEnter([&]() {
+    group->onMouseEnter([&]() {
         show_info_content();
     });
-    button->onMouseLeave([&]() {
-        m_game_state.set_panel_content(nullptr);
+    group->onMouseLeave([&]() {
+        m_game_state.set_tooltip_content("");
     });
    
 }
 
+void BuildingButton::show_info_content() {
+    std::string content =
+        "<b>" + m_name + "</b>\n"
+        "<color=#ffd303>Стоимость: " + std::to_string(cost) + "</color>\n"
+        "<i>Откройте справку, для получения подробностей</i>";
+    m_game_state.set_tooltip_content(content);
+}
+
 BuildingButton::BuildingButton(BuildingButton&& btn) :
-    creator{ btn.creator }, restrictions{ btn.restrictions }, m_gun_icon{ btn.m_gun_icon }, m_game_state{ btn.m_game_state }, cost{ btn.cost }, m_radius{ btn.m_radius }, m_type{btn.m_type}
+    creator{ btn.creator }, restrictions{ btn.restrictions }, m_gun_icon{ btn.m_gun_icon }, m_game_state{ btn.m_game_state }, cost{ btn.cost }, m_radius{ btn.m_radius }, m_type{ btn.m_type }, m_name{btn.m_name}
 {
 	button = std::move(btn.button);
 	connect(); // нужно переназнывать, поскольку используем this в  lambda-функции.
@@ -183,16 +191,13 @@ MinigunBuildingButton::MinigunBuildingButton(GameState& game_state):
 		TileRestrictions::NoRoads,
 		ParamsManager::Instance().params.guns.minigun.cost,
 		ParamsManager::Instance().params.guns.minigun.radius,
-        BuildingType::Minigun
+        BuildingType::Minigun,
+        "Пулемёт"
 	)
 {
     lock_button(false);
 }
 
-void MinigunBuildingButton::show_info_content() {
-    
-
-}
 
 MineBuildingButton::MineBuildingButton(GameState& game_state):
 	BuildingButton(
@@ -202,7 +207,8 @@ MineBuildingButton::MineBuildingButton(GameState& game_state):
 		TileRestrictions::RoadOnly,
 		ParamsManager::Instance().params.guns.mine.cost,
 		ParamsManager::Instance().params.guns.mine.damage_radius,
-        BuildingType::Mine
+        BuildingType::Mine,
+        "Мина"
 	) 
 {}
 
@@ -214,7 +220,8 @@ TwinGunBuildingButton::TwinGunBuildingButton(GameState& game_state) :
 		TileRestrictions::NoRoads,
 		ParamsManager::Instance().params.guns.twingun.cost,
 		ParamsManager::Instance().params.guns.twingun.radius,
-        BuildingType::TwinGun
+        BuildingType::TwinGun,
+        "Двуствольная пушка"
 	)
 {}
 
@@ -244,7 +251,8 @@ AntitankGunBuildingButton::AntitankGunBuildingButton(GameState& game_state) :
 		TileRestrictions::NoRoads,
 		ParamsManager::Instance().params.guns.antitank.cost,
 		ParamsManager::Instance().params.guns.antitank.radius,
-        BuildingType::AntitankGun
+        BuildingType::AntitankGun,
+        "Противотанковая пушка"
 	)
 {
 }
@@ -275,10 +283,9 @@ SpikesBuildingButton::SpikesBuildingButton(GameState& game_state) :
 		TileRestrictions::RoadOnly,
 		ParamsManager::Instance().params.guns.spikes.cost,
 		0,
-        BuildingType::Spikes
-	) {
-
-}
+        BuildingType::Spikes,
+        "Шипы"
+){}
 
 void SpikesBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
 	bool allowed = is_cell_allowed(x_id, y_id);
@@ -298,7 +305,8 @@ HedgeBuildingButton::HedgeBuildingButton(GameState& game_state):
         TileRestrictions::RoadOnly,
         ParamsManager::Instance().params.guns.spikes.cost,
         0,
-        BuildingType::Hedgehogs
+        BuildingType::Hedgehogs,
+        "Противотанковые ежи"
     )
 {}
 

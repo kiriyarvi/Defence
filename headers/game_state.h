@@ -37,6 +37,8 @@ public:
     bool is_help_displayed() {
         return m_is_help_displayed;
     }
+    void set_tooltip_content(const std::string& content);
+
 	//void minigun_state_update(const MiniGun& minigun);
 private:
 	friend class BuildingButton;	
@@ -59,6 +61,7 @@ private:
 	sf::Vector2f m_mouse_pos;
 	std::list<std::unique_ptr<BuildingButton>> m_building_buttons;
     tgui::Panel::Ptr m_panel = nullptr;
+    tgui::RichTextLabel::Ptr m_mouse_tooltip;
 public:
     tgui::Font GOSTtypeA_font;
     tgui::Font PixelSplitter_Bold_font; // расположены здесь, чтобы уничтожались первее (иначе ошибка в tgui).

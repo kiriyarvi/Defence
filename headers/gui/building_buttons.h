@@ -19,7 +19,7 @@ public:
 		RoadOnly
 	} restrictions;
 
-	BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type);
+	BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name);
 	BuildingButton(BuildingButton&& btn);
 	BuildingCreator creator;
 	template <typename T>
@@ -40,7 +40,7 @@ public:
         Disabled,
     };
     State get_state() const { return m_state; }
-    virtual void show_info_content() { };
+    void show_info_content();
 public:
     tgui::Group::Ptr group;
 	tgui::BitmapButton::Ptr button;
@@ -60,13 +60,13 @@ protected:
 	GameState& m_game_state;
 	float m_radius;
     BuildingType m_type;
+    std::string m_name;
 };
 
 
 class MinigunBuildingButton : public BuildingButton {
 public:
 	MinigunBuildingButton(GameState& game_state);
-    void show_info_content() override;
 };
 
 class MineBuildingButton : public BuildingButton {
