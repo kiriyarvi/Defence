@@ -205,6 +205,11 @@ void GameState::player_health_add(int health) {
 	m_player_health_count_widget->setText("X" + std::to_string(m_player_hp));
 }
 
+void GameState::kill_player() {
+    m_player_hp = 0;
+    m_player_health_count_widget->setText("X" + std::to_string(m_player_hp));
+}
+
 void GameState::player_coins_add(int coins) {
 	m_player_coins += coins;
 	m_player_coins_count_widget->setText(std::to_string(m_player_coins));

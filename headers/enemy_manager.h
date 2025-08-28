@@ -36,7 +36,7 @@ public:
 		return instance;
 	}
 
-	void spawn(EnemyType type, int path);
+	void spawn(EnemyType type, int path, bool boss = false);
 
 	// Удаляем копирование и перемещение
 	EnemyManager(const EnemyManager&) = delete;

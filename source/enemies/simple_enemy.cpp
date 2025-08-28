@@ -1,6 +1,7 @@
 #include "enemies/simple_enemy.h"
 #include "glm/gtc/random.hpp"
 #include "shader_manager.h"
+#include "game_state.h"
 
 SimpleEnemy::SimpleEnemy(EnemyTexturesID enemy_texture, EnemyTexturesID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params, EnemyType t):
 	m_destroyed_enemy_texture(destroyed_enemy_texture),
@@ -202,8 +203,12 @@ CruiserI::CruiserI(): IEnemy(ParamsManager::Instance().params.enemies.CruiserI, 
     eq.sprite.setScale(0.5, 0.5);
     eq.layer = 2;
 
+}
+
+void CruiserI::make_boss() {
     m_indicator.width = 32;
     m_indicator.fill_color = sf::Color::Magenta;
+    IEnemy::make_boss();
 }
 
 void CruiserI::draw(sf::RenderWindow& window) {

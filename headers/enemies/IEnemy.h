@@ -48,6 +48,7 @@ public:
 	virtual bool logic(double dtime); // true --- достиг конца пути
 	virtual glm::vec2 get_position() { return position; }
 	virtual IDestroyedEnemy::Ptr get_destroyed_enemy() = 0;
+    virtual void make_boss() { m_boss = true; }
 	uint32_t id; // уникальный идентификатор врага
 	const ParamsManager::Params::Enemies::Enemy& params;
 
@@ -74,4 +75,5 @@ private:
 	double repairing_time;
 	int goal_path_node = 0; // номер узла в пути, к которому враг стремиться на данный момент
 	std::unique_ptr<sf::Sound> engine_sound;
+    bool m_boss = false;
 };

@@ -9,6 +9,7 @@ public:
     struct EnemySpawn {
         EnemyType type;
         double delay;
+        bool boss = false;
     };
 
     struct Route {

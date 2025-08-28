@@ -58,8 +58,11 @@ bool IEnemy::logic(double dtime) {
 		auto& enemy_manager = EnemyManager::Instance();
 		auto& path = enemy_manager.all_paths[path_id];
 		if (goal_path_node + 1 == path.size()) {
-			GameState::Instance().player_health_add(-1); //TODO отнимать cost
 			path_is_completed = true;
+            if (m_boss)
+                GameState::Instance().kill_player();
+            else
+			    GameState::Instance().player_health_add(-1); //TODO отнимать cost
 			return true;
 		}
 		position = glm::vec2(path[goal_path_node]->x * 32 + 16, path[goal_path_node]->y * 32 + 16);

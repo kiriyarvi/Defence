@@ -28,6 +28,7 @@ public:
 	bool is_player_defeated() { return  m_player_hp <= 0; }
     bool is_game_over() { return is_player_defeated() || m_win; }
 	void player_health_add(int health);
+    void kill_player();
 	void player_coins_add(int coins);
     void enemy_defeated(EnemyType type);
     void win();

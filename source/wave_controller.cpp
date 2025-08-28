@@ -8,7 +8,8 @@ WaveController::WaveController() {
     {
         Route r1;
         r1.route = rand() % all_paths;
-        r1.spawner.push_back({ EnemyType::CruiserI, 1 });
+        r1.spawner.push_back({ EnemyType::CruiserI, 0, false });
+        r1.spawner.push_back({ EnemyType::CruiserI, 4, true });
         /*r1.spawner.push_back({ EnemyType::Solder, 1 });
         r1.spawner.push_back({ EnemyType::Solder, 1 });*/
         Wave w;
@@ -543,7 +544,7 @@ bool WaveController::RouteState::logic(double dtime_ms) {
         return true;
     timer += dtime_ms;
     if (timer >= route.spawner[current_spawner].delay * 1000 * 1000) {
-        EnemyManager::Instance().spawn(route.spawner[current_spawner].type, route.route);
+        EnemyManager::Instance().spawn(route.spawner[current_spawner].type, route.route, route.spawner[current_spawner].boss);
         ++current_spawner;
         timer = 0;
         return current_spawner >= route.spawner.size();
