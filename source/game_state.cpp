@@ -94,7 +94,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 
     m_ui->add(bottom_panel_group);
 
-	player_coins_add(20000);
+	player_coins_add(1000);
 
     m_panel = tgui::Panel::create();
     m_panel->setTextSize(30);

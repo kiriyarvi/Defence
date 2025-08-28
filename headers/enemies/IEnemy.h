@@ -3,6 +3,7 @@
 #include "SFML/Audio.hpp"
 #include "glm/glm.hpp"
 #include "params_manager.h"
+#include "tile_map.h"
 
 enum class EnemyType {
     Solder,
@@ -56,7 +57,7 @@ public:
 	glm::vec2 position = { 0,0 };
 	float rotation = 0;
 
-	int path_id = 0; // путь по которому движется враг.
+    RoadGraph::PathID path_id; // путь по которому движется враг.
 	bool path_is_completed = false;
 	
 	bool infantry; // пехота (мотоциклист считается пехотой)

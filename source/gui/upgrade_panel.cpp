@@ -190,23 +190,28 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
 }
 
 void UpgradePanelCreator::visit(Spikes& spikes) {
-
+    m_buttons.clear();
+    panel->removeAllWidgets();
 }
 
 void UpgradePanelCreator::visit(Hedgehog& headgehogs) {
-
+    m_buttons.clear();
+    panel->removeAllWidgets();
 }
 
 void UpgradePanelCreator::visit(AntitankGun& antitank_gun) {
-
+    m_buttons.clear();
+    panel->removeAllWidgets();
 }
 
 void UpgradePanelCreator::visit(TwinGun& twingun) {
-
+    m_buttons.clear();
+    panel->removeAllWidgets();
 }
 
 void UpgradePanelCreator::visit(Mine& mine) {
-
+    m_buttons.clear();
+    panel->removeAllWidgets();
 }
 
 void UpgradePanelCreator::update() {

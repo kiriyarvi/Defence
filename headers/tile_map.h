@@ -71,7 +71,14 @@ public:
 	std::vector<Node*> end_nodes;
 
 	// Найти все пути
-	std::vector<std::vector<Node*>> find_all_paths() const;
+    using Path = std::vector<Node*>;
+    using Paths = std::map<Node*, std::vector<Path>>;
+    struct PathID {
+        RoadGraph::Node* start_node = nullptr;
+        int path = 0;
+    };
+
+    Paths find_all_paths() const;
 private:
 	void dfs(Node* current,
 		std::vector<Node*>& path,

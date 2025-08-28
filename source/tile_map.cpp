@@ -139,13 +139,13 @@ void TileMap::logic(double dtime) {
 		}
 }
 
-std::vector<std::vector<RoadGraph::Node*>> RoadGraph::find_all_paths() const {
-	std::vector<std::vector<Node*>> all_paths;
+RoadGraph::Paths RoadGraph::find_all_paths() const {
+    Paths all_paths;
 
 	for (Node* start : start_nodes) {
 		std::vector<Node*> current_path;
 		std::unordered_set<Node*> visited;
-		dfs(start, current_path, visited, all_paths);
+        dfs(start, current_path, visited, all_paths[start]);
 	}
 
 	return all_paths;

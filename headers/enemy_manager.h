@@ -12,7 +12,7 @@ public:
 		return instance;
 	}
 
-	void spawn(EnemyType type, int path, bool boss = false);
+	void spawn(EnemyType type, RoadGraph::PathID id, bool boss = false);
 
 	// Удаляем копирование и перемещение
 	EnemyManager(const EnemyManager&) = delete;
@@ -22,7 +22,7 @@ public:
 	void logic(double dtime); // если возвращает true --- спавнеры кончились.
 	void draw(sf::RenderWindow& window);
 	IEnemy* get_enemy_by_id(uint32_t id);
-	std::vector<std::vector<RoadGraph::Node*>> all_paths;
+    RoadGraph::Paths all_paths;
 	std::vector<IEnemy::Ptr> m_enemies;
     void init();
 private:

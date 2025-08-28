@@ -15,7 +15,7 @@ void EnemyManager::init() {
     m_wave_controller = std::make_unique<WaveController>();
 }
 
-void EnemyManager::spawn(EnemyType type, int path, bool boss) {
+void EnemyManager::spawn(EnemyType type, RoadGraph::PathID path_id, bool boss) {
     switch (type) {
     case EnemyType::Solder:
         m_enemies.push_back(std::make_unique<Solder>());
@@ -41,7 +41,7 @@ void EnemyManager::spawn(EnemyType type, int path, bool boss) {
     }
     if (boss)
         m_enemies.back()->make_boss();
-	m_enemies.back()->path_id = path;
+    m_enemies.back()->path_id = path_id;
 	m_enemies.back()->id = ++current_max_id;
 	m_enemies.back()->logic(0.0); // чтобы установить верную позицию.
 	if (current_max_id > 32768)

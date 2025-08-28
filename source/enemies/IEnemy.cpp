@@ -56,7 +56,7 @@ bool IEnemy::logic(double dtime) {
 	}
 	else { // при старте goal нулевой и current_pos нулевой, поэтому попадаем сюда и выставляем начальную точку маршрута. 
 		auto& enemy_manager = EnemyManager::Instance();
-		auto& path = enemy_manager.all_paths[path_id];
+        auto& path = enemy_manager.all_paths[path_id.start_node][path_id.path];
 		if (goal_path_node + 1 == path.size()) {
 			path_is_completed = true;
             if (m_boss)
