@@ -287,3 +287,14 @@ void MiniGun::compass_logic(int x_id, int y_id) {
 	}
 }
 
+IRotatingGun::TargetStatus MiniGun::get_enemy_status(IEnemy& enemy) {
+    TargetStatus status;
+    if (enemy.params.armor_level > m_params.penetration_upgrades[m_penetration_upgrade].max_armor_penetration_level) {
+        status.valid = false;
+        return status;
+    }
+    status.priority = 1. / ((enemy.params.armor_level + 1) * enemy.health); // чем меньше armor_level и здоворье, тем выше приоритет.
+    status.mult_by_distance = true;
+    return status;
+}
+

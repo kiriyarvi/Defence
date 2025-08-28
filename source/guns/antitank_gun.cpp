@@ -115,3 +115,16 @@ void AntitankGun::start_animation() {
 	fire.set_position_origin(0, 4);
 	fire.set_position(30, 16);
 }
+
+IRotatingGun::TargetStatus AntitankGun::get_enemy_status(IEnemy& enemy) {
+    TargetStatus status;
+    // не атакуем слишком бронированных врагов и пехоту
+    if (enemy.params.armor_level > m_params.armor_penetration_level || (enemy.infantry && enemy.wheels == IEnemy::Wheels::None)) {
+        status.valid = false;
+        return status;
+    }
+    status.mult_by_distance = true;
+    return status;
+}
+
+

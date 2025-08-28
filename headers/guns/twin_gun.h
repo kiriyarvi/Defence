@@ -42,6 +42,8 @@ public:
 	void logic(double dtime_microseconds, int x_id, int y_id) override;
 	void shoot_logic(int x_id, int y_id, IEnemy& enemy) override;
     ACCEPT(TwinGun)
+protected:
+    IRotatingGun::TargetStatus TwinGun::get_enemy_status(IEnemy& enemy) override;
 private:
 	void shot(int x_id, int y_id, IEnemy& enemy, bool upper_barrel);
 private:

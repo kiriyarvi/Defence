@@ -17,6 +17,13 @@ public:
 protected:
 	virtual void on_gun_pointed() {}
 	virtual void on_gun_unpointed() {}
+    struct TargetStatus {
+        bool valid = true;
+        float priority = 1.;
+        bool mult_by_distance = true;
+    };
+    virtual TargetStatus get_enemy_status(IEnemy& enemy) = 0; // определяет приоритет цели по этой функции (также может отбраковать). 
+protected:
 	bool m_is_gun_pointed = false;
 	bool m_is_enemy_captured = false;
 	uint32_t m_captured_enemy_id;

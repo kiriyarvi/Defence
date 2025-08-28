@@ -44,18 +44,24 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 		auto& enemies = EnemyManager::Instance().m_enemies;
 		if (enemies.empty()) return; // врагов нет
 		
-		// ищем ближайшего врага в радиусе действия
-		double best_dist = 0;
+		// ищем ближайшего врага в радиусе действия (по приоритету)
+		double best_priority = 0;
 		for (auto& enemy : enemies) {
-			double dist = glm::length(enemy->get_position() - gun_pos);
+            auto status = get_enemy_status(*enemy.get());
+            if (!status.valid)
+                continue;
+            double dist = glm::length(enemy->get_position() - gun_pos);
 			if (dist <= radius * 32) {
+                float p = status.priority;
+                if (status.mult_by_distance)
+                    p *= 1. - dist / (radius * 32);
 				if (!captured_enemy) {
 					captured_enemy = enemy.get();
-					best_dist = dist;
+                    best_priority = p;
 				}
-				else if (best_dist > dist) {
+				else if (best_priority < p) {
 					captured_enemy = enemy.get();
-					best_dist = dist;
+                    best_priority = p;
 				}
 			}
 		}

@@ -18,6 +18,8 @@ private:
 	} m_state = State::Ready;
 	void start_animation();
 	void fire_animation();
+protected:
+    TargetStatus get_enemy_status(IEnemy& enemy) override;
 private:
 	const ParamsManager::Params::Guns::Antitank& m_params;
 

@@ -23,6 +23,7 @@ private:
 	void drum_animation();
 	void belt_animation();
 	void compass_logic(int x_id, int y_id);
+    TargetStatus get_enemy_status(IEnemy& enemy) override;
 private:
 	const ParamsManager::Params::Guns::Minigun& m_params;
     SpriteChain m_minigun_sprite;

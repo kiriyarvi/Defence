@@ -182,3 +182,9 @@ void TwinGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
 		state = State::ShotCD;
 	}
 }
+
+
+IRotatingGun::TargetStatus TwinGun::get_enemy_status(IEnemy& enemy) {
+    TargetStatus status; //TODO добавить хотя бы учет бронепробития.
+    return status;
+}
