@@ -1,15 +1,16 @@
 #include "guns/antitank_gun.h"
 #include "enemy_manager.h"
 #include "sound_manager.h"
+#include "texture_manager.h"
 
 AntitankGun::AntitankGun(): m_params(ParamsManager::Instance().params.guns.antitank) {
 	radius = m_params.radius;
 
-	m_turret_sprite.sprite.setTexture(TileMap::Instance().textures[TileTexture::AntitankGunTurret]);
+	m_turret_sprite.sprite.setTexture(TextureManager::Instance().textures[TextureID::AntitankGunTurret]);
 	m_barrel = &m_turret_sprite.childs.emplace_back();
-	m_barrel->sprite.setTexture(TileMap::Instance().textures[TileTexture::AntitankGunBarrel]);
+	m_barrel->sprite.setTexture(TextureManager::Instance().textures[TextureID::AntitankGunBarrel]);
 	auto& substrate = m_turret_sprite.childs.emplace_back();
-	substrate.sprite.setTexture(TileMap::Instance().textures[TileTexture::AntitankGunTurretSubstrate]);
+	substrate.sprite.setTexture(TextureManager::Instance().textures[TextureID::AntitankGunTurretSubstrate]);
 	m_turret_sprite.layer = 2;
 	m_barrel->layer = 1;
 }
@@ -52,7 +53,7 @@ void AntitankGun::draw_effects(sf::RenderWindow& window, int x, int y) {
 	if (k < fraction) {
 		float p = k / fraction;
 		int frame = p * 4;
-		sf::Sprite fire(TileMap::Instance().textures[TileTexture::Shot]);
+		sf::Sprite fire(TextureManager::Instance().textures[TextureID::Shot]);
 		fire.setTextureRect(sf::IntRect(8 * frame, 24, 8, 8));
 		fire.setOrigin(4, 4);
 		auto enemy_pos = enemy->get_position();
@@ -109,7 +110,7 @@ void AntitankGun::start_animation() {
 	m_animation = true;
 	m_animation_timer = 0;
 	auto& fire = m_barrel->childs.emplace_back();
-	fire.sprite.setTexture(TileMap::Instance().textures[TileTexture::Shot]);
+	fire.sprite.setTexture(TextureManager::Instance().textures[TextureID::Shot]);
 	fire.layer = 3;
 	fire.set_position_origin(0, 4);
 	fire.set_position(30, 16);

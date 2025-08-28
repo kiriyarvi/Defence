@@ -67,7 +67,7 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 	m_building_buttons.push_back(std::make_unique<SpikesBuildingButton>(*this));
     m_building_buttons.push_back(std::make_unique<HedgeBuildingButton>(*this));
 	for (auto& button : m_building_buttons) {
-		bottom_panel_group->add(button->group);
+		bottom_panel_group->add(button->m_group);
 	}
 
     auto help_button = tgui::Button::create("?");
@@ -83,8 +83,8 @@ GameState::GameState(sf::RenderWindow& window): m_gui(window) {
 		float size = bottom_panel_group->getSize().y;
 		float x = 0;
 		for (auto& button : m_building_buttons){
-			button->group->setSize({ size, size });
-			button->group->setPosition({ x, 0 });
+			button->m_group->setSize({ size, size });
+			button->m_group->setPosition({ x, 0 });
 			x += size + spacing;
 		}
         help_button->setSize({ size, size });
@@ -164,9 +164,21 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 			}
 		}
 		else if (event.mouseButton.button == sf::Mouse::Button::Right) {
-			m_current_building_construction = nullptr;
-			for (auto& btn : m_building_buttons)
-				btn->unselect();
+            if (m_current_building_construction) { // если мы строили, нужно отменить строительство
+                m_current_building_construction = nullptr;
+                for (auto& btn : m_building_buttons)
+                    btn->unselect();
+            }
+            else { // если не строили, значит запросили открыть окно постройки
+                sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
+                bool on_map = m_mouse_pos.x < 8 && m_mouse_pos.x >= 0 && m_mouse_pos.y < 8 && m_mouse_pos.y >= 0;
+                if (!on_map)
+                    return false;
+                auto& cell = TileMap::Instance().map[cell_id.x][cell_id.y];
+                if (!cell.building)
+                    return false;
+                
+            }
 			return true;
 		}
 	}

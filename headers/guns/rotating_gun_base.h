@@ -1,5 +1,6 @@
 #pragma once
 #include "tile_map.h"
+#include "texture_manager.h"
 
 class IEnemy;
 
@@ -12,7 +13,7 @@ public:
 	double rotation = 180; //текущее вращение.
 	double rotation_speed = 90; // скорость вращения (градусы в секунду).
 	double radius; // радиус действия (указывается в клетках)
-	TileTexture base_texture = TileTexture::GunBase; // текстура основания орудия.
+	TextureID base_texture = TextureID::GunBase; // текстура основания орудия.
 protected:
 	virtual void on_gun_pointed() {}
 	virtual void on_gun_unpointed() {}

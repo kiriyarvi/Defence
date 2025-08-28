@@ -4,13 +4,13 @@
 #include <iostream>
 
 Solder::Solder(): m_animation(2), IEnemy(ParamsManager::Instance().params.enemies.solder, EnemyType::Solder) {
-	m_solder_sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::SolderWalkAnimation]);
+	m_solder_sprite.setTexture(TextureManager::Instance().textures[TextureID::SolderWalkAnimation]);
 	m_solder_sprite.setOrigin(16, 16);
 	m_solder_sprite.setScale(0.25, 0.25);
 	m_animation.add_framer(16, [&](int frame) {
 		m_solder_sprite.setTextureRect(sf::IntRect(32 * (frame % 4), 32 * (frame / 4), 32, 32));
 	});
-	m_solder_ammunition.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::SolderAmmunition]);
+	m_solder_ammunition.setTexture(TextureManager::Instance().textures[TextureID::SolderAmmunition]);
 	m_solder_ammunition.setOrigin(16, 16);
 	m_solder_ammunition.setScale(0.25, 0.25);
 	m_animation.set_loop(true);
@@ -57,7 +57,7 @@ private:
 IDestroyedEnemy::Ptr Solder::get_destroyed_enemy() {
 	auto de = std::make_unique<DestroyedSolder>();
 	de->sprite = m_solder_sprite;
-	de->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::DeadSolder]);
+	de->sprite.setTexture(TextureManager::Instance().textures[TextureID::DeadSolder]);
 	de->sprite.setOrigin(32, 32);
 	de->sprite.setTextureRect(sf::IntRect(0, 0, 64, 64));
 	return de;

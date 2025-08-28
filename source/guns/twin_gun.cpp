@@ -5,13 +5,13 @@
 
 
 TwinGunAnimation::TwinGunAnimation() {
-	m_twin_gun_sprite.sprite.setTexture(TileMap::Instance().textures[TileTexture::TwinGunTurret]);
+	m_twin_gun_sprite.sprite.setTexture(TextureManager::Instance().textures[TextureID::TwinGunTurret]);
 	m_twin_gun_sprite.layer = 1;
 	SpriteChain upper_barrel;
-	upper_barrel.sprite.setTexture(TileMap::Instance().textures[TileTexture::TwinGunUpperBarrel]);
+	upper_barrel.sprite.setTexture(TextureManager::Instance().textures[TextureID::TwinGunUpperBarrel]);
 	upper_barrel.layer = 0;
 	SpriteChain lower_barrel;
-	lower_barrel.sprite.setTexture(TileMap::Instance().textures[TileTexture::TwinGunUpperBarrel]);
+	lower_barrel.sprite.setTexture(TextureManager::Instance().textures[TextureID::TwinGunUpperBarrel]);
 	lower_barrel.layer = 0;
 	m_twin_gun_sprite.childs.push_back(upper_barrel);
 	m_twin_gun_sprite.childs.push_back(lower_barrel);
@@ -54,7 +54,7 @@ void TwinGunAnimation::fire_animation(sf::RenderWindow& window, int x_id, int y_
 	}
 	k = k / fire_duration;
 	//TODO вообще нужно менять спрайт только один раз. Так один спрайт кучу раз устанавливается каждый кадр.
-	sf::Sprite fire(TileMap::Instance().textures[TileTexture::Shot]);
+	sf::Sprite fire(TextureManager::Instance().textures[TextureID::Shot]);
 	if (k < 1 / 3.)
 		fire.setTextureRect(sf::IntRect(0, 0, 8, 8));
 	else if (k < 2. / 3.)
@@ -79,7 +79,7 @@ void TwinGunAnimation::draw_enemy_hit_animation(sf::RenderWindow& window, int x_
 	glm::vec2 enemy_pos = enemy->get_position();
 	glm::vec2 hit_pos = enemy_pos + (upper ? upper_shot_fire_pos : lower_shot_fire_pos);
 
-	sf::Sprite fire(TileMap::Instance().textures[TileTexture::Shot]);
+	sf::Sprite fire(TextureManager::Instance().textures[TextureID::Shot]);
 	if (k < 1 / 3.)
 		fire.setTextureRect(sf::IntRect(0, 8, 8, 8));
 	else if (k < 2. / 3.)

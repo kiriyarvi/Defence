@@ -9,28 +9,6 @@
 
 EnemyManager::EnemyManager() {
 	all_paths = TileMap::Instance().get_road_graph().find_all_paths();
-	enemy_textures[EnemyTexturesID::Tank].loadFromFile("sprites/tank.png");
-	enemy_textures[EnemyTexturesID::TankDestroyed].loadFromFile("sprites/tank_destroyed.png");
-	enemy_textures[EnemyTexturesID::Truck].loadFromFile("sprites/truck.png");
-	enemy_textures[EnemyTexturesID::TruckDestroyed].loadFromFile("sprites/truck_destroyed.png");
-	enemy_textures[EnemyTexturesID::MedBlustOfDestruction1].loadFromFile("sprites/med_blust_of_destruction1.png");
-	enemy_textures[EnemyTexturesID::MedBlustOfDestruction2].loadFromFile("sprites/med_blust_of_destruction2.png");
-	enemy_textures[EnemyTexturesID::Bike].loadFromFile("sprites/bike.png");
-	enemy_textures[EnemyTexturesID::SolderWalkAnimation].loadFromFile("sprites/solder_walk_animation.png");
-	enemy_textures[EnemyTexturesID::SolderAmmunition].loadFromFile("sprites/solder_ammunition.png");
-	enemy_textures[EnemyTexturesID::DeadSolder].loadFromFile("sprites/dead_solder.png");
-	enemy_textures[EnemyTexturesID::DestroyedBike].loadFromFile("sprites/destroyed_bike.png");
-	enemy_textures[EnemyTexturesID::DoubleBlust].loadFromFile("sprites/double_blust.png");
-	enemy_textures[EnemyTexturesID::Blusts16x16].loadFromFile("sprites/16x16_blusts.png");
-	enemy_textures[EnemyTexturesID::RepairWrench].loadFromFile("sprites/repair_wrench.png");
-    enemy_textures[EnemyTexturesID::Pickup].loadFromFile("sprites/pickup.png");
-    enemy_textures[EnemyTexturesID::PickupDestroyed].loadFromFile("sprites/pickup_destroyed.png");
-    enemy_textures[EnemyTexturesID::BTR].loadFromFile("sprites/BTR.png");
-    enemy_textures[EnemyTexturesID::Trucks].loadFromFile("sprites/Trucks.png");
-    enemy_textures[EnemyTexturesID::Trucks].setRepeated(true);
-    enemy_textures[EnemyTexturesID::BTRDestroyed].loadFromFile("sprites/BTR_destroyed.png");
-    enemy_textures[EnemyTexturesID::CruiserIBase].loadFromFile("sprites/cruiser_I_base.png");
-    enemy_textures[EnemyTexturesID::CruiserIEquipment].loadFromFile("sprites/cruiser_I_equipment.png");
 }
 
 void EnemyManager::init() {

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "gui/icon_button.h"
 #include "tile_map.h"
-
 #include <TGUI/TGUI.hpp>
 
 #include <functional>
@@ -10,7 +10,7 @@
 
 class GameState;
 
-class BuildingButton {
+class BuildingButton: public IconButton {
 public:
 	using BuildingCreator = std::function<std::unique_ptr<IBuilding>()>;
 
@@ -19,7 +19,7 @@ public:
 		RoadOnly
 	} restrictions;
 
-	BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name);
+	BuildingButton(TextureID gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name);
 	BuildingButton(BuildingButton&& btn);
 	BuildingCreator creator;
 	template <typename T>
@@ -33,30 +33,14 @@ public:
 	void unselect();
 	void coins_update(int current_coins_count);
     void defeat_event();
-    enum class State {
-        Locked,
-        Active,
-        Selected,
-        Disabled,
-    };
-    State get_state() const { return m_state; }
     void show_info_content();
-public:
-    tgui::Group::Ptr group;
-	tgui::BitmapButton::Ptr button;
-    tgui::Picture::Ptr lock;
 	int cost;
 private:
 	void connect();
-    State m_state = State::Locked;
 protected:
 	void draw_radius(sf::RenderWindow& window, int x_id, int y_id);
     void lock_button(bool lock);
-    void set_state(State state);
-private:
-    void set_grayscale();
 protected:
-	TileTexture m_gun_icon;
 	GameState& m_game_state;
 	float m_radius;
     BuildingType m_type;

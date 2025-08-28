@@ -86,7 +86,7 @@ bool IEnemy::break_enemy(double repairing_time) {
 void IEnemy::draw_effects(sf::RenderWindow& window) {
 	if (!repairing)
 		return;
-	sf::Sprite repairing_wrench(EnemyManager::Instance().enemy_textures[EnemyTexturesID::RepairWrench]);
+	sf::Sprite repairing_wrench(TextureManager::Instance().textures[TextureID::RepairWrench]);
 	repairing_wrench.setOrigin(16, 16);
 	repairing_wrench.setPosition(position.x, position.y);
 	repairing_wrench.setScale(0.3, 0.3);

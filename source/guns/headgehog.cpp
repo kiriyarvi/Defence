@@ -1,13 +1,14 @@
 #include "guns/hedgehog.h"
 #include "tile_map.h"
 #include "enemy_manager.h"
+#include "texture_manager.h"
 
 Hedgehog::Hedgehog(): params(ParamsManager::Instance().params.guns.hedgehog) {
     health = params.health;
 }
 
 void Hedgehog::draw(sf::RenderWindow& window, int x, int y) {
-    sf::Sprite sprite(TileMap::Instance().textures[TileTexture::Hedgehog]);
+    sf::Sprite sprite(TextureManager::Instance().textures[TextureID::Hedgehog]);
     sprite.setPosition(x * 32, y * 32);
     window.draw(sprite);
 }

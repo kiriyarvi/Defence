@@ -1,6 +1,6 @@
 #include "guns/spikes.h"
 #include "enemy_manager.h"
-
+#include "texture_manager.h"
 
 Spikes::Spikes(): params(ParamsManager::Instance().params.guns.spikes) 
 {
@@ -20,7 +20,7 @@ sf::Sprite Spikes::get_sprite_for_tile(int x_id, int y_id) {
 	sprite.setPosition(x_id * 32 + 16, y_id * 32 + 16);
 	float rotation = 0;
 	if (count == 4 || count == 0) { // count == 0 для того чтобы отображадся план постройки.
-		sprite.setTexture(TileMap::Instance().textures[TileTexture::SpikesCross]);
+		sprite.setTexture(TextureManager::Instance().textures[TextureID::SpikesCross]);
 	}
 	else if (count == 2) {
 		if (tile_id % 3 == 0) {
@@ -31,17 +31,17 @@ sf::Sprite Spikes::get_sprite_for_tile(int x_id, int y_id) {
 				rotation = 90;
 			else if (tile_id == 9)
 				rotation = 180;
-			sprite.setTexture(TileMap::Instance().textures[TileTexture::SpikesD]);
+			sprite.setTexture(TextureManager::Instance().textures[TextureID::SpikesD]);
 		}
 		else { // прямая дорога
-			sprite.setTexture(TileMap::Instance().textures[TileTexture::SpikesRight]);
+			sprite.setTexture(TextureManager::Instance().textures[TextureID::SpikesRight]);
 			if (tile_id == 10) {
 				rotation = 90;
 			}
 		}
 	}
 	else if (count == 3) {
-		sprite.setTexture(TileMap::Instance().textures[TileTexture::SpikesT]);
+		sprite.setTexture(TextureManager::Instance().textures[TextureID::SpikesT]);
 		if (tile_id == 14)
 			rotation = -90;
 		else if (tile_id == 11)

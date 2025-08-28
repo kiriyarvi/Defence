@@ -5,7 +5,7 @@
 void IRotatingGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
 	sf::Sprite sprite;
 	sprite.setPosition(32 * x_id, 32 * y_id);
-	sprite.setTexture(TileMap::Instance().textures[base_texture]);
+	sprite.setTexture(TextureManager::Instance().textures[base_texture]);
 	window.draw(sprite);
 }
 

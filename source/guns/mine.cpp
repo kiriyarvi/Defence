@@ -2,9 +2,10 @@
 #include "utils/framers.h"
 #include "enemy_manager.h"
 #include "sound_manager.h"
+#include "texture_manager.h"
 
 Mine::Mine(): m_params(ParamsManager::Instance().params.guns.mine) {
-	m_mine_sprite.setTexture(TileMap::Instance().textures[TileTexture::Mine]);
+	m_mine_sprite.setTexture(TextureManager::Instance().textures[TextureID::Mine]);
 	m_mine_sprite.setOrigin(8, 8);
 
 	m_blast_framer = std::make_unique<MineBlastFramer>();

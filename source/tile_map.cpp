@@ -10,10 +10,11 @@
 
 #include <iostream>
 
+
 void Tile::draw(sf::RenderWindow& window, int x, int y) {
 	sf::Sprite sprite;
 	sprite.setPosition(x * 32, y * 32);
-	sprite.setTexture(TileMap::Instance().textures[TileTexture::Grass]);
+	sprite.setTexture(TextureManager::Instance().textures[TextureID::Grass]);
 	window.draw(sprite);
 
 	int ends = std::count(roads.begin(), roads.end(), true);
@@ -23,7 +24,7 @@ void Tile::draw(sf::RenderWindow& window, int x, int y) {
 			tile_id *= 2;
 			tile_id += roads[i];
 		}
-		sprite.setTexture(TileMap::Instance().textures[static_cast<TileTexture>(tile_id)]);
+		sprite.setTexture(TextureManager::Instance().textures[static_cast<TextureID>(tile_id)]);
 		window.draw(sprite);
 	}
 }
@@ -31,50 +32,6 @@ void Tile::draw(sf::RenderWindow& window, int x, int y) {
 
 
 TileMap::TileMap() {
-	textures[TileTexture::Grass].loadFromFile("tiles/grass.png");
-	textures[TileTexture::Road1100].loadFromFile("tiles/road1100.png");
-	textures[TileTexture::Road0110].loadFromFile("tiles/road0110.png");
-	textures[TileTexture::Road0011].loadFromFile("tiles/road0011.png");
-	textures[TileTexture::Road1001].loadFromFile("tiles/road1001.png");
-	textures[TileTexture::Road1010].loadFromFile("tiles/road1010.png");
-	textures[TileTexture::Road0101].loadFromFile("tiles/road0101.png");
-	textures[TileTexture::Road0111].loadFromFile("tiles/road0111.png");
-	textures[TileTexture::Road1011].loadFromFile("tiles/road1011.png");
-	textures[TileTexture::Road1101].loadFromFile("tiles/road1101.png");
-	textures[TileTexture::Road1110].loadFromFile("tiles/road1110.png");
-	textures[TileTexture::Road1111].loadFromFile("tiles/road1111.png");
-
-	textures[TileTexture::GunBase].loadFromFile("sprites/gun_base.png");
-	textures[TileTexture::TwinGunTurret].loadFromFile("sprites/twin_gun_turret.png");
-	textures[TileTexture::TwinGunUpperBarrel].loadFromFile("sprites/twin_gun_upper_barrel.png");
-	textures[TileTexture::Shot].loadFromFile("sprites/shot.png");
-
-	textures[TileTexture::AntitankGunTurret].loadFromFile("sprites/antitank_gun_turret.png");
-	textures[TileTexture::AntitankGunBarrel].loadFromFile("sprites/antitank_gun_barrel.png");
-	textures[TileTexture::AntitankGunTurretSubstrate].loadFromFile("sprites/antitank_gun_turret_substrate.png");
-
-	textures[TileTexture::MiniGun].loadFromFile("sprites/minigun.png");
-	textures[TileTexture::MiniGunEquipment].loadFromFile("sprites/minigun_equipment.png");
-	textures[TileTexture::MineBlast].loadFromFile("sprites/mine_blast.png");
-	textures[TileTexture::Mine].loadFromFile("sprites/mine.png");
-
-	textures[TileTexture::ButtonBackground].loadFromFile("sprites/button_background.png");
-	textures[TileTexture::ButtonClickedBackground].loadFromFile("sprites/button_clicked_background.png");
-	textures[TileTexture::MinigunIcon].loadFromFile("sprites/minigun_icon.png");
-	textures[TileTexture::TwingunIcon].loadFromFile("sprites/twingun_icon.png");
-	textures[TileTexture::TwingunConstructed].loadFromFile("sprites/twingun_constructed.png");
-	textures[TileTexture::AntitankGunIcon].loadFromFile("sprites/antitank_gun_icon.png");
-	textures[TileTexture::AntitankGunConstructed].loadFromFile("sprites/antitank_gun_constructed.png");
-
-	textures[TileTexture::SpikesT].loadFromFile("sprites/spikes_T.png");
-	textures[TileTexture::SpikesRight].loadFromFile("sprites/spikes_right.png");
-	textures[TileTexture::SpikesCross].loadFromFile("sprites/spikes_cross.png");
-	textures[TileTexture::SpikesD].loadFromFile("sprites/spikes_d.png");
-	textures[TileTexture::SpikesIcon].loadFromFile("sprites/spikes_icon.png");
-
-    textures[TileTexture::Hedgehog].loadFromFile("sprites/hedgehog.png");
-
-    textures[TileTexture::Locked].loadFromFile("sprites/lock.png");
 	//Test Map
 	map[0][1].roads = { 1,0,1,0 };
 	map[1][1].roads = { 1,0,1,0 };

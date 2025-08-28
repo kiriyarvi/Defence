@@ -1,5 +1,6 @@
 #include "utils/framers.h"
-#include "enemy_manager.h"
+#include "texture_manager.h"
+
 
 MedBlustFramer::MedBlustFramer() {
 	sprite.setOrigin(8, 8);
@@ -8,18 +9,18 @@ MedBlustFramer::MedBlustFramer() {
 
 void MedBlustFramer::on_frame(int frame) {
 	if (frame < 4) {
-		sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::MedBlustOfDestruction1]);
+		sprite.setTexture(TextureManager::Instance().textures[TextureID::MedBlustOfDestruction1]);
 		sprite.setTextureRect(sf::IntRect(16 * (frame % 2), 16 * (frame / 2), 16, 16));
 	}
 	else {
 		frame -= 4;
-		sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::MedBlustOfDestruction2]);
+		sprite.setTexture(TextureManager::Instance().textures[TextureID::MedBlustOfDestruction2]);
 		sprite.setTextureRect(sf::IntRect(16 * (frame % 2), 16 * (frame / 2), 16, 16));
 	}
 }
 
 DoubleBlustFramer::DoubleBlustFramer() {
-	sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::DoubleBlust]);
+	sprite.setTexture(TextureManager::Instance().textures[TextureID::DoubleBlust]);
 	sprite.setOrigin(8, 16);
 	frames = 16;
 }
@@ -30,7 +31,7 @@ void DoubleBlustFramer::on_frame(int frame) {
 DenceBlustFramer::DenceBlustFramer() {
 	frames = 12;
 	sprite.setOrigin(8, 8);
-	sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Blusts16x16]);
+	sprite.setTexture(TextureManager::Instance().textures[TextureID::Blusts16x16]);
 }
 
 void DenceBlustFramer::on_frame(int frame) {
@@ -39,7 +40,7 @@ void DenceBlustFramer::on_frame(int frame) {
 
 SteamFramer::SteamFramer() {
 	frames = 4;
-	sprite.setTexture(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sprite.setTexture(TextureManager::Instance().textures[TextureID::MiniGunEquipment]);
 	sprite.setOrigin(1.5, 4);
 }
 
@@ -50,7 +51,7 @@ void SteamFramer::on_frame(int frame) {
 
 MinigunHitFramer::MinigunHitFramer() {
 	frames = 2;
-	sprite.setTexture(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sprite.setTexture(TextureManager::Instance().textures[TextureID::MiniGunEquipment]);
 	sprite.setOrigin(1.5, 1.5);
 }
 
@@ -61,7 +62,7 @@ void MinigunHitFramer::on_frame(int frame) {
 
 MinigunShootFramer::MinigunShootFramer() {
 	frames = 4;
-	sprite.setTexture(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sprite.setTexture(TextureManager::Instance().textures[TextureID::MiniGunEquipment]);
 	sprite.setOrigin(0, 1.5);
 }
 
@@ -72,7 +73,7 @@ void MinigunShootFramer::on_frame(int frame) {
 
 MinigunReboundFramer::MinigunReboundFramer() {
 	frames = 4;
-	sprite.setTexture(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sprite.setTexture(TextureManager::Instance().textures[TextureID::MiniGunEquipment]);
 	sprite.setOrigin(0, 1.5);
 }
 
@@ -82,7 +83,7 @@ void MinigunReboundFramer::on_frame(int frame) {
 
 MineBlastFramer::MineBlastFramer() {
 	frames = 14;
-	sprite.setTexture(TileMap::Instance().textures[TileTexture::MineBlast]);
+	sprite.setTexture(TextureManager::Instance().textures[TextureID::MineBlast]);
 	sprite.setOrigin(8,8);
 }
 
@@ -93,7 +94,7 @@ void MineBlastFramer::on_frame(int frame) {
 PickupBlastFramer::PickupBlastFramer() {
     frames = 12;
     sprite.setOrigin(8, 8);
-    sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Blusts16x16]);
+    sprite.setTexture(TextureManager::Instance().textures[TextureID::Blusts16x16]);
 }
 
 void PickupBlastFramer::on_frame(int frame) {

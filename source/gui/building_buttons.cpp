@@ -11,33 +11,14 @@
 #include "achievement_system.h"
 #include "gui/info_panel.h"
 
-BuildingButton::BuildingButton(TileTexture gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name)
-    : creator{ creator }, restrictions{ restrictions }, m_gun_icon{ gun_icon }, m_game_state{ game_state }, cost{ cost }, m_radius(radius), m_type{ type }, m_name{name} {
-
-    group = tgui::Group::create();
-    group->setSize({ "height" , "100%" });
-
-    button = tgui::BitmapButton::create();
-	auto button_renderer = button->getRenderer();
-	button_renderer->setBorders(0);
-	button->setImage(TileMap::Instance().textures[gun_icon]);
-	button->setImageScaling(1);
-	button->setSize({ "100%" , "100%" });
-
-    group->add(button);
-
-    lock = tgui::Picture::create(TileMap::Instance().textures[TileTexture::Locked]);
-    lock->setSize({ "100%" , "100%" });
-    lock->ignoreMouseEvents(true);
-    group->add(lock);
-
-	connect();
-    set_state(m_state);
+BuildingButton::BuildingButton(TextureID gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name)
+    : creator{ creator }, restrictions{ restrictions }, m_game_state{ game_state }, cost{ cost }, m_radius(radius), m_type{ type }, m_name{name}, IconButton(gun_icon) {
+    connect();
 }
 
 void BuildingButton::connect() {
-	button->onPress.disconnectAll();
-	button->onPress.connect([&]() {
+	m_button->onPress.disconnectAll();
+    m_button->onPress.connect([&]() {
         for (auto& button : m_game_state.m_building_buttons) {
             if (button.get() != this)
                 button->unselect();
@@ -47,10 +28,10 @@ void BuildingButton::connect() {
             m_game_state.m_current_building_construction = this;
         }
 	});
-    group->onMouseEnter([&]() {
+    m_group->onMouseEnter([&]() {
         show_info_content();
     });
-    group->onMouseLeave([&]() {
+    m_group->onMouseLeave([&]() {
         m_game_state.set_tooltip_content("");
     });
    
@@ -65,10 +46,9 @@ void BuildingButton::show_info_content() {
 }
 
 BuildingButton::BuildingButton(BuildingButton&& btn) :
-    creator{ btn.creator }, restrictions{ btn.restrictions }, m_gun_icon{ btn.m_gun_icon }, m_game_state{ btn.m_game_state }, cost{ btn.cost }, m_radius{ btn.m_radius }, m_type{ btn.m_type }, m_name{btn.m_name}
+    creator{ btn.creator }, restrictions{ btn.restrictions }, m_game_state{ btn.m_game_state }, cost{ btn.cost }, m_radius{ btn.m_radius }, m_type{ btn.m_type }, m_name{btn.m_name}, IconButton(std::move(btn))
 {
-	button = std::move(btn.button);
-	connect(); // нужно переназнывать, поскольку используем this в  lambda-функции.
+	connect(); // нужно переназначать, поскольку используем this в lambda-функции.
 }
 
 void BuildingButton::coins_update(int current_coins_count) {
@@ -102,7 +82,7 @@ void BuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int 
 	if (allowed) {
 		draw_radius(window, x_id, y_id);
 	}
-	auto& gun_texture = TileMap::Instance().textures[m_gun_icon];
+	auto& gun_texture = TextureManager::Instance().textures[m_icon];
 	sf::Sprite gun(gun_texture);
 	gun.setOrigin(gun_texture.getSize().x / 2.f, gun_texture.getSize().y / 2.f);
 	gun.rotate(180);
@@ -121,46 +101,7 @@ void BuildingButton::draw_radius(sf::RenderWindow& window, int x_id, int y_id) {
 	window.draw(circle);
 }
 
-void BuildingButton::set_grayscale() {
-    tgui::Texture background(TileMap::Instance().textures[TileTexture::ButtonBackground]);
-    tgui::Texture icon(TileMap::Instance().textures[m_gun_icon]);
-    background.setShader(&ShaderManager::Instance().shaders[Shader::GrayScale]);
-    icon.setShader(&ShaderManager::Instance().shaders[Shader::GrayScale]);
-    button->getSharedRenderer()->setTexture(background);
-    button->setImage(icon);
-}
 
-void BuildingButton::set_state(State state) {
-    switch (state) {
-    case BuildingButton::State::Locked: {
-        set_grayscale();
-        lock->setVisible(true);
-        break;
-    }
-    case BuildingButton::State::Active: {
-        lock->setVisible(false);
-        tgui::Texture background(TileMap::Instance().textures[TileTexture::ButtonBackground]);
-        tgui::Texture icon(TileMap::Instance().textures[m_gun_icon]);
-        button->getSharedRenderer()->setTexture(background);
-        button->setImage(icon);
-        break;
-    }
-    case BuildingButton::State::Selected: {
-        lock->setVisible(false);
-        tgui::Texture background(TileMap::Instance().textures[TileTexture::ButtonClickedBackground]);
-        tgui::Texture icon(TileMap::Instance().textures[m_gun_icon]);
-        button->getSharedRenderer()->setTexture(background);
-        button->setImage(icon);
-        break;
-    }
-    case BuildingButton::State::Disabled:
-        set_grayscale();
-        break;
-    default:
-        break;
-    }
-    m_state = state;
-}
 
 void BuildingButton::unselect() {
     if (m_state == State::Selected) {
@@ -185,7 +126,7 @@ void BuildingButton::lock_button(bool l) {
 
 MinigunBuildingButton::MinigunBuildingButton(GameState& game_state):
 	BuildingButton(
-		TileTexture::MinigunIcon,
+        TextureID::MinigunIcon,
 		game_state,
 		make_creator<MiniGun>(),
 		TileRestrictions::NoRoads,
@@ -201,7 +142,7 @@ MinigunBuildingButton::MinigunBuildingButton(GameState& game_state):
 
 MineBuildingButton::MineBuildingButton(GameState& game_state):
 	BuildingButton(
-		TileTexture::Mine,
+        TextureID::Mine,
 		game_state,
 		make_creator<Mine>(),
 		TileRestrictions::RoadOnly,
@@ -214,7 +155,7 @@ MineBuildingButton::MineBuildingButton(GameState& game_state):
 
 TwinGunBuildingButton::TwinGunBuildingButton(GameState& game_state) :
 	BuildingButton(
-		TileTexture::TwingunIcon,
+        TextureID::TwingunIcon,
 		game_state,
 		make_creator<TwinGun>(),
 		TileRestrictions::NoRoads,
@@ -230,12 +171,12 @@ void TwinGunBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_i
 	if (allowed) {
 		draw_radius(window, x_id, y_id);
 	}
-	sf::Sprite base(TileMap::Instance().textures[TileTexture::GunBase]);
+	sf::Sprite base(TextureManager::Instance().textures[TextureID::GunBase]);
 	base.setPosition(x_id * 32, y_id * 32);
 	if (!allowed) base.setColor(sf::Color(255, 0, 0));
 	window.draw(base);
 
-	sf::Sprite gun(TileMap::Instance().textures[TileTexture::TwingunConstructed]);
+	sf::Sprite gun(TextureManager::Instance().textures[TextureID::TwingunConstructed]);
 	gun.setOrigin(16, 15.5);
 	gun.rotate(180);
 	gun.setPosition(x_id * 32 + 16, y_id * 32 + 16);
@@ -245,7 +186,7 @@ void TwinGunBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_i
 
 AntitankGunBuildingButton::AntitankGunBuildingButton(GameState& game_state) :
 	BuildingButton(
-		TileTexture::AntitankGunIcon,
+		TextureID::AntitankGunIcon,
 		game_state,
 		make_creator<AntitankGun>(),
 		TileRestrictions::NoRoads,
@@ -262,12 +203,12 @@ void AntitankGunBuildingButton::draw_building_plan(sf::RenderWindow& window, int
 	if (allowed) {
 		draw_radius(window, x_id, y_id);
 	}
-	sf::Sprite base(TileMap::Instance().textures[TileTexture::GunBase]);
+	sf::Sprite base(TextureManager::Instance().textures[TextureID::GunBase]);
 	base.setPosition(x_id * 32, y_id * 32);
 	if (!allowed) base.setColor(sf::Color(255, 0, 0));
 	window.draw(base);
 
-	sf::Sprite gun(TileMap::Instance().textures[TileTexture::AntitankGunConstructed]);
+	sf::Sprite gun(TextureManager::Instance().textures[TextureID::AntitankGunConstructed]);
 	gun.setOrigin(9, 16);
 	gun.rotate(180);
 	gun.setPosition(x_id * 32 + 16, y_id * 32 + 16);
@@ -277,7 +218,7 @@ void AntitankGunBuildingButton::draw_building_plan(sf::RenderWindow& window, int
 
 SpikesBuildingButton::SpikesBuildingButton(GameState& game_state) :
 	BuildingButton(
-		TileTexture::SpikesIcon,
+		TextureID::SpikesIcon,
 		game_state,
 		make_creator<Spikes>(),
 		TileRestrictions::RoadOnly,
@@ -299,7 +240,7 @@ void SpikesBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id
 
 HedgeBuildingButton::HedgeBuildingButton(GameState& game_state):
     BuildingButton(
-        TileTexture::Hedgehog,
+        TextureID::Hedgehog,
         game_state,
         make_creator<Hedgehog>(),
         TileRestrictions::RoadOnly,
@@ -312,7 +253,7 @@ HedgeBuildingButton::HedgeBuildingButton(GameState& game_state):
 
 void HedgeBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
     bool allowed = is_cell_allowed(x_id, y_id);
-    sf::Sprite headge(TileMap::Instance().textures[TileTexture::Hedgehog]);
+    sf::Sprite headge(TextureManager::Instance().textures[TextureID::Hedgehog]);
     headge.setOrigin(16, 16);
     headge.setPosition(x_id * 32 + 16, y_id * 32 + 16);
     if (!allowed) headge.setColor(sf::Color(255, 0, 0));

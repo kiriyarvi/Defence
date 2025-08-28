@@ -5,47 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <glm/glm.hpp>
-
-enum class TileTexture {
-	Grass,
-	Road1100 = 12, // 1100: 1 - дорога направо, 1 - дорога наверх, 0 - нет дорого налево, 0 - нет дороги наверх
-	Road0110 = 6,
-	Road0011 = 3,
-	Road1001 = 9,
-	Road1010 = 10,
-	Road0101 = 5,
-	Road0111 = 7,
-	Road1011 = 11,
-	Road1101 = 13,
-	Road1110 = 14,
-	Road1111 = 15,
-	GunBase,
-	TwinGunTurret,
-	TwinGunUpperBarrel,
-	Shot,
-	AntitankGunTurret,
-	AntitankGunBarrel,
-	AntitankGunTurretSubstrate,
-	MiniGun,
-	MiniGunEquipment,
-	Mine,
-	MineBlast,
-	ButtonBackground,
-	ButtonClickedBackground,
-	MinigunIcon,
-	TwingunIcon,
-	TwingunConstructed,
-	AntitankGunIcon,
-	AntitankGunConstructed,
-	SpikesRight,
-	SpikesT,
-	SpikesCross,
-	SpikesD,
-	SpikesIcon,
-	Hedgehog,
-    Locked
-};
-
+#include "texture_manager.h"
 
 enum class BuildingType {
     Minigun,
@@ -56,12 +16,33 @@ enum class BuildingType {
     TwinGun
 };
 
+class MiniGun;
+class Spikes;
+class Hedgehog;
+class AntitankGun;
+class TwinGun;
+class Mine;
+
+class IBuildingVisitor {
+public:
+    virtual void visit(MiniGun& minigun) = 0;
+    virtual void visit(Spikes& spikes) = 0;
+    virtual void visit(Hedgehog& headgehogs) = 0;
+    virtual void visit(AntitankGun& antitank_gun) = 0;
+    virtual void visit(TwinGun& twingun) = 0;
+    virtual void visit(Mine& mine) = 0;
+};
+
+#define ACCEPT(Type) \
+void accept(IBuildingVisitor& visitor) override { visitor.visit(*this); }
+
 class IBuilding {
 public:
 	virtual void draw(sf::RenderWindow& window, int x_id, int y_id) = 0;
 	virtual void draw_effects(sf::RenderWindow& window, int x_id, int y_id) = 0;
 	virtual void logic(double dtime, int x_id, int y_id) = 0;
 	virtual bool is_destroyed() { return false; }
+    virtual void accept(IBuildingVisitor& visitor) = 0;
 	virtual ~IBuilding() = default;
 };
 
@@ -69,7 +50,7 @@ using Building = std::unique_ptr<IBuilding>;
 
 class Tile {
 public:
-	TileTexture background_texture = TileTexture::Grass;
+	TextureID background_texture = TextureID::Grass;
 	std::array<bool, 4> roads; // Right, Up, Left, Down
 	virtual void draw(sf::RenderWindow& window, int x, int y);
 	virtual ~Tile() = default;
@@ -115,7 +96,6 @@ public:
 	void draw_effects(sf::RenderWindow& window);
 	void logic(double dtime);
 	std::array<std::array<Tile, 8>, 8> map;
-	std::unordered_map<TileTexture, sf::Texture> textures;
 	const RoadGraph& get_road_graph() { return m_road_graph; }
 private:
 	TileMap();

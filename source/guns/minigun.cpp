@@ -1,6 +1,7 @@
 #include "guns/minigun.h"
 #include "enemy_manager.h"
 #include "sound_manager.h"
+#include "texture_manager.h"
 
 #include "game_state.h"
 #include "utils/framers.h"
@@ -14,25 +15,25 @@ MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
 	m_heat_speed = 1. / m_params.heating_time;
 	m_cooling_speed = 1. / m_params.cooling_time;
 
-	m_minigun_sprite.sprite.setTexture(TileMap::Instance().textures[TileTexture::MiniGun]);
+	m_minigun_sprite.sprite.setTexture(TextureManager::Instance().textures[TextureID::MiniGun]);
 	m_minigun_sprite.set_position_origin(16, 16);
 	m_minigun_sprite.set_rotation_origin(16, 16);
 	m_minigun_sprite.layer = -1;
 
-	sf::Sprite drum(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sf::Sprite drum(TextureManager::Instance().textures[TextureID::MiniGunEquipment]);
 	drum.setOrigin(0, 1.5);
 	drum.setScale(4 / 9.f, 4 / 9.f);
 	drum.setTextureRect(sf::IntRect(0, 24, 16, 3));
 	for (int i = 0; i < 6; ++i)
 		m_minigun_sprite.childs.push_back(SpriteChain(drum));
 
-	sf::Sprite belt(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sf::Sprite belt(TextureManager::Instance().textures[TextureID::MiniGunEquipment]);
 	belt.setTextureRect(sf::IntRect(0, 0, 10, 24));
 	belt.setScale(3 / 10., 8. / 24.);
 	m_belt_chain = &m_minigun_sprite.childs.emplace_back(SpriteChain(belt));
 	m_belt_chain->layer = 1;
 
-	sf::Sprite overlap(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sf::Sprite overlap(TextureManager::Instance().textures[TextureID::MiniGunEquipment]);
 	overlap.setTextureRect(sf::IntRect(10, 0, 3, 10));
 	auto& overlap_chain = m_minigun_sprite.childs.emplace_back(SpriteChain(overlap));
 	overlap_chain.layer = 2;
@@ -45,7 +46,7 @@ MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
 	m_overheat_animation.start();
 	m_overheat_animation.logic(0.0); // чтобы установить первый frame. 
 
-	sf::Sprite compass(TileMap::Instance().textures[TileTexture::MiniGunEquipment]);
+	sf::Sprite compass(TextureManager::Instance().textures[TextureID::MiniGunEquipment]);
 	compass.setTextureRect(sf::IntRect(16, 0, 5, 5));
 	compass.scale(3. / 5., 3. / 5.);
 	m_enemy_compass = &m_minigun_sprite.childs.emplace_back(SpriteChain(compass));

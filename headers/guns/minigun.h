@@ -14,6 +14,7 @@ public:
 	void shoot_logic(int x_id, int y_id, IEnemy& enemy) override;
 	void on_gun_pointed() override;
 	void on_gun_unpointed() override;
+    ACCEPT(Minigun)
 private:
 	void temperature_logic(double dtime_microseconds);
 	void drum_animation();

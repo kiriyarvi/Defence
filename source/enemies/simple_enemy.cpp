@@ -3,12 +3,12 @@
 #include "shader_manager.h"
 #include "game_state.h"
 
-SimpleEnemy::SimpleEnemy(EnemyTexturesID enemy_texture, EnemyTexturesID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params, EnemyType t):
+SimpleEnemy::SimpleEnemy(TextureID enemy_texture, TextureID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params, EnemyType t):
 	m_destroyed_enemy_texture(destroyed_enemy_texture),
 	m_destruction_sound(destruction_sound),
 	IEnemy(params, t)
 {
-	m_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[enemy_texture]);
+	m_enemy_sprite.setTexture(TextureManager::Instance().textures[enemy_texture]);
 	m_enemy_sprite.setOrigin(16, 16);
 }
 
@@ -23,7 +23,7 @@ void SimpleEnemy::draw(sf::RenderWindow& window) {
 IDestroyedEnemy::Ptr SimpleEnemy::get_destroyed_enemy() {
 	auto de = std::make_unique<SimpleEnemyDestroyed>(std::make_unique<MedBlustFramer>(), 1, 2.0, m_destruction_sound);
 	de->destroyed_enemy_sprite = m_enemy_sprite;
-	de->destroyed_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[m_destroyed_enemy_texture]);
+	de->destroyed_enemy_sprite.setTexture(TextureManager::Instance().textures[m_destroyed_enemy_texture]);
 	return de;
 }
 
@@ -111,7 +111,7 @@ bool BikeDestroyed::is_ready() {
 IDestroyedEnemy::Ptr Bike::get_destroyed_enemy() {
 	auto de = std::make_unique<BikeDestroyed>();
 	de->destroyed_enemy_sprite = m_enemy_sprite;
-	de->destroyed_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[m_destroyed_enemy_texture]);
+	de->destroyed_enemy_sprite.setTexture(TextureManager::Instance().textures[m_destroyed_enemy_texture]);
 	de->destroyed_enemy_sprite.setScale(0.3, 0.3);
 	return de;
 }
@@ -120,7 +120,7 @@ IDestroyedEnemy::Ptr Bike::get_destroyed_enemy() {
 BTR::BTR(): IEnemy(ParamsManager::Instance().params.enemies.BTR, EnemyType::BTR) {
     wheels = Wheels::Tracks;
     infantry = false;
-    m_btr.sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::BTR]);
+    m_btr.sprite.setTexture(TextureManager::Instance().textures[TextureID::BTR]);
     m_btr.set_position_origin(16, 16);
     m_btr.set_rotation_origin(16, 16);
     m_upper_truck = &m_btr.childs.emplace_back();
@@ -128,13 +128,13 @@ BTR::BTR(): IEnemy(ParamsManager::Instance().params.enemies.BTR, EnemyType::BTR)
 
     auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
 
-    m_upper_truck->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Trucks]);
+    m_upper_truck->sprite.setTexture(TextureManager::Instance().textures[TextureID::Trucks]);
     m_upper_truck->sprite.setTextureRect(sf::IntRect(0, 0, 60, 7));
     m_upper_truck->sprite.setScale(2 / 7.f, 2 / 7.f);
     m_upper_truck->set_position(9, 10);
     m_upper_truck->shader = &shader;
 
-    m_lower_truck->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Trucks]);
+    m_lower_truck->sprite.setTexture(TextureManager::Instance().textures[TextureID::Trucks]);
     m_lower_truck->sprite.setTextureRect(sf::IntRect(0, 0, 60, 7));
     m_lower_truck->sprite.setScale(2 / 7.f, 2 / 7.f);
     m_lower_truck->set_position(9, 20);
@@ -165,7 +165,7 @@ IDestroyedEnemy::Ptr BTR::get_destroyed_enemy() {
     de->destroyed_enemy_sprite.setOrigin(16, 16);
     de->destroyed_enemy_sprite.setPosition(position.x, position.y);
     de->destroyed_enemy_sprite.setRotation(rotation);
-    de->destroyed_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::BTRDestroyed]);
+    de->destroyed_enemy_sprite.setTexture(TextureManager::Instance().textures[TextureID::BTRDestroyed]);
     return de;
 }
 
@@ -173,7 +173,7 @@ IDestroyedEnemy::Ptr BTR::get_destroyed_enemy() {
 CruiserI::CruiserI(): IEnemy(ParamsManager::Instance().params.enemies.CruiserI, EnemyType::CruiserI) {
     wheels = Wheels::HeavyTracks;
     infantry = false;
-    m_btr.sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::CruiserIBase]);
+    m_btr.sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIBase]);
     m_btr.sprite.setScale(0.5, 0.5);
     m_btr.layer = 0;
     m_btr.set_position_origin(16, 16);
@@ -184,14 +184,14 @@ CruiserI::CruiserI(): IEnemy(ParamsManager::Instance().params.enemies.CruiserI, 
 
     auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
 
-    m_upper_truck->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Trucks]);
+    m_upper_truck->sprite.setTexture(TextureManager::Instance().textures[TextureID::Trucks]);
     m_upper_truck->sprite.setTextureRect(sf::IntRect(0, 0, 56, 7));
     m_upper_truck->sprite.setScale(5 / 14.f, 5 / 14.f);
     m_upper_truck->set_position(10/2., 16/2.);
     m_upper_truck->shader = &shader;
     m_upper_truck->layer = 1;
 
-    m_lower_truck->sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::Trucks]);
+    m_lower_truck->sprite.setTexture(TextureManager::Instance().textures[TextureID::Trucks]);
     m_lower_truck->sprite.setTextureRect(sf::IntRect(0, 0, 56, 7));
     m_lower_truck->sprite.setScale(5 / 14.f, 5 / 14.f);
     m_lower_truck->set_position(10/2., 44/2.);
@@ -199,7 +199,7 @@ CruiserI::CruiserI(): IEnemy(ParamsManager::Instance().params.enemies.CruiserI, 
     m_lower_truck->layer = 1;
 
     auto& eq = m_btr.childs.emplace_back();
-    eq.sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::CruiserIEquipment]);
+    eq.sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIEquipment]);
     eq.sprite.setScale(0.5, 0.5);
     eq.layer = 2;
 
@@ -234,6 +234,6 @@ IDestroyedEnemy::Ptr CruiserI::get_destroyed_enemy() {
     de->destroyed_enemy_sprite.setOrigin(16, 16);
     de->destroyed_enemy_sprite.setPosition(position.x, position.y);
     de->destroyed_enemy_sprite.setRotation(rotation);
-    de->destroyed_enemy_sprite.setTexture(EnemyManager::Instance().enemy_textures[EnemyTexturesID::BTRDestroyed]);
+    de->destroyed_enemy_sprite.setTexture(TextureManager::Instance().textures[TextureID::BTRDestroyed]);
     return de;
 }

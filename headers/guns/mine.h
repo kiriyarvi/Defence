@@ -10,6 +10,7 @@ public:
 	void draw_effects(sf::RenderWindow& window, int x, int y) override;
 	void logic(double dtime, int x_id, int y_id) override;
 	bool is_destroyed() override { return m_state == State::Destroyed; }
+    ACCEPT(Mine)
 private:
 	enum class State {
 		Ready,
