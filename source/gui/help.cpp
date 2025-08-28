@@ -161,6 +161,110 @@ Help::Help() {
         m_guns_tabs.create_tab("Противотанковые ежи", panel.create());
     }
 
+    // ENEMIES
+    {
+        auto& params = ParamsManager::Instance().params.enemies.solder;
+        InfoPanel panel;
+        panel.set_name("Солдат");
+        panel.set_description(
+            "Не доставит вам серьезных проблем. Обычный пулемет без улучшений легко справиться с ним."
+        );
+        panel.add_char("здоровье", params.health);
+        panel.add_char("скорость", params.speed);
+        panel.add_char("награда", params.reward);
+        panel.add_char("уровень бронирования", params.armor_level);
+        m_enemies_tabs.create_tab("Солдат", panel.create());
+        
+    }
+    {
+        auto& params = ParamsManager::Instance().params.enemies.bike;
+        InfoPanel panel;
+        panel.set_name("Мотоциклист");
+        panel.set_description(
+            "Довольное неприятный противник из-за своей высокой скорости. Используйте несколько пулеметов, чтобы победить его. "
+            " Победа над мотоциклистом откроет вам шипы, позволяющие останавливать колесную технику. "
+            " После получения шипой мотоциклист перетанет быть для вас головной болью. "
+        );
+        panel.add_char("здоровье", params.health);
+        panel.add_char("скорость", params.speed);
+        panel.add_char("награда", params.reward);
+        panel.add_char("уровень бронирования", params.armor_level);
+        m_enemies_tabs.create_tab("Мотоциклист", panel.create());
+    }
+    {
+        auto& params = ParamsManager::Instance().params.enemies.pickup;
+        InfoPanel panel;
+        panel.set_name("Пикап");
+        panel.set_description(
+            "Простая легковая машина, ее бронирование ничего из себя не представляет, поэтому можно использовать обычный пулемет."
+            " Победа над пикапом откроет улучшение для пулемета \"Бронебойные снаряды I\", увеличиваюющее его бронепробиваемость."
+            " После получения шипой мотоциклист перетанет быть для вас головной болью. "
+        );
+        panel.add_char("здоровье", params.health);
+        panel.add_char("скорость", params.speed);
+        panel.add_char("награда", params.reward);
+        panel.add_char("уровень бронирования", params.armor_level);
+        m_enemies_tabs.create_tab("Пикап", panel.create());
+    }
+    {
+        auto& params = ParamsManager::Instance().params.enemies.truck;
+        InfoPanel panel;
+        panel.set_name("Грузовик");
+        panel.set_description(
+            "Обычный военный грузовок, который везет взвод солдат к вам в тыл. Если остановите его, получите можное оружие - Мину."
+        );
+        panel.add_char("здоровье", params.health);
+        panel.add_char("скорость", params.speed);
+        panel.add_char("награда", params.reward);
+        panel.add_char("уровень бронирования", params.armor_level);
+        m_enemies_tabs.create_tab("Грузовик", panel.create());
+    }
+    {
+        auto& params = ParamsManager::Instance().params.enemies.BTR;
+        InfoPanel panel;
+        panel.set_name("БТР");
+        panel.set_description(
+            "Довольно серьезный противник. Имеет уровень бронирования выше, чем вся техника, встречающаяся вам до этого. "
+            "Для победы над ним можно воспользоваться обычным племетом с улучшением \"бронебойные снаряды I\". Пулемет без улучшений "
+            "сможет пробивать БТР лишь при достижени нагрева в 500 градусов. Также можно использовать мины. Не надейтесь использовать шипы, "
+            " на БТР (как и на любую гусенечную технику) они не действуют. После победы над БТР вы откроете противотанковые ежи - хорошее дополнение к шипам."
+        );
+        panel.add_char("здоровье", params.health);
+        panel.add_char("скорость", params.speed);
+        panel.add_char("награда", params.reward);
+        panel.add_char("уровень бронирования", params.armor_level);
+        m_enemies_tabs.create_tab("БТР", panel.create());
+    }
+    {
+        auto& params = ParamsManager::Instance().params.enemies.tank;
+        InfoPanel panel;
+        panel.set_name("Танк");
+        panel.set_description(
+            "Имеет уровень бронирования выше, чем у БТР. Это значит, что даже пулемет с улучшением  \"бронебойные снаряды I\" будет пробивать его лишь при достижении нагрева в 500 градусов. "
+            "После победы над танком ваши страдания с бронированной техникой наконец закончатся и вы получите в свое распоряжение противотанковую пушку."
+        );
+        panel.add_char("здоровье", params.health);
+        panel.add_char("скорость", params.speed);
+        panel.add_char("награда", params.reward);
+        panel.add_char("уровень бронирования", params.armor_level);
+        m_enemies_tabs.create_tab("Танк", panel.create());
+    }
+    {
+        auto& params = ParamsManager::Instance().params.enemies.CruiserI;
+        InfoPanel panel;
+        panel.set_name("Наземный крейсер I");
+        panel.set_description(
+            "Первый по-настоящему серьезный противник. Имеет внушительный запас прочности и высокий уровень бронирования. Используйте противотанковые пушки для его уничтожения. "
+            "Если наземный крейсер I сможет пройти через вашу оборону - вы проиграите не зависимо от того, сколько у вас осталось здоровья. "
+            "Победа над наземный крейсером I откроет для вас мощную сдвоенную пушку."
+        );
+        panel.add_char("здоровье", params.health);
+        panel.add_char("скорость", params.speed);
+        panel.add_char("награда", params.reward);
+        panel.add_char("уровень бронирования", params.armor_level);
+        m_enemies_tabs.create_tab("Наземный крейсер I", panel.create());
+    }
+
 }
 
 void Help::show_guns_cat() {
@@ -170,4 +274,5 @@ void Help::show_guns_cat() {
 
 void Help::show_enemies_cat() {
     m_cat_content->removeAllWidgets();
+    m_cat_content->add(m_enemies_tabs.get_content());
 }
