@@ -75,4 +75,8 @@ TextureManager::TextureManager() {
     textures[TextureID::MinigunShellsUpgradeI].loadFromFile("sprites/minigun_shells_upgrade_I.png");
     textures[TextureID::MinigunCoolingUpgradeI].loadFromFile("sprites/minigun_cooling_upgrade_I.png");
     textures[TextureID::MinigunLubricantUpgradeI].loadFromFile("sprites/minigun_lubricant_upgrade_I.png");
+
+    textures[TextureID::Arrow].loadFromFile("sprites/arrow.png");
+    textures[TextureID::Path].loadFromFile("sprites/path.png");
+    textures[TextureID::Path].setRepeated(true);
 }

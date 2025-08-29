@@ -40,7 +40,7 @@ int main() {
 		if (accumulator > dt * 1000 * 1000) {
 			dtime = accumulator;
 			accumulator = 0;
-			game_state.logic();
+			game_state.logic(dtime);
 			if (!game_state.is_game_over() && !game_state.is_help_displayed()) {
 				EnemyManager::Instance().logic(dtime);
 				TileMap::Instance().logic(dtime);

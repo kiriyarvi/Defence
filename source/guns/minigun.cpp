@@ -293,7 +293,7 @@ IRotatingGun::TargetStatus MiniGun::get_enemy_status(IEnemy& enemy) {
         status.valid = false;
         return status;
     }
-    status.priority = 1. / ((enemy.params.armor_level + 1) * enemy.health); // чем меньше armor_level и здоворье, тем выше приоритет.
+    status.priority = 1. / (enemy.params.armor_level + 1); // чем меньше armor_level, тем выше приоритет.
     status.mult_by_distance = true;
     return status;
 }

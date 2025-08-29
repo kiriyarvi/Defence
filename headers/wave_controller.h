@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <string>
 #include "tile_map.h"
 
 struct EnemySpawn {
@@ -15,6 +16,7 @@ struct IRoute {
     IRoute() = default;
     IRoute(IRoute&&) = default;
     virtual std::pair<EnemySpawn, bool> next_enemy() = 0;
+    virtual std::string description() = 0;
     virtual ~IRoute() = default;
     RoadGraph::PathID id;
 };
@@ -23,6 +25,7 @@ class UniformSpawner : public IRoute {
 public:
     std::pair<EnemySpawn, bool> next_enemy() override;
     void add_spawner(EnemyType type, int count, bool boss = false);
+    std::string description() override;
 private:  
     struct Spawn {
         EnemyType type;
@@ -36,6 +39,7 @@ class ControlledSpawner : public IRoute {
 public:
     void add_enemy(EnemyType type, float count, bool boss = false);
     std::pair<EnemySpawn, bool> next_enemy() override;
+    std::string description() override;
 private:
     int m_current_spawner = 0;
     std::vector<EnemySpawn> m_spawners;
@@ -49,7 +53,6 @@ struct Wave {
 
 class WaveController {
 public:
-
     WaveController();
     void logic(double dtime_microseconds);
     bool next_wave();

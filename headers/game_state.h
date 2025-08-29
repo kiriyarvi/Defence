@@ -24,7 +24,7 @@ public:
 	tgui::Gui& get_tgui();
 
 	bool event(sf::Event& event, const sf::RenderWindow& current_window);
-	void logic();
+	void logic(double dtime_mc);
 	void draw(sf::RenderWindow& current_window);
 	bool is_player_defeated() { return  m_player_hp <= 0; }
     bool is_game_over() { return is_player_defeated() || m_win; }
@@ -44,6 +44,17 @@ public:
 
 	//void minigun_state_update(const MiniGun& minigun);
     sf::Window& window;
+
+    struct Enter {
+        int x_id;
+        int y_id;
+        RoadGraph::PathID id;
+        std::string content;
+        RouteDrawer drawer;
+    };
+    void add_enter(RoadGraph::PathID id, const std::string& content);
+    void delete_all_enters();
+
 private:
 	friend class BuildingButton;	
 private:
@@ -67,6 +78,8 @@ private:
     tgui::Panel::Ptr m_panel = nullptr;
     tgui::RichTextLabel::Ptr m_mouse_tooltip;
     UpgradePanelCreator m_upgrade_panel_creator;
+    std::vector<Enter> m_enters;
+    Enter* m_showed_enter = nullptr;
 public:
     tgui::Font GOSTtypeA_font;
     tgui::Font PixelSplitter_Bold_font; // расположены здесь, чтобы уничтожались первее (иначе ошибка в tgui).

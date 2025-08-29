@@ -86,6 +86,16 @@ private:
 		std::vector<std::vector<Node*>>& all_paths) const;
 };
 
+class RouteDrawer {
+public:
+    RouteDrawer(const RoadGraph::Path& path);
+    void draw(sf::RenderWindow& window);
+    void logic(double dtime_mc);
+private:
+    sf::VertexArray m_vertex_array;
+    float m_offset = 0;
+};
+
 class TileMap {
 public:
 	// Получение единственного экземпляра

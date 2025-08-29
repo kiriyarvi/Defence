@@ -80,7 +80,7 @@ void UpgradeButton::update() {
             int current_coins_count = GameState::Instance().get_player_coins();
             if (current_coins_count >= m_cost)
                 set_state(State::Active);
-            if (current_coins_count < m_cost)
+            else
                 set_state(State::Disabled);
         }
     }

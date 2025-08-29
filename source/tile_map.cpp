@@ -1,10 +1,12 @@
 #include "tile_map.h"
 #include "enemy_manager.h"
 #include "sound_manager.h"
+#include "shader_manager.h"
 #include "guns/twin_gun.h"
 #include "guns/antitank_gun.h"
 #include "guns/minigun.h"
 #include "guns/mine.h"
+
 
 #include "glm/glm.hpp"
 
@@ -174,5 +176,81 @@ void RoadGraph::dfs(Node* current,
 	// Назад (backtracking)
 	visited.erase(current);
 	path.pop_back();
+}
+
+
+RouteDrawer::RouteDrawer(const RoadGraph::Path& path) {
+    int N = path.size();
+    m_vertex_array.resize(N * 2);
+    glm::vec2 begin = { path[0]->x * 32 + 16, path[0]->y * 32 + 16 };
+    glm::vec2 next_begin = { path[1]->x * 32 + 16, path[1]->y * 32 + 16 };
+    glm::vec2 end = { path.back()->x * 32 + 16, path.back()->y * 32 + 16 };
+    glm::vec2 prev_end = { path[N - 2]->x * 32 + 16, path[N - 2]->y * 32 + 16 };
+    glm::vec2 dir_begin = glm::normalize(next_begin - begin);
+    dir_begin = glm::vec2{ -dir_begin.y, dir_begin.x };
+    glm::vec2 dir_end = glm::normalize(end - prev_end);
+    dir_end = glm::vec2{ -dir_end.y, dir_end.x };
+
+    float width = 4;
+
+
+    m_vertex_array[0].position.x = begin.x +  width * dir_begin.x;
+    m_vertex_array[0].position.y = begin.y +  width * dir_begin.y;
+    m_vertex_array[1].position.x = begin.x -  width * dir_begin.x;
+    m_vertex_array[1].position.y = begin.y -  width * dir_begin.y;
+
+    m_vertex_array[2 * (N - 1)].position.x = end.x + width * dir_end.x;
+    m_vertex_array[2 * (N - 1)].position.y = end.y + width * dir_end.y;
+    m_vertex_array[2 * (N - 1) + 1].position.x = end.x - width * dir_end.x;
+    m_vertex_array[2 * (N - 1) + 1].position.y = end.y - width * dir_end.y;
+
+    for (size_t i = 1; i < N - 1; ++i) {
+        glm::vec2 prev = { path[i - 1]->x * 32 + 16, path[i - 1]->y * 32 + 16 };
+        glm::vec2 curr = { path[i]->x * 32 + 16, path[i]->y * 32 + 16 };
+        glm::vec2 next = { path[i + 1]->x * 32 + 16, path[i + 1]->y * 32 + 16 };
+        glm::vec2 A = glm::normalize(next - curr);
+        glm::vec2 B = glm::normalize(prev - curr);
+        glm::vec2 dir = glm::normalize(A + B);
+        if (glm::length(A + B) > 0) {
+            if (dir.x * A.y - dir.y * A.x > 0) // изменим знак, если dir смотрит не в ту сторону
+                dir = -dir;
+            float cos = glm::abs(glm::dot(dir, A));
+            m_vertex_array[2 * i].position.x = curr.x + width * dir.x / cos;
+            m_vertex_array[2 * i].position.y = curr.y + width * dir.y / cos;
+            m_vertex_array[2 * i + 1].position.x = curr.x - width * dir.x / cos;
+            m_vertex_array[2 * i + 1].position.y = curr.y - width * dir.y / cos;
+        }
+        else {
+            dir = glm::normalize(next - prev);
+            dir = glm::vec2{ -dir.y, dir.x };
+            m_vertex_array[2 * i].position.x = curr.x + width * dir.x;
+            m_vertex_array[2 * i].position.y = curr.y + width * dir.y;
+            m_vertex_array[2 * i + 1].position.x = curr.x - width * dir.x;
+            m_vertex_array[2 * i + 1].position.y = curr.y - width * dir.y;
+        }
+    }
+
+    for (size_t i = 0; i < 2 * N; ++i) {
+        m_vertex_array[i].texCoords = m_vertex_array[i].position;
+    }
+
+    m_vertex_array.setPrimitiveType(sf::TrianglesStrip);
+}
+
+void RouteDrawer::draw(sf::RenderWindow& window) {
+    sf::RenderStates states;
+    states.texture = &TextureManager::Instance().textures[TextureID::Path];
+    auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
+    shader.setUniform("texture", sf::Shader::CurrentTexture);
+    shader.setUniform("offset", -(float)m_offset / (1000 * 1000));
+    states.shader = &shader;
+    window.draw(m_vertex_array, states);
+}
+
+void RouteDrawer::logic(double dtime_mc) {
+    m_offset += 0.5 * dtime_mc;
+    if (m_offset > 10 * 1000 * 1000) {
+        m_offset -= 10 * 1000 * 1000;
+    }
 }
 

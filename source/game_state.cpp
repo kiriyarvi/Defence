@@ -5,6 +5,7 @@
 #include "guns/twin_gun.h"
 #include "guns/antitank_gun.h"
 #include "achievement_system.h"
+#include "enemy_manager.h"
 
 GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" };
@@ -142,11 +143,40 @@ void GameState::set_tooltip_content(const std::string& content, sf::Vector2f ori
     }
 }
 
+void GameState::add_enter(RoadGraph::PathID id, const std::string& content) {
+    auto& path = EnemyManager::Instance().all_paths[id.start_node][id.path];
+    Enter enter{ path[0]->x, path[0]->y, id, content, RouteDrawer(path) };
+    m_enters.push_back(enter);
+}
+
+void GameState::delete_all_enters() {
+    m_enters.clear();
+    m_showed_enter = nullptr;
+}
+
 bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) {
 	if (event.type == sf::Event::MouseMoved) {
 		sf::Vector2i mouse_screen_pos(event.mouseMove.x, event.mouseMove.y);
 		m_mouse_pos = current_window.mapPixelToCoords(mouse_screen_pos);
         m_mouse_tooltip->setPosition(mouse_screen_pos.x, mouse_screen_pos.y);
+        sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
+        bool mouse_on_enter = false;
+        if (cell_id.x == 0 && m_mouse_pos.x < 0) {
+            for (auto& enter : m_enters) {
+                if (enter.y_id == cell_id.y) { // показать информацию о волне
+                    if (m_showed_enter != &enter) {
+                        set_tooltip_content(enter.content);
+                        m_showed_enter = &enter;
+                    }
+                    mouse_on_enter = true;
+                    break;
+                }
+            }
+        }
+        if (!mouse_on_enter) {
+            set_tooltip_content("");
+            m_showed_enter = nullptr;
+        }
 		return false;
 	}
 	if (event.type == sf::Event::MouseButtonPressed) {
@@ -191,7 +221,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 	return false;
 }
 
-void GameState::logic() {
+void GameState::logic(double dtime_mc) {
 	if (is_player_defeated()) {
 		m_centered_message->setText("GAME OVER");
 		return;
@@ -199,6 +229,9 @@ void GameState::logic() {
     if (m_win) {
         m_centered_message->setText("WIN, WIN, WIN!");
         return;
+    }
+    if (m_showed_enter) {
+        m_showed_enter->drawer.logic(dtime_mc);
     }
 }
 
@@ -208,6 +241,16 @@ void GameState::draw(sf::RenderWindow& current_window) {
 		sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
 		m_current_building_construction->draw_building_plan(current_window, cell_id.x, cell_id.y);
 	}
+    if (!m_enters.empty()) {
+        sf::Sprite wave_arrow(TextureManager::Instance().textures[TextureID::Arrow]);
+        for (auto& enter : m_enters) {
+            wave_arrow.setPosition((enter.x_id - 1) * 32, enter.y_id * 32);
+            current_window.draw(wave_arrow);
+        }
+    }
+    if (m_showed_enter) {
+        m_showed_enter->drawer.draw(current_window);
+    }
 }
 
 void GameState::enemy_defeated(EnemyType type) {

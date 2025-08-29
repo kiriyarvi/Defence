@@ -65,7 +65,9 @@ enum class TextureID {
     UpgradeButtonBackgroundCompleted,
     MinigunShellsUpgradeI,
     MinigunCoolingUpgradeI,
-    MinigunLubricantUpgradeI
+    MinigunLubricantUpgradeI,
+    Arrow,
+    Path
 };
 
 class TextureManager {

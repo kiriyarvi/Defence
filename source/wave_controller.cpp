@@ -31,6 +31,20 @@ std::pair<EnemySpawn, bool> UniformSpawner::next_enemy() {
     return { spawn, true };
 }
 
+std::string UniformSpawner::description() {
+    std::map<EnemyType, int> enemies;
+    for (auto& spw : m_spawners) {
+        enemies[spw.type] += spw.count;
+    }
+    std::string description;
+    for (auto& it = enemies.begin(); it != enemies.end(); ++it) {
+        description += to_string(it->first) + "x" + std::to_string(it->second);
+        if (it != --enemies.end())
+            description += "\n";
+    }
+    return description;
+}
+
 void ControlledSpawner::add_enemy(EnemyType type, float delay, bool boss) {
     m_spawners.push_back(EnemySpawn{ type, delay, boss });
 }
@@ -41,6 +55,20 @@ std::pair<EnemySpawn, bool> ControlledSpawner::next_enemy() {
     EnemySpawn sp = m_spawners[m_current_spawner];
     ++m_current_spawner;
     return std::make_pair(sp, true);
+}
+
+std::string ControlledSpawner::description() {
+    std::map<EnemyType, int> enemies;
+    for (auto& spw : m_spawners) {
+        enemies[spw.type] += 1;
+    }
+    std::string description;
+    for (auto& it = enemies.begin(); it != enemies.end(); ++it) {
+        description += to_string(it->first) + "x" + std::to_string(it->second);
+        if (it != --enemies.end())
+            description += "\n";
+    }
+    return description;
 }
 
 WaveController::WaveController() {
@@ -59,7 +87,7 @@ WaveController::WaveController() {
     {
         auto r1 = std::make_unique<UniformSpawner>();
         r1->id = get_random_route(0);
-        r1->add_spawner(EnemyType::CruiserI, 3);
+        r1->add_spawner(EnemyType::Solder, 3);
         Wave w;
         w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
@@ -466,7 +494,16 @@ bool WaveController::set_active_wave(int wave) {
     m_timer = 0;
     m_routes_states.clear();
     auto& w = m_waves[m_current_wave];
+    auto& game_state = GameState::Instance();
+    auto& all_paths = EnemyManager::Instance().all_paths;
+    game_state.delete_all_enters();
+    for (auto& route : w.routes) {
+        game_state.add_enter(route->id, route->description());
+    }
     for (auto& r : w.routes)
         m_routes_states.push_back(RouteState(*r.get()));
+
+
+
     return true;
 }
