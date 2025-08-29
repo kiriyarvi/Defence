@@ -47,7 +47,7 @@ private:
 
 struct Wave {
     std::vector<std::unique_ptr<IRoute>> routes;
-    double prepairing_time;
+    double prepairing_time = 10;
     int reward;
 };
 
@@ -56,6 +56,7 @@ public:
     WaveController();
     void logic(double dtime_microseconds);
     bool next_wave();
+    void start_wave();
 private:
     bool set_active_wave(int wave);
     std::vector<Wave> m_waves;

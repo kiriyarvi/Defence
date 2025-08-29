@@ -37,7 +37,15 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 	m_player_coins_count_widget->setTextSize(32);
 	m_player_coins_count_widget->ignoreMouseEvents(true);
 	m_player_coins_count_widget->getRenderer()->setTextColor(tgui::Color(255, 211, 3));
+
+    m_wave_info = tgui::Label::create();
+    m_wave_info->setTextSize(32);
+    m_wave_info->ignoreMouseEvents(true);
+    m_wave_info->setOrigin(0.5, 0);
+    m_wave_info->setPosition("50%", 0);
+    m_wave_info->getRenderer()->setTextColor(sf::Color::White);
     m_ui->add(m_player_coins_count_widget, "CoinsCountWidget");
+    m_ui->add(m_wave_info);
 	tgui::Picture::Ptr coin_picture = tgui::Picture::create("sprites/coin.png");
 	coin_picture->setPosition(
 		"(CoinsCountWidget.right)", // X: левый край rightWidget минус ширина heart_icon
@@ -71,13 +79,41 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 		bottom_panel_group->add(button->m_group);
 	}
 
-    auto help_button = tgui::Button::create("?");
+    auto help_button = tgui::BitmapButton::create("?");
+    help_button->setImage(TextureManager::Instance().textures[TextureID::Question]);
+    help_button->setImageScaling(1.);
+    help_button->getRenderer()->setTexture(TextureManager::Instance().textures[TextureID::UpgradeButtonBackground]);
+    help_button->getRenderer()->setBorders(0);
     help_button->onClick.connect([&]() {
         display_help(true);
     });
     help_button->setOrigin(1., 0.);
     help_button->setPosition("100%", 0);
-    bottom_panel_group->add(help_button);
+    bottom_panel_group->add(help_button, "HelpButton");
+
+    auto next_wave_button = tgui::BitmapButton::create();
+    next_wave_button->setImage(TextureManager::Instance().textures[TextureID::NextWaveIcon]);
+    next_wave_button->getRenderer()->setTexture(TextureManager::Instance().textures[TextureID::UpgradeButtonBackground]);
+    next_wave_button->setOrigin(1., 0);
+    next_wave_button->setPosition("HelpButton.left", 0);
+    next_wave_button->setImageScaling(1.);
+    next_wave_button->getRenderer()->setBorders(0);
+    next_wave_button->onMousePress.connect([=]() {
+        EnemyManager::Instance().start_wave();
+        next_wave_button->getRenderer()->setTexture(TextureManager::Instance().textures[TextureID::UpgradeButtonBackgroundCompleted]);
+    });
+    next_wave_button->onMouseRelease.connect([=]() {
+        next_wave_button->getRenderer()->setTexture(TextureManager::Instance().textures[TextureID::UpgradeButtonBackground]);
+    });
+    next_wave_button->onMouseEnter.connect([=]() {
+        set_tooltip_content("Начать волну", { 1,0 });
+    });
+    next_wave_button->onMouseLeave.connect([=]() {
+        set_tooltip_content("");
+    });
+    next_wave_button->setOrigin(1., 0.);
+
+    bottom_panel_group->add(next_wave_button);
 
 	bottom_panel_group->onSizeChange([=]() {
 		const float spacing = 4.f;
@@ -89,6 +125,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 			x += size + spacing;
 		}
         help_button->setSize({ size, size });
+        next_wave_button->setSize({ size, size });
 	});
 
  
@@ -126,6 +163,9 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     mouse_tooltip_renderer->setTextColor(sf::Color::White);
 
     m_ui->add(m_mouse_tooltip);
+
+
+
 }
 
 tgui::Gui& GameState::get_tgui() {
@@ -173,7 +213,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
                 }
             }
         }
-        if (!mouse_on_enter) {
+        if (!mouse_on_enter && m_showed_enter) {
             set_tooltip_content("");
             m_showed_enter = nullptr;
         }

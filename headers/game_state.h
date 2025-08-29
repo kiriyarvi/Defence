@@ -41,7 +41,7 @@ public:
     }
     void update_upgrade_panel();
     void set_tooltip_content(const std::string& content, sf::Vector2f origin = {0.,1.});
-
+    void set_wave_info(const std::string& wave) { m_wave_info->setText(wave); }
 	//void minigun_state_update(const MiniGun& minigun);
     sf::Window& window;
 
@@ -80,6 +80,7 @@ private:
     UpgradePanelCreator m_upgrade_panel_creator;
     std::vector<Enter> m_enters;
     Enter* m_showed_enter = nullptr;
+    tgui::Label::Ptr m_wave_info;
 public:
     tgui::Font GOSTtypeA_font;
     tgui::Font PixelSplitter_Bold_font; // расположены здесь, чтобы уничтожались первее (иначе ошибка в tgui).

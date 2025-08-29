@@ -38,7 +38,7 @@ std::string UniformSpawner::description() {
     }
     std::string description;
     for (auto& it = enemies.begin(); it != enemies.end(); ++it) {
-        description += to_string(it->first) + "x" + std::to_string(it->second);
+        description += to_string(it->first) + " x" + std::to_string(it->second);
         if (it != --enemies.end())
             description += "\n";
     }
@@ -64,7 +64,7 @@ std::string ControlledSpawner::description() {
     }
     std::string description;
     for (auto& it = enemies.begin(); it != enemies.end(); ++it) {
-        description += to_string(it->first) + "x" + std::to_string(it->second);
+        description += to_string(it->first) + " x" + std::to_string(it->second);
         if (it != --enemies.end())
             description += "\n";
     }
@@ -133,7 +133,6 @@ WaveController::WaveController() {
         r1->add_enemy(EnemyType::Solder, 1.5);
         r1->add_enemy(EnemyType::Bike, 0);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.reward = 1000;
         m_waves.push_back(std::move(w));
@@ -149,7 +148,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::Solder, 5);
         r2->add_spawner(EnemyType::Bike, 1);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 1000;
@@ -166,7 +164,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::Solder, 4);
         r2->add_spawner(EnemyType::Bike, 1);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 1000;
@@ -183,7 +180,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::Solder, 4);
         r2->add_spawner(EnemyType::Bike, 1);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 1000;
@@ -201,7 +197,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::Solder, 5);
         r2->add_spawner(EnemyType::Pickup, 3);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 1500;
@@ -218,7 +213,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::Pickup, 3);
         r2->add_spawner(EnemyType::Bike, 2);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 1500;
@@ -236,7 +230,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::Solder, 10);
         r2->add_spawner(EnemyType::Bike, 4);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 1500;
@@ -251,7 +244,6 @@ WaveController::WaveController() {
         r2->id = get_random_route(1);
         r2->add_spawner(EnemyType::BTR, 1);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 1500;
@@ -269,7 +261,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::Solder, 10);
         r2->add_spawner(EnemyType::BTR, 2);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 1500;
@@ -285,7 +276,6 @@ WaveController::WaveController() {
         r2->id = get_random_route(1);
         r2->add_spawner(EnemyType::Bike, 4);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 3000;
@@ -301,7 +291,6 @@ WaveController::WaveController() {
         r2->id = get_random_route(1);
         r2->add_spawner(EnemyType::Truck, 4);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 3000;
@@ -319,7 +308,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::Tank, 1);
         r2->add_spawner(EnemyType::BTR, 3);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 3000;
@@ -334,7 +322,6 @@ WaveController::WaveController() {
         r2->id = get_random_route(1);
         r2->add_spawner(EnemyType::Tank, 3);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 3000;
@@ -350,7 +337,6 @@ WaveController::WaveController() {
         r1->add_spawner(EnemyType::Truck, 8);
         r1->add_spawner(EnemyType::Tank, 8);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.reward = 5000;
         m_waves.push_back(std::move(w));
@@ -370,7 +356,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::Truck, 10);
         r2->add_spawner(EnemyType::Pickup, 10);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 10000;
@@ -391,7 +376,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::Pickup, 5);
         r2->add_spawner(EnemyType::CruiserI, 1, true);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 10000;
@@ -419,7 +403,6 @@ WaveController::WaveController() {
         r2->add_spawner(EnemyType::BTR, 20);
         r2->add_spawner(EnemyType::CruiserI, 2);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.routes.push_back(std::move(r2));
         w.reward = 10000;
@@ -436,6 +419,7 @@ void WaveController::logic(double dtime_microseconds) {
     switch (m_state) {
     case WaveController::State::Prepairing: {
         m_timer += dtime_microseconds;
+        GameState::Instance().set_wave_info(std::to_string(m_current_wave + 1) + "/" + std::to_string(m_waves.size()) + " " + std::to_string(static_cast<int>(wave.prepairing_time - m_timer / (1000 * 1000.f))) + "s.");
         if (m_timer >= wave.prepairing_time * 1000 * 1000) {
             m_state = State::Spawn;
             m_timer = 0;
@@ -454,6 +438,14 @@ void WaveController::logic(double dtime_microseconds) {
     }
     default:
         break;
+    }
+}
+
+void WaveController::start_wave() {
+    if (m_state == WaveController::State::Prepairing) {
+        m_state = State::Spawn;
+        m_timer = 0;
+        GameState::Instance().set_wave_info(std::to_string(m_current_wave + 1) + "/" + std::to_string(m_waves.size()) + " 0s.");
     }
 }
 

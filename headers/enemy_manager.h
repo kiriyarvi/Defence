@@ -21,6 +21,7 @@ public:
 	EnemyManager& operator=(EnemyManager&&) = delete;
 	void logic(double dtime); // если возвращает true --- спавнеры кончились.
 	void draw(sf::RenderWindow& window);
+    void start_wave() { if (m_wave_controller) m_wave_controller->start_wave(); }
 	IEnemy* get_enemy_by_id(uint32_t id);
     RoadGraph::Paths all_paths;
 	std::vector<IEnemy::Ptr> m_enemies;

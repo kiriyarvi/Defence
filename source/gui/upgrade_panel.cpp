@@ -74,7 +74,6 @@ void UpgradeButton::update() {
         }
         if (locked) {
             set_state(State::Locked);
-            return;
         }
         else { // открыто
             int current_coins_count = GameState::Instance().get_player_coins();

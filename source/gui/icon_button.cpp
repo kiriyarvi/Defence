@@ -47,6 +47,7 @@ void IconButton::set_state(State state) {
 	}
 	case IconButton::State::Disabled:
 		set_grayscale();
+        m_lock->setVisible(false);
 		break;
 	default:
 		break;

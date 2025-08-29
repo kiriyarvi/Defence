@@ -79,4 +79,7 @@ TextureManager::TextureManager() {
     textures[TextureID::Arrow].loadFromFile("sprites/arrow.png");
     textures[TextureID::Path].loadFromFile("sprites/path.png");
     textures[TextureID::Path].setRepeated(true);
+
+    textures[TextureID::NextWaveIcon].loadFromFile("sprites/next_wave_button.png");
+    textures[TextureID::Question].loadFromFile("sprites/question.png");
 }
