@@ -112,28 +112,3 @@ private:
     HealthIndicator m_indicator;
 };
 
-
-
-class CruiserI : public IEnemy {
-public:
-    CruiserI();
-    void draw(sf::RenderWindow& window) override;
-    bool logic(double dtime_microseconds) override;
-    IDestroyedEnemy::Ptr get_destroyed_enemy();
-    void make_boss() override;
-private:
-    double m_trucks_offset = 0;
-    bool m_first_stage = true;
-    SpriteChain m_cruiserI;
-    SpriteChain* m_upper_truck;
-    SpriteChain* m_lower_truck;
-    SpriteChain* m_equipment;
-    HealthIndicator m_indicator;
-    Animation m_fire_animation;
-    ISpriteFramer::Ptr m_fire_framer;
-    SpriteChain* m_fire_sprite;
-
-    Animation m_dence_blust_animation;
-    ISpriteFramer::Ptr m_dence_blust_framer;
-    SpriteChain* m_dence_blust_sprite;
-};

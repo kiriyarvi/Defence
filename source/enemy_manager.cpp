@@ -5,7 +5,7 @@
 
 #include "enemies/simple_enemy.h"
 #include "enemies/solder.h"
-
+#include "enemies/cruiser_I.h"
 
 EnemyManager::EnemyManager() {
 	all_paths = TileMap::Instance().get_road_graph().find_all_paths();

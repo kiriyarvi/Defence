@@ -5,6 +5,7 @@
 #include "enemy_manager.h"
 #include "sound_manager.h"
 #include "game_state.h"
+#include "animation_holder.h"
 
 int main() {
 
@@ -45,6 +46,7 @@ int main() {
 				EnemyManager::Instance().logic(dtime);
 				TileMap::Instance().logic(dtime);
 				SoundManager::Instance().logic();
+                AnimationHolder::Instance().logic(dtime);
 			}
 		}
 		//отрисовка
@@ -54,6 +56,7 @@ int main() {
 		TileMap::Instance().draw(window);
 		EnemyManager::Instance().draw(window);
 		TileMap::Instance().draw_effects(window);
+        AnimationHolder::Instance().draw(window);
 		game_state.draw(window);
 		gui.draw();
 		window.display();
