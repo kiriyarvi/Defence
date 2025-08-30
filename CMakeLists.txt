@@ -2,13 +2,16 @@ cmake_minimum_required(VERSION 3.22)
 
 project(DEFENCE)
 
-# Устанавливаем стандарт C++
+# РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЃС‚Р°РЅРґР°СЂС‚ C++
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 file(GLOB_RECURSE DEFENCE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/source/*cpp" )
 add_executable(defence "${DEFENCE_SOURCES}")
+
 
 find_package(SFML COMPONENTS system window graphics audio CONFIG REQUIRED)
 target_link_libraries(defence PRIVATE sfml-system sfml-network sfml-graphics sfml-window sfml-audio)

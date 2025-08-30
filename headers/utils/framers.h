@@ -48,3 +48,14 @@ struct PickupBlastFramer : public ISpriteFramer {
     void on_frame(int frame) override;
 };
 
+struct CruiserIFireFramer : public ISpriteFramer {
+    CruiserIFireFramer();
+    void on_frame(int frame) override;
+};
+
+struct CruiserIBlustFramer : public ISpriteFramer {
+    CruiserIBlustFramer();
+    void on_frame(int frame) override;
+};
+
+

@@ -101,3 +101,34 @@ void PickupBlastFramer::on_frame(int frame) {
     frame += 16;
     sprite.setTextureRect(sf::IntRect(16 * (frame % 8), 16 * (frame / 8), 16, 16));
 }
+
+CruiserIFireFramer::CruiserIFireFramer() {
+    frames = 5;
+    sprite.setOrigin(4, 8);
+    sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserISupplementary]);
+}
+
+void CruiserIFireFramer::on_frame(int frame) {
+    if (frame < 4)
+        sprite.setTextureRect(sf::IntRect(16 + 8 * (frame % 2), 8 * (frame / 2), 8, 8));
+    else
+        sprite.setTextureRect(sf::IntRect(0, 16, 8, 8));
+}
+
+
+CruiserIBlustFramer::CruiserIBlustFramer() {
+    frames = 19;
+    sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIBlust]);
+}
+
+void CruiserIBlustFramer::on_frame(int frame) {
+    if (frame < 15) {
+        sprite.setOrigin(16, 16);
+        sprite.setTextureRect(sf::IntRect(32 * (frame % 4), 32 * (frame / 4), 32, 32));
+    }
+    else {
+        frame -= 15;
+        sprite.setOrigin(8, 8);
+        sprite.setTextureRect(sf::IntRect(32 * 3 + 16 * (frame % 2), 32 * 3 + 16 * (frame / 2), 16, 16));
+    }
+}

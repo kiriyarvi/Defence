@@ -25,7 +25,7 @@ public:
         int cooling_upgrade = 0;
         int lubricant_update = 0;
     } minigun_upgrades;
-
+    void unlock_all();
 private:
     AchievementSystem();
     std::unordered_map<EnemyType, BuildingType> m_achievements;

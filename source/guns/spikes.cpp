@@ -1,6 +1,7 @@
 #include "guns/spikes.h"
 #include "enemy_manager.h"
 #include "texture_manager.h"
+#include "sound_manager.h"
 
 Spikes::Spikes(): params(ParamsManager::Instance().params.guns.spikes) 
 {
@@ -69,12 +70,14 @@ void Spikes::logic(double dtime, int x_id, int y_id) {
 		if (health <= 0)
 			return;
 		if (glm::length(pos - enemy->get_position()) < 0.2 * 32) {
-            if (enemy->wheels == IEnemy::Wheels::HeavyTracks) {
+            if (enemy->wheels == IEnemy::Wheels::HeavyTracks)
                 health = 0;
+			else if(enemy->break_enemy(params.delay))
+				--health;
+            if (health <= 0) {
+                SoundManager::Instance().play(Sounds::SpikesBreaking);
                 return;
             }
-			if(enemy->break_enemy(params.delay))
-				--health;
 		}
 	}
 }

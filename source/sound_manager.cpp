@@ -14,6 +14,9 @@ SoundManager::SoundManager() {
 	sounds[Sounds::MineBlast].loadFromFile("sounds/mine_blast.wav");
     sounds[Sounds::Ricochet].loadFromFile("sounds/ricochet.wav");
     sounds[Sounds::PickupDestruction].loadFromFile("sounds/pickup_destruction.wav");
+    sounds[Sounds::HedgehogsBreaking].loadFromFile("sounds/hedgehogs_breaking.wav");
+    sounds[Sounds::SpikesBreaking].loadFromFile("sounds/spikes_breaking.wav");
+    sounds[Sounds::CruiserIExplosion].loadFromFile("sounds/cruiserI_explosion.wav");
 }
 
 void SoundManager::play(Sounds sound, int limit, float volume, float pitch) {

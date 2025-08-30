@@ -173,13 +173,13 @@ IDestroyedEnemy::Ptr BTR::get_destroyed_enemy() {
 CruiserI::CruiserI(): IEnemy(ParamsManager::Instance().params.enemies.CruiserI, EnemyType::CruiserI) {
     wheels = Wheels::HeavyTracks;
     infantry = false;
-    m_btr.sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIBase]);
-    m_btr.sprite.setScale(0.5, 0.5);
-    m_btr.layer = 0;
-    m_btr.set_position_origin(16, 16);
-    m_btr.set_rotation_origin(16, 16);
-    m_upper_truck = &m_btr.childs.emplace_back();
-    m_lower_truck = &m_btr.childs.emplace_back();
+    m_cruiserI.sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIBase]);
+    m_cruiserI.sprite.setScale(0.5, 0.5);
+    m_cruiserI.layer = 0;
+    m_cruiserI.set_position_origin(16, 16);
+    m_cruiserI.set_rotation_origin(16, 16);
+    m_upper_truck = &m_cruiserI.childs.emplace_back();
+    m_lower_truck = &m_cruiserI.childs.emplace_back();
 
 
     auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
@@ -198,10 +198,28 @@ CruiserI::CruiserI(): IEnemy(ParamsManager::Instance().params.enemies.CruiserI, 
     m_lower_truck->shader = &shader;
     m_lower_truck->layer = 1;
 
-    auto& eq = m_btr.childs.emplace_back();
-    eq.sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIEquipment]);
-    eq.sprite.setScale(0.5, 0.5);
-    eq.layer = 2;
+    m_equipment = &m_cruiserI.childs.emplace_back();
+    m_equipment->sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIEquipment]);
+    m_equipment->sprite.setScale(0.5, 0.5);
+    m_equipment->layer = 2;
+
+ 
+    m_fire_sprite = &m_cruiserI.childs.emplace_back();
+    m_fire_sprite->layer = 3;
+    m_fire_sprite->set_position(16 / 2.f, 28 / 2.f);
+
+    m_dence_blust_sprite = &m_cruiserI.childs.emplace_back();
+    m_dence_blust_sprite->set_position(16 / 2.f, 28 / 2.f);
+    m_dence_blust_sprite->layer = 4;
+
+    m_fire_framer = std::make_unique<CruiserIFireFramer>();
+    m_fire_animation.add_framer(m_fire_framer);
+    m_fire_animation.set_loop(true);
+    m_fire_animation.set_duration(1.);
+
+    m_dence_blust_framer = std::make_unique<DenceBlustFramer>();
+    m_dence_blust_animation.add_framer(m_dence_blust_framer);
+    m_dence_blust_animation.set_duration(1.5);
 
 }
 
@@ -215,25 +233,47 @@ void CruiserI::draw(sf::RenderWindow& window) {
     auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
     shader.setUniform("texture", sf::Shader::CurrentTexture);
     shader.setUniform("offset", -(float)m_trucks_offset / (1000 * 1000));
-    m_btr.set_rotation(rotation);
-    m_btr.set_position(position.x, position.y);
-    m_btr.draw(window);
-    m_indicator.draw(window, position.x, position.y - 8, params.health, health);
+    m_cruiserI.set_rotation(rotation);
+    m_cruiserI.set_position(position.x, position.y);
+    if (m_fire_animation.started()) {
+        m_fire_sprite->sprite = m_fire_framer->sprite;
+    }
+    if (m_dence_blust_animation.started()) {
+        m_dence_blust_sprite->sprite = m_dence_blust_framer->sprite;
+        m_dence_blust_sprite->enabled = true;
+    }
+    else
+        m_dence_blust_sprite->enabled = false;
+    m_indicator.draw(window, position.x, position.y - (rotation ? 16 : 10), params.health, health);
+    m_cruiserI.draw(window);
 }
 
 bool CruiserI::logic(double dtime_microseconds) {
+    m_fire_animation.logic(dtime_microseconds);
+    m_dence_blust_animation.logic(dtime_microseconds);
+
     m_trucks_offset += params.speed * dtime_microseconds;
     if (m_trucks_offset >= 1000 * 1000)
         m_trucks_offset = 0;
+    if (health <= params.health / 2 && m_first_stage) {
+        m_first_stage = false;
+        m_cruiserI.sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIDemagedBase]);
+        m_equipment->sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIDemagedEquipment]);
+        m_fire_animation.start();
+        m_dence_blust_animation.start();
+        m_fire_animation.logic(0);
+        m_dence_blust_animation.logic(0);
+        SoundManager::Instance().play(Sounds::DenceBlust);
+    }
     return IEnemy::logic(dtime_microseconds);
 }
 
 IDestroyedEnemy::Ptr CruiserI::get_destroyed_enemy() {
-    auto de = std::make_unique<SimpleEnemyDestroyed>(std::make_unique<DenceBlustFramer>(), 1.4, 2.0, Sounds::DenceBlust);
-    de->destroyed_enemy_sprite;
-    de->destroyed_enemy_sprite.setOrigin(16, 16);
+    auto de = std::make_unique<SimpleEnemyDestroyed>(std::make_unique<CruiserIBlustFramer>(), 2, 2.0, Sounds::CruiserIExplosion);
+    de->destroyed_enemy_sprite.setScale(0.5, 0.5);
+    de->destroyed_enemy_sprite.setOrigin(32, 32);
     de->destroyed_enemy_sprite.setPosition(position.x, position.y);
     de->destroyed_enemy_sprite.setRotation(rotation);
-    de->destroyed_enemy_sprite.setTexture(TextureManager::Instance().textures[TextureID::BTRDestroyed]);
+    de->destroyed_enemy_sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIDestroyed]);
     return de;
 }

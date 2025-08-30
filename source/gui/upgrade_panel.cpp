@@ -115,10 +115,10 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
             InfoPanel panel;
             panel.set_name("Бронебойные снаряды " + std::string(i + 1, 'I'));
             panel.set_description("Пулемет получит снаряды повышенной бронепробиваемости.");
-            panel.add_char("бронепробиваемость при минимальном нагреве", params.penetration_upgrades[i].min_armor_penetration_level);
-            panel.add_char("бронепробиваемость при максимальном нагреве", params.penetration_upgrades[i].max_armor_penetration_level);
-            panel.add_char("минимальный урон", params.penetration_upgrades[i].min_damage);
-            panel.add_char("максимальный урон", params.penetration_upgrades[i].max_damage);
+            panel.add_char("бронепробиваемость при минимальном нагреве", params.penetration_upgrades[i + 1].min_armor_penetration_level);
+            panel.add_char("бронепробиваемость при максимальном нагреве", params.penetration_upgrades[i + 1].max_armor_penetration_level);
+            panel.add_char("минимальный урон", params.penetration_upgrades[i + 1].min_damage);
+            panel.add_char("максимальный урон", params.penetration_upgrades[i + 1].max_damage);
             panel.create();
             info->removeAllWidgets();
             info->add(panel.content);
@@ -136,9 +136,9 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
             InfoPanel panel;
             panel.set_name("Система охлаждения " + std::string(i + 1, 'I'));
             panel.set_description("Пулемет получит улучшенную систему охлаждения, продливающую время работы при критическом нагреве, а также увеличивающую скорость охлаждения.");
-            panel.add_char("время работы при критическом перегреве", params.cooling_upgrades[i].critical_temperature_work_duration);
-            panel.add_char("время полного охлаждения", params.cooling_upgrades[i].cooling_time);
-            panel.add_char("время на охлаждение после перегрева", params.cooling_upgrades[i].cooldown_duration);
+            panel.add_char("время работы при критическом перегреве", params.cooling_upgrades[i + 1].critical_temperature_work_duration);
+            panel.add_char("время полного охлаждения", params.cooling_upgrades[i + 1].cooling_time);
+            panel.add_char("время на охлаждение после перегрева", params.cooling_upgrades[i + 1].cooldown_duration);
             panel.create();
             info->removeAllWidgets();
             info->add(panel.content);
@@ -156,7 +156,7 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
             InfoPanel panel;
             panel.set_name("Смазка " + std::string(i + 1, 'I'));
             panel.set_description("Пулемет получит улучшенную смачную систему, что позволит ему набирать максимальную скорость вращения барабана быстрее. При этом соответсвие скорости и нагрева останется прежним.");
-            panel.add_char("Время нагрева до максимальной температуры", params.lubricant_upgrades[i].heating_time);
+            panel.add_char("Время нагрева до максимальной температуры", params.lubricant_upgrades[i + 1].heating_time);
             panel.create();
             info->removeAllWidgets();
             info->add(panel.content);

@@ -69,7 +69,12 @@ enum class TextureID {
     Arrow,
     Path,
     NextWaveIcon,
-    Question
+    Question,
+    CruiserIDemagedBase,
+    CruiserIDemagedEquipment,
+    CruiserISupplementary,
+    CruiserIDestroyed,
+    CruiserIBlust
 };
 
 class TextureManager {

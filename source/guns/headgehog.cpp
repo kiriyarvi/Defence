@@ -2,6 +2,7 @@
 #include "tile_map.h"
 #include "enemy_manager.h"
 #include "texture_manager.h"
+#include "sound_manager.h"
 
 Hedgehog::Hedgehog(): params(ParamsManager::Instance().params.guns.hedgehog) {
     health = params.health;
@@ -22,12 +23,14 @@ void Hedgehog::logic(double dtime, int x_id, int y_id) {
             return;
         float debuff = enemy->wheels == IEnemy::Wheels::Wheels ? params.wheels_debuff : 1.f;
         if (glm::length(pos - enemy->get_position()) < 0.2 * 32) {
-            if (enemy->wheels == IEnemy::Wheels::HeavyTracks) {
+            if (enemy->wheels == IEnemy::Wheels::HeavyTracks)
                 health = 0;
+            else if (enemy->break_enemy(params.delay * debuff) && enemy->wheels == IEnemy::Wheels::Tracks)
+                --health;
+            if (health <= 0) {
+                SoundManager::Instance().play(Sounds::HedgehogsBreaking);
                 return;
             }
-            if (enemy->break_enemy(params.delay * debuff) && enemy->wheels == IEnemy::Wheels::Tracks)
-                --health;
         }
     }
 }

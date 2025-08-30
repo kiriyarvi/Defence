@@ -16,7 +16,10 @@ enum class Sounds {
 	OverHeat,
 	MineBlast,
 	Ricochet,
-    PickupDestruction
+    PickupDestruction,
+    HedgehogsBreaking,
+    SpikesBreaking,
+    CruiserIExplosion
 };
 
 class SoundManager {
