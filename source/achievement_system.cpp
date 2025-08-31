@@ -1,5 +1,5 @@
 #include "achievement_system.h"
-#include <iostream>
+#include "game_state.h"
 
 
 AchievementSystem::AchievementSystem() {
@@ -10,11 +10,15 @@ AchievementSystem::AchievementSystem() {
     m_achievements[EnemyType::CruiserI] = BuildingType::TwinGun;
     m_general_achievements[EnemyType::Pickup] = [&]() {
         minigun_upgrades.penetration_upgrade = 1;
+        GameState::Instance().add_message("Разблокировано улучшение для пулемета \"Бронебойные снаряды I\"", GameState::MessageType::UnlockedUpgrade);
     };
     m_general_achievements[EnemyType::CruiserI] = [&]() {
         minigun_upgrades.penetration_upgrade = 2;
         minigun_upgrades.lubricant_update = 1;
         minigun_upgrades.cooling_upgrade = 1;
+        GameState::Instance().add_message("Разблокировано улучшение для пулемета \"Бронебойные снаряды II\"", GameState::MessageType::UnlockedUpgrade);
+        GameState::Instance().add_message("Разблокировано улучшение для пулемета \"Система охлаждения I\"", GameState::MessageType::UnlockedUpgrade);
+        GameState::Instance().add_message("Разблокировано улучшение для пулемета \"Смазка I\"", GameState::MessageType::UnlockedUpgrade);
     };
     m_unlocked_buildings[BuildingType::Minigun] = true;
 }
@@ -23,8 +27,12 @@ bool AchievementSystem::defeated(EnemyType enemy_type) {
     bool achievement = false;
     auto it = m_achievements.find(enemy_type);
     if (it != m_achievements.end()) {
-        m_unlocked_buildings[it->second] = true;
-        achievement = true;
+        if (!m_unlocked_buildings[it->second]) { // если здание еще не разблокировано
+            // разблокировать
+            m_unlocked_buildings[it->second] = true;
+            achievement = true;
+            GameState::Instance().add_message("Разблокирована постройка \"" + to_string(it->second) + "\"", GameState::MessageType::UnlockedBuilding);
+        }
     }
     auto g_it = m_general_achievements.find(enemy_type);
     if (g_it != m_general_achievements.end()) {

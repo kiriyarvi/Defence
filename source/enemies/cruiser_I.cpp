@@ -18,7 +18,7 @@ CruiserTurretAnimation::CruiserTurretAnimation(const CruiserI& cruiser) {
     m_rotation = cruiser.rotation;
     m_turret_sprite.setRotation(cruiser.rotation);
     m_vel = glm::sphericalRand(20.); // определим начальный вектор скорости
-    m_vel.z = 3 * glm::abs(m_vel.z);
+    m_vel.z = glm::abs(m_vel.z) / 10.f;
 }
 
 void CruiserTurretAnimation::draw(sf::RenderWindow& window) {

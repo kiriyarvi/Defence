@@ -130,7 +130,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 
  
 
-    m_ui->add(bottom_panel_group);
+    m_ui->add(bottom_panel_group, "BottomPanelGroup");
 
 
     m_panel = tgui::Panel::create();
@@ -163,12 +163,21 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 
     m_ui->add(m_mouse_tooltip);
 
-    player_coins_add(1000);
+    m_console = tgui::Group::create();
+    m_console->setOrigin(0, 1.);
+    m_console->setPosition(0, "BottomPanelGroup.top");
+    m_console->setSize("100%", "90%");
+    m_console->setTextSize(30);
+    auto console_renderer = m_console->getRenderer();
+    console_renderer->setFont(GOSTtypeA_font);
+    m_console->onSizeChange.connect([this]() {
+        this->align_console_labels();
+    });
+    m_ui->add(m_console);
+}
 
-    //TODO delete
-	player_coins_add(100000);
-    AchievementSystem::Instance().unlock_all();
-    enemy_defeated(EnemyType::CruiserI);
+GameState::~GameState() {
+    m_console->onSizeChange.disconnectAll(); // чтобы небыло Debug Assertion Failed
 }
 
 tgui::Gui& GameState::get_tgui() {
@@ -195,6 +204,43 @@ void GameState::add_enter(RoadGraph::PathID id, const std::string& content) {
 void GameState::delete_all_enters() {
     m_enters.clear();
     m_showed_enter = nullptr;
+}
+
+void GameState::add_message(const std::string& message, MessageType type) {
+    auto label = tgui::Label::create(message);
+    label->setTextSize(30);
+    switch (type) {
+    case MessageType::UnlockedBuilding:
+        label->getRenderer()->setTextColor(sf::Color(0, 255, 0));
+        break;
+    case MessageType::UnlockedUpgrade:
+        label->getRenderer()->setTextColor(sf::Color::Magenta);
+        break;
+    case MessageType::None:
+        label->getRenderer()->setTextColor(sf::Color::White);
+        break;
+    default:
+        break;
+    }
+    m_console->add(label);
+    Message msg;
+    msg.message = label;
+    msg.animation.set_duration(4);
+    auto& fade = msg.animation.add_subanimation(3, 4, Animation());
+    fade.on_progress = [=](float p) {
+        label->getRenderer()->setOpacity(1. - p);
+    };
+    msg.animation.start();
+    m_messages.push_back(std::move(msg));
+    align_console_labels();
+}
+
+void GameState::align_console_labels() {
+    float y = 0;
+    for (auto it = m_messages.begin(); it != m_messages.end(); ++it) {
+        y += it->message->getSize().y;
+        it->message->setPosition(0, m_console->getSize().y - y);
+    }
 }
 
 bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) {
@@ -276,6 +322,26 @@ void GameState::logic(double dtime_mc) {
     if (m_showed_enter) {
         m_showed_enter->drawer.logic(dtime_mc);
     }
+    if (!m_messages.empty()) {
+        bool erased = false;
+        auto it = m_messages.begin();
+        while (it != m_messages.end()) { // возможно можно переписать в помощью std::remove_if
+            it->animation.logic(dtime_mc);
+            if (it->animation.started())
+                ++it;
+            else {
+                it = m_messages.erase(it);
+                erased = true;
+            }
+        }
+        if (erased) {
+            m_console->removeAllWidgets();
+            for (auto& msg : m_messages) {
+                m_console->add(msg.message);
+            }
+            align_console_labels();
+        }
+    }
 }
 
 void GameState::draw(sf::RenderWindow& current_window) {
@@ -316,6 +382,17 @@ void GameState::display_help(bool help) {
         m_gui.add(m_help.get_content());
     else
         m_gui.add(m_ui);
+}
+
+void GameState::init_stage(int stage) {
+    if (stage == 0) {
+        player_coins_add(1000);
+    }
+    else {
+        player_coins_add(100000);
+        AchievementSystem::Instance().unlock_all();
+        enemy_defeated(EnemyType::CruiserI);
+    }
 }
 
 void GameState::update_upgrade_panel() {

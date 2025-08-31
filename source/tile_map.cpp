@@ -12,6 +12,17 @@
 
 #include <iostream>
 
+std::string to_string(BuildingType type) {
+    std::unordered_map<BuildingType, std::string> m{
+        {BuildingType::AntitankGun, "Противотанковая пушка"},
+        {BuildingType::Hedgehogs, "Противотанковые ежи"},
+        {BuildingType::Mine, "Мина"},
+        {BuildingType::Minigun, "Пулемет"},
+        {BuildingType::Spikes, "Шипы"},
+        {BuildingType::TwinGun, "Сдвоенная пушка"}
+    };
+    return m[type];
+}
 
 void Tile::draw(sf::RenderWindow& window, int x, int y) {
 	sf::Sprite sprite;

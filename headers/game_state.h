@@ -8,6 +8,7 @@
 #include "enemies/IEnemy.h"
 #include "gui/help.h"
 #include "gui/upgrade_panel.h"
+#include <list>
 
 class GameState {
 public:
@@ -39,6 +40,7 @@ public:
     bool is_help_displayed() {
         return m_is_help_displayed;
     }
+    void init_stage(int stage);
     void update_upgrade_panel();
     void set_tooltip_content(const std::string& content, sf::Vector2f origin = {0.,1.});
     void set_wave_info(const std::string& wave) { m_wave_info->setText(wave); }
@@ -54,11 +56,18 @@ public:
     };
     void add_enter(RoadGraph::PathID id, const std::string& content);
     void delete_all_enters();
-
+    enum class MessageType {
+        UnlockedBuilding,
+        UnlockedUpgrade,
+        None
+    };
+    void add_message(const std::string& message, MessageType type);
 private:
 	friend class BuildingButton;	
 private:
 	GameState(sf::RenderWindow& window);
+    ~GameState();
+    void align_console_labels();
 private:
 	int m_player_hp = 10;
 	int m_player_coins = 0;
@@ -81,6 +90,12 @@ private:
     std::vector<Enter> m_enters;
     Enter* m_showed_enter = nullptr;
     tgui::Label::Ptr m_wave_info;
+    struct Message {
+        tgui::Label::Ptr message;
+        Animation animation;
+    };
+    tgui::Group::Ptr m_console;
+    std::list<Message> m_messages;
 public:
     tgui::Font GOSTtypeA_font;
     tgui::Font PixelSplitter_Bold_font; // расположены здесь, чтобы уничтожались первее (иначе ошибка в tgui).

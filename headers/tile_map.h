@@ -33,6 +33,9 @@ public:
     virtual void visit(Mine& mine) = 0;
 };
 
+std::string to_string(BuildingType type);
+
+
 #define ACCEPT(Type) \
 void accept(IBuildingVisitor& visitor) override { visitor.visit(*this); }
 
