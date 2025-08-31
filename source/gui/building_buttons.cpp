@@ -45,6 +45,7 @@ void BuildingButton::show_info_content() {
     std::string content =
         "<b>" + m_name + "</b>\n"
         "<color=#ffd303>Стоимость: " + std::to_string(cost) + "</color>\n"
+        + (m_state == State::Locked ? "<color=#ff0000>Закрыто: " + AchievementSystem::Instance().get_building_unlock_condition_description(m_type) + "</color>\n" : "") +
         "<i>Откройте справку, для получения подробностей</i>";
     m_game_state.set_tooltip_content(content);
 }

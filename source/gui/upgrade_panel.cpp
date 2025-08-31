@@ -69,7 +69,7 @@ void UpgradeButton::update() {
             m_reason = "\n<color=#ff0000>Закрыто: </color> требуется предыдущее улучшение.";
         }
         if (m_achievement_system_upgrade < m_goal_upgrade_value) {
-            m_reason += "\n<color=#ff0000>Закрыто: </color> не получено достижение."; //TODO точная причина
+            m_reason += "\n<color=#ff0000>Закрыто: </color> " + AchievementSystem::Instance().get_upgrade_unlock_condition_description(&m_achievement_system_upgrade, m_goal_upgrade_value) + "."; 
             locked = true;
         }
         if (locked) {
