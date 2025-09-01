@@ -15,6 +15,7 @@ enum class TextureID {
     Road1101 = 13,
     Road1110 = 14,
     Road1111 = 15,
+    RoadTileset,
     GunBase,
     TwinGunTurret,
     TwinGunUpperBarrel,

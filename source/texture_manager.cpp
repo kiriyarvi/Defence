@@ -13,6 +13,7 @@ TextureManager::TextureManager() {
     textures[TextureID::Road1101].loadFromFile("tiles/road1101.png");
     textures[TextureID::Road1110].loadFromFile("tiles/road1110.png");
     textures[TextureID::Road1111].loadFromFile("tiles/road1111.png");
+    textures[TextureID::RoadTileset].loadFromFile("tiles/road_tileset.png");
 
     textures[TextureID::GunBase].loadFromFile("sprites/gun_base.png");
     textures[TextureID::TwinGunTurret].loadFromFile("sprites/twin_gun_turret.png");
