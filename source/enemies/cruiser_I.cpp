@@ -18,14 +18,16 @@ CruiserTurretAnimation::CruiserTurretAnimation(const CruiserI& cruiser) {
     m_rotation = cruiser.rotation;
     m_turret_sprite.setRotation(cruiser.rotation);
     m_vel = glm::sphericalRand(20.); // определим начальный вектор скорости
-    m_vel.z = glm::abs(m_vel.z) / 10.f;
+    m_vel.z = glm::abs(m_vel.z);
 }
 
 void CruiserTurretAnimation::draw(sf::RenderWindow& window) {
     m_turret_sprite.setPosition(m_position.x + m_sep_position.x, m_position.y + m_sep_position.y);
     m_turret_sprite.setColor(sf::Color(255, 255, 255, m_fade * 255));
     m_turret_sprite.setRotation(m_rotation);
-    m_turret_sprite.setScale(0.5 * (1 + m_position.z), 0.5 * (1 + m_position.z));
+    float scale_factor = (m_position.z / (m_vel.z * m_vel.z) * (2 * 9.8));
+    scale_factor = 0.5 * (1. + scale_factor);
+    m_turret_sprite.setScale(scale_factor, scale_factor);
     window.draw(m_turret_sprite);
 }
 
@@ -121,7 +123,8 @@ void CruiserI::make_boss() {
 void CruiserI::draw(sf::RenderWindow& window) {
     auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
     shader.setUniform("texture", sf::Shader::CurrentTexture);
-    shader.setUniform("offset", -(float)m_trucks_offset / (1000 * 1000));
+    shader.setUniform("offset_x", -(float)m_trucks_offset / (1000 * 1000));
+    shader.setUniform("offset_y", 0.f);
     m_cruiserI.set_rotation(rotation);
     m_cruiserI.set_position(position.x, position.y);
     if (m_fire_animation.started()) {

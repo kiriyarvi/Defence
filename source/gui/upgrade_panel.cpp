@@ -9,7 +9,7 @@
 UpgradeButton::UpgradeButton(
     TextureID icon,
     int cost,
-    int& building_upgrade,
+    BuildingUpgrade& building_upgrade,
     int& achievement_system_upgrade,
     int goal_upgrade_value,
     const std::string name
@@ -104,8 +104,8 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
 
     auto& params = ParamsManager::Instance().params.guns.minigun;
     UpgradeButton shells_upgrade_I(TextureID::MinigunShellsUpgradeI, 1000, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 1, "Бронебойные снаряды I");
-    UpgradeButton shells_upgrade_II(TextureID::MinigunShellsUpgradeI, 2000, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 2, "Бронебойные снаряды II");
-    UpgradeButton shells_upgrade_III(TextureID::MinigunShellsUpgradeI, 3000, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 3, "Бронебойные снаряды III");
+    UpgradeButton shells_upgrade_II(TextureID::MinigunShellsUpgradeII, 2000, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 2, "Бронебойные снаряды II");
+    UpgradeButton shells_upgrade_III(TextureID::MinigunShellsUpgradeIII, 3000, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 3, "Бронебойные снаряды III");
     shells_upgrades.push_back(std::move(shells_upgrade_I));
     shells_upgrades.push_back(std::move(shells_upgrade_II));
     shells_upgrades.push_back(std::move(shells_upgrade_III));

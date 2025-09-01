@@ -2,6 +2,7 @@
 #include "enemy_manager.h"
 #include "sound_manager.h"
 #include "texture_manager.h"
+#include "shader_manager.h"
 
 #include "game_state.h"
 #include "utils/framers.h"
@@ -26,16 +27,34 @@ MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
 		m_minigun_sprite.childs.push_back(SpriteChain(drum));
 
 	sf::Sprite belt(TextureManager::Instance().textures[TextureID::MiniGunEquipment]);
-	belt.setTextureRect(sf::IntRect(0, 0, 10, 24));
+	belt.setTextureRect(sf::IntRect(0, 6, 10, 18));
 	belt.setScale(3 / 10., 8. / 24.);
-	m_belt_chain = &m_minigun_sprite.childs.emplace_back(SpriteChain(belt));
-	m_belt_chain->layer = 1;
 
-	sf::Sprite overlap(TextureManager::Instance().textures[TextureID::MiniGunEquipment]);
-	overlap.setTextureRect(sf::IntRect(10, 0, 3, 10));
-	auto& overlap_chain = m_minigun_sprite.childs.emplace_back(SpriteChain(overlap));
-	overlap_chain.layer = 2;
-	overlap_chain.set_position(10, 10);
+    m_belt_chain = &m_minigun_sprite.childs.emplace_back(SpriteChain(belt));
+    m_belt_chain->set_position(10, 12);
+	m_belt_chain->layer = 1;
+    m_belt_chain->shader = &ShaderManager::Instance().shaders[Shader::Scroll];
+
+    m_penetration_upgrade.on_changed = [this]() {
+        auto& sprite = m_belt_chain->sprite;
+        sprite.setTexture(TextureManager::Instance().textures[TextureID::MinigunShells]);
+        if (m_penetration_upgrade == 1) {
+            sprite.setTextureRect(sf::IntRect(0, 12, 26, 36));
+            sprite.setScale(3 / 26., 8. / 48.);
+            m_shell_size_coeff = 12.f / 128.f;
+        }
+        else if (m_penetration_upgrade == 2) {
+            sprite.setTextureRect(sf::IntRect(26, 12, 24, 36));
+            sprite.setScale(3 / 24.f, 8. / 48.);
+            m_shell_size_coeff = 12.f / 128.f;
+        }
+        else if (m_penetration_upgrade == 3) {
+            sprite.setTextureRect(sf::IntRect(0, 48 + 14, 26, 42));
+            sprite.setScale(3 / 26.f, 8. / 55.f);
+            m_shell_size_coeff = 14.f / 128.f;
+        }
+    };
+
 
 	m_steam_framer = std::make_unique<SteamFramer>();
 	m_overheat_animation.set_duration(0.5);
@@ -79,6 +98,10 @@ void MiniGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
 		m_shot_sprite->sprite = m_shot_framer->sprite;
 		//m_shot_sprite->sprite.setScale(4 / 9.f, 4 / 9.f);
 	}
+
+    m_belt_chain->shader->setUniform("offset_x", 0.f);
+    m_belt_chain->shader->setUniform("offset_y", -m_shell_size_coeff * m_belt_offset);
+
 	m_minigun_sprite.draw(window);
 	if (m_state == State::CoolDown) {
 		auto sprite = m_steam_framer->sprite;
@@ -130,12 +153,6 @@ void MiniGun::drum_animation() {
 	}
 }
 
-void MiniGun::belt_animation() {
-	float frac = m_belt_position;
-	frac = frac - int(frac);
-	m_belt_chain->set_position(10, 10 + 2 * frac);
-}
-
 void MiniGun::logic(double dtime_microseconds, int x_id, int y_id) {
 	temperature_logic(dtime_microseconds);
 
@@ -166,14 +183,14 @@ void MiniGun::logic(double dtime_microseconds, int x_id, int y_id) {
 		m_belt_supply_timer += dtime_microseconds;
 		float p = (m_belt_supply_timer / (shot_offset_time * 1000 * 1000));
 
-		m_belt_position = p * 0.5 + (m_dark_shell_on_belt ? 0.5 : 0);
+		m_belt_offset = p * 0.5 + (m_dark_shell_on_belt ? 0.5 : 0);
 
 		if (p >= 1) {
+            m_belt_offset = !m_dark_shell_on_belt ? 0.5 : 0;
 			m_belt_supply = false;
 			m_dark_shell_on_belt = !m_dark_shell_on_belt;
 		}
 	}
-	belt_animation();
 	IRotatingGun::logic(dtime_microseconds, x_id, y_id);
 	compass_logic(x_id, y_id);
 	//GameState::Instance().minigun_state_update(*this);

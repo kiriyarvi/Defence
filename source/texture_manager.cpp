@@ -78,8 +78,11 @@ TextureManager::TextureManager() {
     textures[TextureID::UpgradeButtonBackground].loadFromFile("sprites/upgrade_button.png");
     textures[TextureID::UpgradeButtonBackgroundCompleted].loadFromFile("sprites/upgrade_button_completed.png");
     textures[TextureID::MinigunShellsUpgradeI].loadFromFile("sprites/minigun_shells_upgrade_I.png");
+    textures[TextureID::MinigunShellsUpgradeII].loadFromFile("sprites/minigun_shells_upgrade_II.png");
+    textures[TextureID::MinigunShellsUpgradeIII].loadFromFile("sprites/minigun_shells_upgrade_III.png");
     textures[TextureID::MinigunCoolingUpgradeI].loadFromFile("sprites/minigun_cooling_upgrade_I.png");
     textures[TextureID::MinigunLubricantUpgradeI].loadFromFile("sprites/minigun_lubricant_upgrade_I.png");
+    textures[TextureID::MinigunShells].loadFromFile("sprites/minigun_shells.png");
 
     textures[TextureID::Arrow].loadFromFile("sprites/arrow.png");
     textures[TextureID::Path].loadFromFile("sprites/path.png");

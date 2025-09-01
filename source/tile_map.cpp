@@ -253,7 +253,7 @@ void RouteDrawer::draw(sf::RenderWindow& window) {
     states.texture = &TextureManager::Instance().textures[TextureID::Path];
     auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
     shader.setUniform("texture", sf::Shader::CurrentTexture);
-    shader.setUniform("offset", -(float)m_offset / (1000 * 1000));
+    shader.setUniform("offset_x", -(float)m_offset / (1000 * 1000));
     states.shader = &shader;
     window.draw(m_vertex_array, states);
 }

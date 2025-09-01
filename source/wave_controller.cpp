@@ -83,21 +83,16 @@ WaveController::WaveController() {
         return RoadGraph::PathID{ start_node, path };
     };
 
-   /* {
+    {
         auto r1 = std::make_unique<UniformSpawner>();
         r1->id = get_random_route(0);
-        r1->add_spawner(EnemyType::Solder, 1);
-        r1->add_spawner(EnemyType::Truck, 1);
-        r1->add_spawner(EnemyType::Bike, 1);
-        r1->add_spawner(EnemyType::Pickup, 1);
-        r1->add_spawner(EnemyType::BTR, 1);
         r1->add_spawner(EnemyType::CruiserI, 1);
         Wave w;
         w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
         w.reward = 1000;
         m_waves.push_back(std::move(w));
-    }*/
+    }
 
     // Волна 1
     {

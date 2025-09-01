@@ -1,7 +1,24 @@
+#pragma once
 #include "tile_map.h"
 #include "enemies/IEnemy.h"
 #include <functional>
 #include <unordered_map>
+
+class BuildingUpgrade {
+public:
+    BuildingUpgrade& operator=(int value) {
+        level = value;
+        if (on_changed)
+            on_changed();
+        return *this;
+    }
+    operator int() {
+        return level;
+    }
+    std::function<void()> on_changed;
+private:
+    int level = 0;
+};
 
 struct ICondition {
     virtual std::string get_description() = 0;

@@ -3,6 +3,7 @@
 #include "utils/animation.h"
 #include "utils/sprite_chain.h"
 #include "params_manager.h"
+#include "achievement_system.h"
 
 class MiniGun : public IRotatingGun {
 	friend class GameState;
@@ -15,13 +16,12 @@ public:
 	void on_gun_pointed() override;
 	void on_gun_unpointed() override;
     ACCEPT(Minigun)
-	int m_penetration_upgrade = 0;
-	int m_cooling_upgrade = 0;
-	int m_lubricant_upgrade = 0;
+    BuildingUpgrade m_penetration_upgrade;
+    BuildingUpgrade m_cooling_upgrade;
+    BuildingUpgrade m_lubricant_upgrade;
 private:
 	void temperature_logic(double dtime_microseconds);
 	void drum_animation();
-	void belt_animation();
 	void compass_logic(int x_id, int y_id);
     TargetStatus get_enemy_status(IEnemy& enemy) override;
 private:
@@ -48,7 +48,7 @@ private:
 	bool m_dark_shell_on_belt = false;
 	bool m_belt_supply = false;
 	float m_belt_supply_timer = 0.0;
-	float m_belt_position = 0;
+	float m_belt_offset = 0;
 
 	SpriteChain* m_belt_chain = nullptr;
 	SpriteChain* m_enemy_compass = nullptr;
@@ -67,4 +67,5 @@ private:
 
 	Animation m_enemy_rebound_animation;
 	ISpriteFramer::Ptr m_enemy_rebound_framer;
+    float m_shell_size_coeff = 6.f / 32.f;
 };

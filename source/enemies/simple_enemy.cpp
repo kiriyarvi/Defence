@@ -145,7 +145,8 @@ BTR::BTR(): IEnemy(ParamsManager::Instance().params.enemies.BTR, EnemyType::BTR)
 void BTR::draw(sf::RenderWindow& window) {
     auto& shader = ShaderManager::Instance().shaders[Shader::Scroll];
     shader.setUniform("texture", sf::Shader::CurrentTexture);
-    shader.setUniform("offset", -(float)m_trucks_offset / (1000 * 1000));
+    shader.setUniform("offset_x", -(float)m_trucks_offset / (1000 * 1000));
+    shader.setUniform("offset_y", 0.f);
     m_btr.set_rotation(rotation);
     m_btr.set_position(position.x, position.y);
     m_btr.draw(window);

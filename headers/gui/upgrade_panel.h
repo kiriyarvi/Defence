@@ -10,7 +10,7 @@
 
 class UpgradeButton: public IconButton {
 public:
-	UpgradeButton(TextureID icon, int cost, int& building_upgrade,  int& achievement_system_upgrade, int goal_upgrade_value, const std::string name);
+	UpgradeButton(TextureID icon, int cost, BuildingUpgrade& building_upgrade,  int& achievement_system_upgrade, int goal_upgrade_value, const std::string name);
 	UpgradeButton(UpgradeButton&& btn);
 	UpgradeButton(const UpgradeButton&) = delete;
 	UpgradeButton& operator=(const UpgradeButton&) = delete;
@@ -20,7 +20,7 @@ public:
 private:
 	void connect();
 	int m_cost;
-	int& m_building_upgrade;
+	BuildingUpgrade& m_building_upgrade;
 	int& m_achievement_system_upgrade;
 	int m_goal_upgrade_value;
 	std::string m_name;
