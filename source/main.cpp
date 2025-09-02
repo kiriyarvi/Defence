@@ -8,12 +8,14 @@
 #include "animation_holder.h"
 
 int main() {
-
+    auto seed = static_cast<unsigned int>(time(nullptr));
+    srand(seed);
+    std::cout << "seed: " << seed << std::endl;
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
 
 	auto& game_state = GameState::Instance(&window);
-    game_state.init_stage(1);
+    game_state.init_stage(0);
 	auto& gui = GameState::Instance().get_tgui();
     EnemyManager::Instance().init();
 

@@ -271,7 +271,8 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 	if (event.type == sf::Event::MouseButtonPressed) {
 		if (event.mouseButton.button == sf::Mouse::Button::Left) {
 			if (m_current_building_construction) {
-				bool on_map = m_mouse_pos.x < 8 * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < 8 * 32 && m_mouse_pos.y >= 0;
+                size_t N = TileMap::Instance().map.size();
+				bool on_map = m_mouse_pos.x < N * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < N * 32 && m_mouse_pos.y >= 0;
 				sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
 				if (on_map && m_current_building_construction->is_cell_allowed(cell_id.x, cell_id.y)) {
 					TileMap::Instance().map[cell_id.x][cell_id.y].building = m_current_building_construction->creator();
@@ -291,7 +292,8 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
             }
             else { // если не строили, значит запросили открыть окно постройки
                 sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
-                bool on_map = cell_id.x < 8 && cell_id.x >= 0 && cell_id.y < 8 && cell_id.y >= 0;
+                size_t N = TileMap::Instance().map.size();
+                bool on_map = cell_id.x < N && cell_id.x >= 0 && cell_id.y < N && cell_id.y >= 0;
                 if (!on_map) {
                     set_panel_content(nullptr);
                     return false;
@@ -345,7 +347,8 @@ void GameState::logic(double dtime_mc) {
 }
 
 void GameState::draw(sf::RenderWindow& current_window) {
-	bool on_map = m_mouse_pos.x < 8 * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < 8 * 32 && m_mouse_pos.y >= 0;
+    size_t N = TileMap::Instance().map.size();
+	bool on_map = m_mouse_pos.x < N * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < N * 32 && m_mouse_pos.y >= 0;
 	if (m_current_building_construction && on_map) {
 		sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
 		m_current_building_construction->draw_building_plan(current_window, cell_id.x, cell_id.y);

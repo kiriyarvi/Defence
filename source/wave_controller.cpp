@@ -2,6 +2,7 @@
 #include "enemy_manager.h"
 #include "game_state.h"
 #include <unordered_map>
+#include <random>
 
 void UniformSpawner::add_spawner(EnemyType type, int count, bool boss) {
     m_spawners.push_back(Spawn{ type, count, boss });
@@ -71,19 +72,60 @@ std::string ControlledSpawner::description() {
     return description;
 }
 
+std::list<size_t> get_random_enters(size_t enters_N, size_t requested_N) {
+    std::list<size_t> list;
+    for (size_t i = 0; i < enters_N; ++i)
+        list.push_back(i);
+
+    // Копируем в вектор
+    std::vector<size_t> temp(list.begin(), list.end());
+    // Перемешиваем
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(temp.begin(), temp.end(), gen);
+    list.assign(temp.begin(), temp.end());
+
+    while (list.size() > requested_N) {
+        auto it = list.begin();
+        std::advance(it, rand() % list.size());
+        list.erase(it);
+    }
+    return list;
+}
+
+std::pair<size_t, size_t> two_random_enters() {
+    auto list = get_random_enters(EnemyManager::Instance().all_paths.size(), 2);
+    return { list.front(), list.back() };
+}
+
+size_t one_random_enter() {
+    auto list = get_random_enters(EnemyManager::Instance().all_paths.size(), 2);
+    return list.front();
+}
+
+
+RoadGraph::PathID get_random_route(int start_node_count) {
+    auto all_paths = EnemyManager::Instance().all_paths;
+    auto it = all_paths.begin();
+    std::advance(it, start_node_count);
+    RoadGraph::Node* start_node = it->first;
+    int path = rand() % it->second.size();
+    return RoadGraph::PathID{ start_node, path };
+};
+
+RoadGraph::PathID one_random_route() {
+    return get_random_route(one_random_enter());
+}
+
+std::pair<RoadGraph::PathID, RoadGraph::PathID> random_routes_from_to_random_enters() {
+    auto [e1, e2] = two_random_enters();
+    return { get_random_route(e1), get_random_route(e2) };
+}
+
 WaveController::WaveController() {
     int all_paths = EnemyManager::Instance().all_paths.size();
 
-    auto get_random_route = [](int start_node_count) {
-        auto all_paths = EnemyManager::Instance().all_paths;
-        auto it = all_paths.begin();
-        std::advance(it, start_node_count);
-        RoadGraph::Node* start_node = it->first;
-        int path = rand() % it->second.size();
-        return RoadGraph::PathID{ start_node, path };
-    };
-
-    {
+   /* {
         auto r1 = std::make_unique<UniformSpawner>();
         r1->id = get_random_route(0);
         r1->add_spawner(EnemyType::CruiserI, 1);
@@ -92,12 +134,12 @@ WaveController::WaveController() {
         w.routes.push_back(std::move(r1));
         w.reward = 1000;
         m_waves.push_back(std::move(w));
-    }
+    }*/
 
     // Волна 1
     {
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = one_random_route();
         r1->add_spawner(EnemyType::Solder, 3);
         Wave w;
         w.prepairing_time = 3;
@@ -107,11 +149,12 @@ WaveController::WaveController() {
     }
     // Волна 2
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Solder, 3);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Solder, 3);
         Wave w;
         w.prepairing_time = 3;
@@ -122,11 +165,12 @@ WaveController::WaveController() {
     }
     // Волна 3
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Solder, 6);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Solder, 6);
         Wave w;
         w.prepairing_time = 3;
@@ -138,7 +182,7 @@ WaveController::WaveController() {
     // Волна 4
     {
         auto r1 = std::make_unique<ControlledSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = one_random_route();
         r1->add_enemy(EnemyType::Solder, 1);
         r1->add_enemy(EnemyType::Solder, 1);
         r1->add_enemy(EnemyType::Solder, 1.5);
@@ -150,12 +194,13 @@ WaveController::WaveController() {
     }
     // Волна 5
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Solder, 5);
         r1->add_spawner(EnemyType::Bike, 1);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Solder, 5);
         r2->add_spawner(EnemyType::Bike, 1);
         Wave w;
@@ -166,12 +211,13 @@ WaveController::WaveController() {
     }
     // Волна 6
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Pickup, 1);
         r1->add_spawner(EnemyType::Solder, 7);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Solder, 4);
         r2->add_spawner(EnemyType::Bike, 1);
         Wave w;
@@ -182,12 +228,13 @@ WaveController::WaveController() {
     }
     // Волна 7
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Pickup, 2);
         r1->add_spawner(EnemyType::Bike, 2);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Solder, 4);
         r2->add_spawner(EnemyType::Bike, 1);
         Wave w;
@@ -198,13 +245,14 @@ WaveController::WaveController() {
     }
     // Волна 8
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Truck, 1);
         r1->add_spawner(EnemyType::Pickup, 1);
         r1->add_spawner(EnemyType::Bike, 1);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Solder, 5);
         r2->add_spawner(EnemyType::Pickup, 3);
         Wave w;
@@ -215,11 +263,12 @@ WaveController::WaveController() {
     }
     // Волна 9
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Truck, 5);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Solder, 5);
         r2->add_spawner(EnemyType::Pickup, 3);
         r2->add_spawner(EnemyType::Bike, 2);
@@ -232,12 +281,13 @@ WaveController::WaveController() {
 
     // Волна 10
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Solder, 10);
         r1->add_spawner(EnemyType::Bike, 4);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Solder, 10);
         r2->add_spawner(EnemyType::Bike, 4);
         Wave w;
@@ -248,11 +298,12 @@ WaveController::WaveController() {
     }
     // Волна 11
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::BTR, 1);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::BTR, 1);
         Wave w;
         w.routes.push_back(std::move(r1));
@@ -262,13 +313,14 @@ WaveController::WaveController() {
     }
     // Волна 12
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Pickup, 3);
         r1->add_spawner(EnemyType::Truck, 3);
         r1->add_spawner(EnemyType::BTR, 1);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Solder, 10);
         r2->add_spawner(EnemyType::BTR, 2);
         Wave w;
@@ -279,12 +331,13 @@ WaveController::WaveController() {
     }
     // Волна 13
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Truck, 2);
         r1->add_spawner(EnemyType::BTR, 2);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Bike, 4);
         Wave w;
         w.routes.push_back(std::move(r1));
@@ -294,12 +347,13 @@ WaveController::WaveController() {
     }
     // Волна 13
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::BTR, 3);
         r1->add_spawner(EnemyType::Tank, 1);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Truck, 4);
         Wave w;
         w.routes.push_back(std::move(r1));
@@ -309,13 +363,14 @@ WaveController::WaveController() {
     }
     // Волна 14
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Truck, 2);
         r1->add_spawner(EnemyType::BTR, 2);
         r1->add_spawner(EnemyType::Tank, 1);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Tank, 1);
         r2->add_spawner(EnemyType::BTR, 3);
         Wave w;
@@ -326,11 +381,12 @@ WaveController::WaveController() {
     }
     // Волна 15
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Tank, 3);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Tank, 3);
         Wave w;
         w.routes.push_back(std::move(r1));
@@ -341,7 +397,7 @@ WaveController::WaveController() {
     // Волна 16
     {
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = one_random_route();
         r1->add_spawner(EnemyType::Solder, 15);
         r1->add_spawner(EnemyType::Bike, 8);
         r1->add_spawner(EnemyType::Pickup, 8);
@@ -354,14 +410,15 @@ WaveController::WaveController() {
     }
     // Волна 17
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Bike, 10);
         r1->add_spawner(EnemyType::Tank, 14);
         r1->add_spawner(EnemyType::Truck, 18);
         r1->add_spawner(EnemyType::Solder, 20);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Bike, 10);
         r2->add_spawner(EnemyType::BTR, 20);
         r2->add_spawner(EnemyType::Truck, 10);
@@ -374,13 +431,14 @@ WaveController::WaveController() {
     }
     // Волна 18
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Tank, 5);
         r1->add_spawner(EnemyType::Solder, 14);
         r1->add_spawner(EnemyType::Tank, 1);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::Tank, 5);
         r2->add_spawner(EnemyType::BTR, 3);
         r2->add_spawner(EnemyType::Truck, 5);
@@ -395,8 +453,9 @@ WaveController::WaveController() {
 
     // Волна 19
     {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
+        r1->id = id1;
         r1->add_spawner(EnemyType::Solder, 3);
         r1->add_spawner(EnemyType::Bike, 3);
         r1->add_spawner(EnemyType::Solder, 3);
@@ -410,7 +469,7 @@ WaveController::WaveController() {
         r1->add_spawner(EnemyType::Tank, 8);
         r1->add_spawner(EnemyType::CruiserI, 2);
         auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = get_random_route(1);
+        r2->id = id2;
         r2->add_spawner(EnemyType::BTR, 20);
         r2->add_spawner(EnemyType::CruiserI, 2);
         Wave w;

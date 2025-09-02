@@ -53,6 +53,8 @@ using Building = std::unique_ptr<IBuilding>;
 
 class Tile {
 public:
+    Tile() = default;
+    Tile(Tile&&) = default;
 	TextureID background_texture = TextureID::Grass;
 	std::array<bool, 4> roads; // Right, Up, Left, Down
 	virtual void draw(sf::RenderWindow& window, int x, int y);
@@ -61,6 +63,7 @@ public:
     inline static bool new_tiling_mode = true;
 
 	Building building = nullptr;
+    float height = 0;
 };
 
 
@@ -71,9 +74,9 @@ public:
 		int x; int y;
 		std::vector<Node*> relations;
 	};
-	std::vector<Node> nodes;
-	std::vector<Node*> start_nodes;
-	std::vector<Node*> end_nodes;
+	std::list<Node> nodes;
+	std::list<Node*> start_nodes;
+	std::list<Node*> end_nodes;
 
 	// Найти все пути
     using Path = std::vector<Node*>;
@@ -117,10 +120,15 @@ public:
 	void draw(sf::RenderWindow& window);
 	void draw_effects(sf::RenderWindow& window);
 	void logic(double dtime);
-	std::array<std::array<Tile, 8>, 8> map;
+	std::vector<std::vector<Tile>> map;
 	const RoadGraph& get_road_graph() { return m_road_graph; }
 private:
+    void generate_height_map();
+    void create_map(size_t N);
+    void generate_roads();
 	TileMap();
 private:
 	RoadGraph m_road_graph;
+    sf::Texture m_test_texture;
+    sf::Image m_test_image;
 };
