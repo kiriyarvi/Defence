@@ -33,6 +33,11 @@ int main() {
             if (!gui.handleEvent(event)) {
 				camera.process(event);
             }
+            if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code == sf::Keyboard::Key::Q) {
+                    Tile::new_tiling_mode = !Tile::new_tiling_mode;
+                }
+            }
             game_state.event(event, window);
 			
 		}

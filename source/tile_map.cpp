@@ -63,52 +63,53 @@ void Tile::draw(sf::RenderWindow& window, int x, int y) {
 	sprite.setPosition(x * 32, y * 32);
 	sprite.setTexture(TextureManager::Instance().textures[TextureID::Grass]);
 	window.draw(sprite);
+    if (new_tiling_mode) {
+        std::array<std::array<bool, 3>, 3> int_points;
+        for (auto& row : int_points) for (auto& a : row) a = false;
+        if (std::count(roads.begin(), roads.end(), true) == 0)
+            return;
+        int_points[1][1] = true;
+        if (roads[0])
+            int_points[2][1] = true;
+        if (roads[1])
+            int_points[1][0] = true;
+        if (roads[2])
+            int_points[0][1] = true;
+        if (roads[3])
+            int_points[1][2] = true;
+        sprite.setTexture(TextureManager::Instance().textures[TextureID::RoadTileset]);
+        std::array<bool, 4> top_left = { int_points[1][0], int_points[0][0], int_points[0][1], int_points[1][1] };
+        std::array<bool, 4> bottom_left = { int_points[1][1], int_points[0][1], int_points[0][2], int_points[1][2] };
+        std::array<bool, 4> top_right = { int_points[2][0], int_points[1][0], int_points[1][1], int_points[2][1] };
+        std::array<bool, 4> bottom_right = { int_points[2][1], int_points[1][1], int_points[1][2], int_points[2][2] };
+        sprite.setPosition(x * 32, y * 32);
+        get_road_sprite(top_left, sprite);
+        window.draw(sprite);
 
-    std::array<std::array<bool, 3>, 3> int_points;
-    for (auto& row : int_points) for (auto& a : row) a = false;
-    if (std::count(roads.begin(), roads.end(), true) == 0)
-        return;
-   int_points[1][1] = true;
-    if (roads[0])
-        int_points[2][1] = true;
-    if (roads[1])
-        int_points[1][0] = true;
-    if (roads[2])
-        int_points[0][1] = true;
-    if (roads[3])
-        int_points[1][2] = true;
-    sprite.setTexture(TextureManager::Instance().textures[TextureID::RoadTileset]);
-    std::array<bool, 4> top_left = { int_points[1][0], int_points[0][0], int_points[0][1], int_points[1][1] };
-    std::array<bool, 4> bottom_left = { int_points[1][1], int_points[0][1], int_points[0][2], int_points[1][2] };
-    std::array<bool, 4> top_right = { int_points[2][0], int_points[1][0], int_points[1][1], int_points[2][1] };
-    std::array<bool, 4> bottom_right = { int_points[2][1], int_points[1][1], int_points[1][2], int_points[2][2] };
-    sprite.setPosition(x * 32, y * 32);
-    get_road_sprite(top_left, sprite);
-    window.draw(sprite);
+        get_road_sprite(bottom_left, sprite);
+        sprite.setPosition(x * 32, y * 32 + 16);
+        window.draw(sprite);
 
-    get_road_sprite(bottom_left, sprite);
-    sprite.setPosition(x * 32, y * 32 + 16);
-    window.draw(sprite);
+        get_road_sprite(top_right, sprite);
+        sprite.setPosition(x * 32 + 16, y * 32);
+        window.draw(sprite);
 
-    get_road_sprite(top_right, sprite);
-    sprite.setPosition(x * 32 + 16, y * 32);
-    window.draw(sprite);
-
-    get_road_sprite(bottom_right, sprite);
-    sprite.setPosition(x * 32 + 16, y * 32 + 16);
-    window.draw(sprite);
-
-	/*int ends = std::count(roads.begin(), roads.end(), true);
-	if (ends >= 2) {
-		unsigned int tile_id = 0;
-		for (int i = 0; i < 4; ++i) {
-			tile_id *= 2;
-			tile_id += roads[i];
-		}
-		sprite.setTexture(TextureManager::Instance().textures[static_cast<TextureID>(tile_id)]);
-		window.draw(sprite);
-	}*/
-
+        get_road_sprite(bottom_right, sprite);
+        sprite.setPosition(x * 32 + 16, y * 32 + 16);
+        window.draw(sprite);
+    }
+    else {
+        int ends = std::count(roads.begin(), roads.end(), true);
+        if (ends >= 2) {
+            unsigned int tile_id = 0;
+            for (int i = 0; i < 4; ++i) {
+                tile_id *= 2;
+                tile_id += roads[i];
+            }
+            sprite.setTexture(TextureManager::Instance().textures[static_cast<TextureID>(tile_id)]);
+            window.draw(sprite);
+        }
+    }
 
 
 }
