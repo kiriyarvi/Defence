@@ -174,6 +174,9 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
         this->align_console_labels();
     });
     m_ui->add(m_console);
+
+    TileMap::Instance().generate_map();
+    add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.", MessageType::None);
 }
 
 GameState::~GameState() {
@@ -244,6 +247,20 @@ void GameState::align_console_labels() {
 }
 
 bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) {
+    if (event.type == sf::Event::KeyPressed) {
+        if (m_is_preparing) {
+            if (event.key.code == sf::Keyboard::Key::R) {
+                TileMap::Instance().generate_map();
+                m_prepairing_timer = 0;
+                m_last_preparing_message = -1;
+            }
+            else if (event.key.code == sf::Keyboard::Key::Q) {
+                m_is_preparing = false;
+                EnemyManager::Instance().generate_waves();
+                init_stage(0);
+            }
+        }
+    }
 	if (event.type == sf::Event::MouseMoved) {
 		sf::Vector2i mouse_screen_pos(event.mouseMove.x, event.mouseMove.y);
 		m_mouse_pos = current_window.mapPixelToCoords(mouse_screen_pos);
@@ -344,6 +361,19 @@ void GameState::logic(double dtime_mc) {
             align_console_labels();
         }
     }
+   /* if (m_is_preparing) {
+        m_prepairing_timer += dtime_mc;
+        int p = m_prepairing_timer / (1000.f * 1000.f);
+        if (p > m_last_preparing_message) {
+            m_last_preparing_message = p;
+            add_message(std::to_string(4 - m_last_preparing_message) + " секунд до старта.", MessageType::None);
+        }
+        if (p == 4) {
+            m_is_preparing = false;
+            EnemyManager::Instance().generate_waves();
+            init_stage(0);
+        }
+    }*/
 }
 
 void GameState::draw(sf::RenderWindow& current_window) {

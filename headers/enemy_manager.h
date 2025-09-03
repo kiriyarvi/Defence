@@ -25,7 +25,7 @@ public:
 	IEnemy* get_enemy_by_id(uint32_t id);
     RoadGraph::Paths all_paths;
 	std::vector<IEnemy::Ptr> m_enemies;
-    void init();
+    void generate_waves();
 private:
 	EnemyManager();
 	uint32_t current_max_id = 0;

@@ -49,10 +49,10 @@ AchievementSystem::AchievementSystem() {
     m_achievements.push_back(building_for_enemy_achievement(EnemyType::Truck, BuildingType::Mine));
     m_achievements.push_back(building_for_enemy_achievement(EnemyType::BTR, BuildingType::Hedgehogs));
     m_achievements.push_back(building_for_enemy_achievement(EnemyType::Tank, BuildingType::AntitankGun));
-    m_achievements.push_back(building_for_enemy_achievement(EnemyType::CruiserI, BuildingType::TwinGun));
 
     Achievement cruiserI;
     cruiserI.condition = enemy_defaeted_condition(EnemyType::CruiserI);
+    cruiserI.unlocked_buildings.push_back(BuildingType::TwinGun);
     cruiserI.upgrades.push_back(MinigunUpgrades::create_penetration_upgrade(2));
     cruiserI.upgrades.push_back(MinigunUpgrades::create_lubricant_upgrade(1));
     cruiserI.upgrades.push_back(MinigunUpgrades::create_cooling_upgrade(1));

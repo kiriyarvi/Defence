@@ -8,16 +8,11 @@
 #include "animation_holder.h"
 
 int main() {
-    auto seed = static_cast<unsigned int>(time(nullptr));
-    srand(seed);
-    std::cout << "seed: " << seed << std::endl;
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
 
 	auto& game_state = GameState::Instance(&window);
-    game_state.init_stage(0);
 	auto& gui = GameState::Instance().get_tgui();
-    EnemyManager::Instance().init();
 
 	Camera camera(window);
 
@@ -36,7 +31,7 @@ int main() {
 				camera.process(event);
             }
             if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::Key::Q) {
+                if (event.key.code == sf::Keyboard::Key::M) {
                     Tile::new_tiling_mode = !Tile::new_tiling_mode;
                 }
             }

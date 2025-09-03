@@ -125,7 +125,7 @@ std::pair<RoadGraph::PathID, RoadGraph::PathID> random_routes_from_to_random_ent
 WaveController::WaveController() {
     int all_paths = EnemyManager::Instance().all_paths.size();
 
-   /* {
+  /*  {
         auto r1 = std::make_unique<UniformSpawner>();
         r1->id = get_random_route(0);
         r1->add_spawner(EnemyType::CruiserI, 1);

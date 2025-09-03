@@ -191,9 +191,13 @@ void TileMap::generate_height_map() {
 }
 
 void TileMap::create_map(size_t N) {
+    map.clear();
     map.resize(N);
     for (auto& r : map)
         r.resize(N);
+    m_road_graph.end_nodes.clear();
+    m_road_graph.start_nodes.clear();
+    m_road_graph.nodes.clear();
 }
 
 struct Node {
@@ -323,7 +327,9 @@ void TileMap::generate_roads() {
         // 3. выставляем тайлы
         map[0][enters[i]].roads[2] = true;
         map[N - 1][exits[exit_index]].roads[0] = true;
+        //map[path[0].x][path[0].y].height = 2.;
         for (size_t i = 1; i < path.size(); ++i) {
+            //map[path[i].x][path[i].y].height = 2.;
             auto p = path[i];
             auto p_prev = path[i - 1];
             glm::ivec2 dir{ p.x - (int)p_prev.x, p.y - (int)p_prev.y };
@@ -384,11 +390,18 @@ void TileMap::generate_roads() {
     }*/
 }
 
-TileMap::TileMap() {
+void TileMap::generate_map() {
+    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
+    auto seed = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
+    //auto seed = static_cast<unsigned int>(time(nullptr));
+    srand(seed);
+    std::cout << "seed: " << seed << std::endl; //TODO не будет работать из-за использованного вихря мерсена.
     create_map(8); // выделяем память
     generate_roads(); // генерируем дороги
-
     m_test_texture.loadFromImage(m_test_image);
+}
+
+TileMap::TileMap() {
 	//Test Map
 	/*map[0][1].roads = { 1,0,1,0 };
 	map[1][1].roads = { 1,0,1,0 };

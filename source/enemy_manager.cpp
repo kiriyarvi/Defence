@@ -7,11 +7,10 @@
 #include "enemies/solder.h"
 #include "enemies/cruiser_I.h"
 
-EnemyManager::EnemyManager() {
-	all_paths = TileMap::Instance().get_road_graph().find_all_paths();
-}
+EnemyManager::EnemyManager() {}
 
-void EnemyManager::init() {
+void EnemyManager::generate_waves() {
+    all_paths = TileMap::Instance().get_road_graph().find_all_paths();
     m_wave_controller = std::make_unique<WaveController>();
 }
 
@@ -71,11 +70,12 @@ void EnemyManager::logic(double dtime) {
 	for (auto& destroyed_enemy : m_destroyed_enemies)
 		destroyed_enemy->logic(dtime);
 	m_destroyed_enemies.remove_if([](IDestroyedEnemy::Ptr& enemy) { return enemy->is_ready(); });
-
-    m_wave_controller->logic(dtime);
-    if (m_enemies.empty()) {
-        if (!m_wave_controller->next_wave()) {
-            GameState::Instance().win();
+    if (m_wave_controller) {
+        m_wave_controller->logic(dtime);
+        if (m_enemies.empty()) {
+            if (!m_wave_controller->next_wave()) {
+                GameState::Instance().win();
+            }
         }
     }
 

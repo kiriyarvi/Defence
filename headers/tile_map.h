@@ -120,6 +120,7 @@ public:
 	void draw(sf::RenderWindow& window);
 	void draw_effects(sf::RenderWindow& window);
 	void logic(double dtime);
+    void generate_map();
 	std::vector<std::vector<Tile>> map;
 	const RoadGraph& get_road_graph() { return m_road_graph; }
 private:

@@ -75,6 +75,10 @@ private:
 	tgui::Gui m_gui;
     tgui::Group::Ptr m_ui;
     Help m_help;
+
+    bool m_is_preparing = true;
+    int m_last_preparing_message = -1; // пока не используется
+    float m_prepairing_timer = 0; //пока не используется
     bool m_win = false;
     bool m_is_help_displayed = false;
 	tgui::Label::Ptr m_player_health_count_widget;
