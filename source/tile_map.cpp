@@ -421,34 +421,7 @@ void TileMap::generate_map() {
     generate_dirt_road_height_map(sf::IntRect()); // генерируем карту высот
     generate_roads(enters, exits, paths, RoadType::Dirt, sf::IntRect(0,0,8,8));
     // 3. составляем road_graph
-    for (size_t i = 0; i < paths.size(); ++i) {
-        auto& path = paths[i];
-        RoadGraph::Node* prev_node = nullptr;
-        RoadGraph::Node* last_node = nullptr;
-        for (auto& node : path) {
-            auto it = std::find_if(m_road_graph.nodes.begin(), m_road_graph.nodes.end(), [&](const RoadGraph::Node& rg_node) {
-                return rg_node.x == node.x && rg_node.y == node.y;
-            });
-            if (it == m_road_graph.nodes.end()) {
-                last_node = &m_road_graph.nodes.emplace_back(RoadGraph::Node(node.x, node.y));
-                if (prev_node)
-                    prev_node->relations.push_back(last_node);
-                else // это start node
-                    m_road_graph.start_nodes.push_back(last_node);
-            }
-            else {
-                last_node = &*it;
-                if (prev_node) {
-                    if (std::find(prev_node->relations.begin(), prev_node->relations.end(), last_node) == prev_node->relations.end())
-                        prev_node->relations.push_back(last_node);
-                }
-                else // это start node
-                    m_road_graph.start_nodes.push_back(last_node);
-            }
-            prev_node = last_node;
-        }
-        m_road_graph.end_nodes.push_back(last_node); // prev_node == last_node
-    }
+    create_road_graph();
     //m_test_texture.loadFromImage(m_test_image);
 }
 
@@ -503,8 +476,47 @@ void TileMap::enlarge_map() {
     generate_by_enters_chain(enters_chain, N, 2, paths);
 
     //3. Переделываем road_graph.
+    create_road_graph();
 
     m_test_texture.loadFromImage(m_test_image);
+}
+
+void RoadGraph::clear() {
+    nodes.clear();
+    start_nodes.clear();
+    end_nodes.clear();
+}
+
+void TileMap::create_road_graph() {
+    m_road_graph.clear();
+    size_t N = map.size();
+    std::unordered_map<glm::uvec2, RoadGraph::Node*> pos_node;
+    for (size_t x = 0; x < N; ++x)
+        for (size_t y = 0; y < N; ++y)
+            if (map[x][y].road_type != RoadType::None) {
+                pos_node[glm::uvec2{ x, y }] = &m_road_graph.nodes.emplace_back(RoadGraph::Node( x, y ));
+            }
+    for (auto& n : m_road_graph.nodes) {
+        auto& roads = map[n.x][n.y].roads;
+        if (roads[0]) {
+            if (n.x + 1 < N)
+                n.relations.push_back(pos_node[{n.x + 1, n.y}]);
+            else
+                m_road_graph.end_nodes.push_back(&n);
+        }
+        if (roads[1] && n.y - 1 >= 0) {
+            n.relations.push_back(pos_node[{n.x, n.y - 1}]);
+        }
+        if (roads[2]) {
+            if (n.x - 1 >= 0)
+                n.relations.push_back(pos_node[{n.x - 1, n.y}]);
+            else
+                m_road_graph.start_nodes.push_back(&n);
+        }
+        if (roads[3] && n.y + 1 < N) {
+            n.relations.push_back(pos_node[{n.x, n.y + 1}]);
+        }
+    }
 }
 
 TileMap::TileMap() {
@@ -619,41 +631,93 @@ void TileMap::logic(double dtime) {
 		}
 }
 
-RoadGraph::Paths RoadGraph::find_all_paths() const {
-    Paths all_paths;
-
-	for (Node* start : start_nodes) {
-		std::vector<Node*> current_path;
-		std::unordered_set<Node*> visited;
-        dfs(start, current_path, visited, all_paths[start]);
-	}
-
-	return all_paths;
+// -----------------------------
+// Path hashing function
+// -----------------------------
+std::string RoadGraph::hash_path(const Path& path) const {
+    std::string hash;
+    for (const auto* node : path) {
+        hash += std::to_string(node->x) + "," + std::to_string(node->y) + ";";
+    }
+    return hash;
 }
 
-void RoadGraph::dfs(Node* current,
-	std::vector<Node*>& path,
-	std::unordered_set<Node*>& visited,
-	std::vector<std::vector<Node*>>& all_paths) const
-{
-	if (!current || visited.count(current)) return;
+// -----------------------------
+// DFS to find random unique paths
+// -----------------------------
+void RoadGraph::dfs_random_paths(
+    Node* current,
+    Node* start_node,
+    Path& current_path,
+    std::unordered_set<Node*>& visited,
+    Paths& result,
+    int max_paths_per_node,
+    int turns,
+    int dx,
+    std::mt19937& rng
+) const {
+    if (visited.count(current)) return;
 
-	path.push_back(current);
-	visited.insert(current);
+    visited.insert(current);
+    current_path.push_back(current);
 
-	// Если достигли одного из целевых узлов — сохраняем путь
-	if (std::find(end_nodes.begin(), end_nodes.end(), current) != end_nodes.end()) {
-		all_paths.push_back(path);
-	}
+    // Check if reached an end node
+    if (std::find(end_nodes.begin(), end_nodes.end(), current) != end_nodes.end()) {
+        result[start_node].push_back(current_path);
+        current_path.pop_back();
+        visited.erase(current);
+        return;
+    }
+        
+    std::vector<Node*> neighbors = current->relations;
+    // Если уже достаточно много раз сворачивали назад - не позволяем свернуть назад еще раз, если есть выбор.
+    if (neighbors.size() == 1) { // нет выбора
+        int new_dx = neighbors[0]->x;
+        if (new_dx < 0 && dx > 0) {
+            ++turns;
+            dx = -1;
+        }
+        if (turns <= 2)
+            dfs_random_paths(neighbors[0], start_node, current_path, visited, result, max_paths_per_node, turns, dx, rng);
+    }else {
+        neighbors.erase(std::remove_if(neighbors.begin(), neighbors.end(), [&](Node* neight) {
+            int dx = neight->x - current->x;
+            return dx < 0;
+        }), neighbors.end());
+        std::shuffle(neighbors.begin(), neighbors.end(), rng);
+        for (Node* neighbor : neighbors) {
+            if (result[start_node].size() >= max_paths_per_node) break;
+            int new_dx = neighbor->x;
+            if (new_dx * dx == -1) {
+                ++turns;
+                dx = -dx;
+            }
+            if (turns <= 2)
+                dfs_random_paths(neighbor, start_node, current_path, visited, result, max_paths_per_node, turns, dx, rng);
+        }
+    }
+    current_path.pop_back();
+    visited.erase(current);
+}
 
-	// Рекурсивно обходим соседей
-	for (Node* neighbor : current->relations) {
-		dfs(neighbor, path, visited, all_paths);
-	}
+// -----------------------------
+// Main function
+// -----------------------------
+RoadGraph::Paths RoadGraph::find_all_paths() const {
+    const int max_paths_per_node = 10;
+    Paths result;
+    std::random_device rd;
+    std::mt19937 rng(rd());
 
-	// Назад (backtracking)
-	visited.erase(current);
-	path.pop_back();
+    for (Node* start : start_nodes) {
+        std::set<std::string> unique_paths;
+        Path path;
+        std::unordered_set<Node*> visited;
+
+        dfs_random_paths(start, start, path, visited, result, max_paths_per_node, 0, 1, rng);
+    }
+
+    return result;
 }
 
 

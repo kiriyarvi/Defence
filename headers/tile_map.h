@@ -4,6 +4,8 @@
 #include <array>
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
+#include <random>
 #include <glm/glm.hpp>
 #include "texture_manager.h"
 
@@ -72,7 +74,12 @@ public:
     RoadType road_type = RoadType::None;
 };
 
-
+// Может и можно убрать, ведь в Tile уже зашифрован этот граф
+// и (x,y) по Tile можно определить, используя арифметику указателей,
+// Но все же, если map не будет загружено в память полностью, будут проблемы.
+// Поэтому стоить хранить логический класс путей.
+// А если map так и не станет таким большим, чтобы стало необходимо
+// выгружать часть ее на диск, можно будет убрать этот RoadGraph.
 class RoadGraph {
 public:
 	struct Node {
@@ -84,6 +91,8 @@ public:
 	std::list<Node*> start_nodes;
 	std::list<Node*> end_nodes;
 
+    void clear();
+
 	// Найти все пути
     using Path = std::vector<Node*>;
     using Paths = std::map<Node*, std::vector<Path>>;
@@ -94,10 +103,19 @@ public:
 
     Paths find_all_paths() const;
 private:
-	void dfs(Node* current,
-		std::vector<Node*>& path,
-		std::unordered_set<Node*>& visited,
-		std::vector<std::vector<Node*>>& all_paths) const;
+    void dfs_random_paths(
+        Node* current,
+        Node* start_node,
+        Path& current_path,
+        std::unordered_set<Node*>& visited,
+        Paths& result,
+        int max_paths_per_node,
+        int turns_back,
+        int dx,
+        std::mt19937& rng
+    ) const;
+
+    std::string hash_path(const Path& path) const;
 };
 
 class RouteDrawer {
@@ -144,6 +162,7 @@ private:
         float road_cost = -1,
         float direction_change_penalty = -1
         );
+    void create_road_graph();
 	TileMap();
 private:
 	RoadGraph m_road_graph;

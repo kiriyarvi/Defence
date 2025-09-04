@@ -33,6 +33,10 @@ int main() {
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) {
                 TileMap::Instance().enlarge_map();
             }
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::K) {
+                for (auto& enemy : EnemyManager::Instance().m_enemies)
+                    enemy->health = 0;
+            }
             game_state.event(event, window);
 			
 		}
