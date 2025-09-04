@@ -30,6 +30,9 @@ int main() {
             if (!gui.handleEvent(event)) {
 				camera.process(event);
             }
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) {
+                TileMap::Instance().enlarge_map();
+            }
             game_state.event(event, window);
 			
 		}

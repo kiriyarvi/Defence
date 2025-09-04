@@ -80,7 +80,10 @@ void Tile::draw(sf::RenderWindow& window, int x, int y) {
         int_points[0][1] = true;
     if (roads[3])
         int_points[1][2] = true;
-    sprite.setTexture(TextureManager::Instance().textures[TextureID::RoadTileset]);
+    if (road_type == RoadType::Dirt)
+        sprite.setTexture(TextureManager::Instance().textures[TextureID::RoadTileset]);
+    else if (road_type == RoadType::Asphalt)
+        sprite.setTexture(TextureManager::Instance().textures[TextureID::AsphaltRoadTileset]);
     std::array<bool, 4> top_left = { int_points[1][0], int_points[0][0], int_points[0][1], int_points[1][1] };
     std::array<bool, 4> bottom_left = { int_points[1][1], int_points[0][1], int_points[0][2], int_points[1][2] };
     std::array<bool, 4> top_right = { int_points[2][0], int_points[1][0], int_points[1][1], int_points[2][1] };
@@ -106,10 +109,14 @@ size_t mod(int a, int m) {
     return (a % m + m) % m;
 }
 
-void perlin_noise_octave(std::vector<std::vector<Tile>>& map, size_t S, size_t scale, double amplitude, std::vector<std::vector<glm::vec2>>& dir_map) {
+void perlin_noise_octave(std::vector<std::vector<Tile>>& map, size_t S, size_t scale, double amplitude, std::vector<std::vector<glm::vec2>>& dir_map, sf::IntRect prohibited_zone, bool clear) {
     const size_t cells_count = S / scale;
     const size_t cell_size = scale;
     for (size_t x = 0; x < S; ++x) for (size_t y = 0; y < S; ++y) {
+        if (prohibited_zone.contains(sf::Vector2i(x, y)))
+            continue;
+        if (clear)
+            map.at(x).at(y).height = 0;
         int i = cell_size * (x / cell_size);
         int j = cell_size * (y / cell_size);
         // обход по часовой.
@@ -147,29 +154,70 @@ void perlin_noise_octave(std::vector<std::vector<Tile>>& map, size_t S, size_t s
     }
 }
 
-void TileMap::generate_height_map() {
-    size_t N = map.size();
-    //1. Сгенерируем сетку с векторами в углах
+std::vector<std::vector<glm::vec2>> generate_directions(size_t N) {
     std::vector<std::vector<glm::vec2>> directions(N);
     for (size_t i = 0; i < N; ++i) {
         directions[i].resize(N);
         for (size_t j = 0; j < N; ++j)
             directions[i][j] = glm::circularRand(1.f);
     }
+    return directions;
+}
 
+void TileMap::generate_dirt_road_height_map(sf::IntRect prohibited_zone) {
+    size_t N = map.size();
+    //1. Сгенерируем сетку с векторами в углах
+    std::vector<std::vector<glm::vec2>> directions = generate_directions(N);
+    //2. Окатвы шума Перлина
     int layers = log2(N);
     int scale = 2;
     double full_amp = 0;
     for (size_t i = 0; i < layers; ++i) {
-        perlin_noise_octave(map, N, scale, scale, directions);
+        perlin_noise_octave(map, N, scale, scale, directions, prohibited_zone, i == 0);
         scale *= 2;
         full_amp += scale;
     }
-
-    m_test_image.create(map.size(), map.size());
+    // нормировка.
+    //m_test_image.create(map.size(), map.size());
     for (size_t i = 0; i < map.size(); ++ i)
         for (size_t j = 0; j < map.size(); ++j) {
-            map[i][j].height = ((map[i][j].height + full_amp) / (2. * full_amp)); // нормировка.
+            if (prohibited_zone.contains(sf::Vector2i(i, j)))
+                continue;
+            map[i][j].height = ((map[i][j].height + full_amp) / (2. * full_amp)); 
+            int f = map[i][j].height * 255.f;
+           // m_test_image.setPixel(i, j, sf::Color(f, f, f));
+        }
+}
+
+void TileMap::generate_asphalt_road_height_map(sf::IntRect prohibited_zone) {
+    size_t N = map.size();
+
+    size_t S = 10;
+    float d = 1. / S;
+    for (size_t i = 0; i < S; ++i) {
+        size_t x1 = rand() % N;
+        size_t x2 = rand() % N;
+        size_t y1 = rand() % N;
+        size_t y2 = rand() % N;
+        if (x1 > x2) std::swap(x1, x2);
+        if (y1 > y2) std::swap(y1, y2);
+        for (size_t x = x1; x <= x2; ++x)  for (size_t y = y1; y <= y2; ++y) {
+            if (prohibited_zone.contains(sf::Vector2i(x, y)))
+                continue;
+            if (i == 0)
+                map[x][y].height = 0;
+            map[x][y].height += d;
+        }
+    }
+
+
+    // TODO Убрать.
+    m_test_image.create(map.size(), map.size());
+    for (size_t i = 0; i < map.size(); ++i)
+        for (size_t j = 0; j < map.size(); ++j) {
+            if (prohibited_zone.contains(sf::Vector2i(i, j)))
+                continue;
+            map[i][j].height = ((map[i][j].height + 1.) / (2.));
             int f = map[i][j].height * 255.f;
             m_test_image.setPixel(i, j, sf::Color(f, f, f));
         }
@@ -219,7 +267,9 @@ struct UVec2Comparator {
 std::vector<glm::uvec2> a_star(
     const std::vector<std::vector<Tile>>& grid,
     const glm::uvec2& start,
-    const glm::uvec2& goal
+    const glm::uvec2& goal,
+    sf::IntRect zone,
+    float direction_change_penalty = -1
 ) {
     int N = grid.size();
     std::priority_queue<Node, std::vector<Node>, std::greater<>> open_set;
@@ -231,7 +281,7 @@ std::vector<glm::uvec2> a_star(
 
     open_set.push({ start, heuristic(start, goal), 0.0, heuristic(start, goal) });
 
-    std::vector<glm::uvec2> directions = {
+    std::vector<glm::ivec2> directions = {
         {0, 1}, {1, 0}, {0, -1}, {-1, 0}
     };
 
@@ -254,18 +304,22 @@ std::vector<glm::uvec2> a_star(
 
         closed_set.insert(current.point);
 
-        for (const glm::uvec2& dir : directions) {
-            glm::uvec2 neighbor = { current.point.x + dir.x, current.point.y + dir.y };
+        for (const glm::ivec2& dir : directions) {
+            glm::ivec2 neighbor = { current.point.x + dir.x, current.point.y + dir.y };
             // Границы карты
-            if (neighbor.x < 0 || neighbor.y < 0 || neighbor.x >= N || neighbor.y >= N)
+            if (!zone.contains(sf::Vector2i(neighbor.x, neighbor.y)))
                 continue;
             if (closed_set.count(neighbor))
                 continue;
-
+            if (grid[neighbor.x][neighbor.y].height >= 100)
+                continue; // запрещенная клетка.
             auto& roads = grid[neighbor.x][neighbor.y].roads;
             int r = std::count(roads.begin(), roads.end(), true);
-            float tentative_g = g_score[current.point] + grid[neighbor.x][neighbor.y].height + (r ? -1 : 0);
 
+            glm::ivec2 prev_dir = glm::ivec2(current.point) - glm::ivec2(came_from[current.point]);
+            float tentative_g = g_score[current.point] + grid[neighbor.x][neighbor.y].height + (r ? -1 : 0);
+            if (direction_change_penalty > 0 && prev_dir != dir)
+                tentative_g += direction_change_penalty;
             if (!g_score.count(neighbor) || tentative_g < g_score[neighbor]) {
                 came_from[neighbor] = current.point;
                 g_score[neighbor] = tentative_g;
@@ -275,46 +329,63 @@ std::vector<glm::uvec2> a_star(
             }
         }
     }
-
+    assert(false);
     // Путь не найден
     return {};
 }
 
 
-void TileMap::generate_roads() {
-    // 1. сгенерируем входы и выходы.
+std::vector<glm::uvec2> generate_enters(
+    size_t N,
+    glm::uvec2 offset,
+    size_t enters_gap,
+    bool shuffle = true
+) {
+    int enters_count = N / enters_gap;
+    std::vector<glm::uvec2> enters(enters_count);
+    for (size_t i = 0; i < enters_count; ++i)
+        enters[i] = offset + glm::uvec2{ 0,  std::min(rand() % enters_gap + i * enters_gap, N - 1) };
+    if (shuffle) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::shuffle(enters.begin(), enters.end(), gen);
+    }
+    return enters;
+}
+
+
+std::pair<std::vector<glm::uvec2>, std::vector<glm::uvec2>> generate_enters_and_exits(
+    size_t N,
+    glm::uvec2 offset,
+    size_t enters_gap,
+    size_t exits_gap
+) {
+    return std::make_pair(
+        generate_enters(N, offset, enters_gap, false),
+        generate_enters(N, offset + glm::uvec2{N - 1, 0}, enters_gap, true)
+    );
+}
+
+void TileMap::generate_roads(const std::vector<glm::uvec2>& enters, const std::vector<glm::uvec2>& exits, std::vector<std::vector<glm::uvec2>>& paths, RoadType road_type, sf::IntRect zone, float road_cost,
+    float direction_change_penalty) {
     size_t N = map.size();
-    // A. определим число входов и выходов.
-    int enter_gap = 4;
-    int exit_gap = 4;
-    int enters_count = N / enter_gap;
-    int exits_count = N / exit_gap;
-
-
-    std::vector<size_t> enters(enters_count);
-    std::vector<size_t> exits(exits_count);
-    for (size_t i = 0; i < enters_count; ++i) {
-        enters[i] = std::min(rand() % enter_gap + i * enter_gap, N - 1);
-    }
-    for (size_t i = 0; i < exits_count; ++i) {
-        exits[i] = std::min(rand() % exit_gap + i * exit_gap, N - 1);
-    }
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::shuffle(exits.begin(), exits.end(), gen);
-    
-    // 2. генерируем дороги
-    std::vector<std::vector<glm::uvec2>> paths;
-    generate_height_map(); // генерируем карту высот
     for (size_t i = 0; i < enters.size(); ++i) {
-        size_t exit_index = i % exits_count;
-        auto& path = paths.emplace_back(a_star(map, { 0, enters[i] }, { N - 1, exits[exit_index] }));
-        // 3. выставляем тайлы
-        map[0][enters[i]].roads[2] = true;
-        map[N - 1][exits[exit_index]].roads[0] = true;
-        //map[path[0].x][path[0].y].height = 2.;
+        size_t exit_index = i % exits.size();
+        auto& path = paths.emplace_back(a_star(map, enters[i], exits[exit_index], zone, direction_change_penalty));
+        map[enters[i].x][enters[i].y].roads[2] = true;
+        map[exits[exit_index].x][exits[exit_index].y].roads[0] = true;
+        if (road_cost >= 0)
+            map[path[0].x][path[0].y].height = road_cost;
+        if (map[path[0].x][path[0].y].road_type == RoadType::None)
+            map[path[0].x][path[0].y].road_type = road_type;
         for (size_t i = 1; i < path.size(); ++i) {
-            //map[path[i].x][path[i].y].height = 2.;
+            if (road_cost >= 0)
+                map[path[i].x][path[i].y].height = road_cost;
+            if (map[path[i].x][path[i].y].road_type == RoadType::None) {
+                if (sf::IntRect(8,8,8,8).contains(sf::Vector2i(path[i].x, path[i].y)) && road_type == RoadType::Asphalt)
+                    assert(false);
+                map[path[i].x][path[i].y].road_type = road_type;
+            }
             auto p = path[i];
             auto p_prev = path[i - 1];
             glm::ivec2 dir{ p.x - (int)p_prev.x, p.y - (int)p_prev.y };
@@ -335,10 +406,21 @@ void TileMap::generate_roads() {
                 map[p_prev.x][p_prev.y].roads[1] = true;
             }
         }
-        for (auto& p : path)
-            m_test_image.setPixel(p.x, p.y, sf::Color(i * 100, i * 100, i * 100));
     }
-    // 4. составляем road_graph
+}
+
+
+
+void TileMap::generate_map() {
+    create_map(8); // выделяем память
+    // 1. сгенерируем входы и выходы.
+    size_t N = map.size();
+    auto [enters, exits] = generate_enters_and_exits(N, glm::uvec2{ 0,0 }, 4, 4);
+    // 2. генерируем дороги
+    std::vector<std::vector<glm::uvec2>> paths;
+    generate_dirt_road_height_map(sf::IntRect()); // генерируем карту высот
+    generate_roads(enters, exits, paths, RoadType::Dirt, sf::IntRect(0,0,8,8));
+    // 3. составляем road_graph
     for (size_t i = 0; i < paths.size(); ++i) {
         auto& path = paths[i];
         RoadGraph::Node* prev_node = nullptr;
@@ -367,22 +449,61 @@ void TileMap::generate_roads() {
         }
         m_road_graph.end_nodes.push_back(last_node); // prev_node == last_node
     }
-
-    /*for (auto& n: m_road_graph.nodes) {
-        for (auto r : n.relations) {
-            std::cout << "(" << n.x << ", " << n.y << ") -> (" << r->x << ", " << r->y << ")" << std::endl;
-        }
-    }*/
+    //m_test_texture.loadFromImage(m_test_image);
 }
 
-void TileMap::generate_map() {
-    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
-    auto seed = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
-    //auto seed = static_cast<unsigned int>(time(nullptr));
-    srand(seed);
-    std::cout << "seed: " << seed << std::endl; //TODO не будет работать из-за использованного вихря мерсена.
-    create_map(8); // выделяем память
-    generate_roads(); // генерируем дороги
+
+void TileMap::generate_by_enters_chain(const std::vector<std::vector<glm::uvec2>>& enters_chain, int N, int y, std::vector<std::vector<glm::uvec2>>& paths) {
+    for (size_t i = 1; i < enters_chain.size(); ++i) {
+        auto exits = enters_chain[i];
+        for (auto& e : exits) e.x -= 1;
+        generate_roads(enters_chain[i - 1], exits, paths, RoadType::Dirt, sf::IntRect((i - 1) * N, N * y, N, N));
+    }
+}
+
+void TileMap::enlarge_map() {
+    // 1. Выделяем память под расширенную карту и переносим в центр новой карты все старые постройки.
+    size_t N = map.size();
+    auto map_copy = std::move(map);
+    map.clear();
+    map.resize(3 * N);
+    for (size_t i = 0; i < 3 * N; ++i)
+        map[i].resize(3 * N);
+    for (size_t x = 0; x < N; ++x) for (size_t y = 0; y < N; ++y) {
+        map[N + x][N + y] = std::move(map_copy[x][y]);
+        map[N + x][N + y].height = 200; // делаем клетки старой карты запретными.
+    }
+    //2. Генерируем асфальтированные дороги.
+    auto [enters, exits] = generate_enters_and_exits(3 * N, glm::uvec2{ 0,0 }, 8, 8);
+    std::vector<std::vector<glm::uvec2>> paths;
+    generate_asphalt_road_height_map(sf::IntRect(N,N, N, N)); // генерируем карту высот для асфальтированных дорог
+    generate_roads(enters, exits, paths, RoadType::Asphalt, sf::IntRect(0, 0, 3 * N, 3 * N), -1, 2);
+    //3. Прокладываем грунтовые дороги
+    generate_dirt_road_height_map(sf::IntRect(N, N, N, N)); // генерируем карту высот для грунтовых дорог.
+
+    std::vector<std::vector<glm::uvec2>> enters_chain;
+
+    //A. Генерируем верхний слой
+    for (int x = 0; x < 4; ++x)
+        enters_chain.push_back(generate_enters(N, {x * N, 0}, 4, x != 0));
+    generate_by_enters_chain(enters_chain, N, 0, paths);
+    //B. Генерируем центральный слой
+    std::vector<glm::uvec2> nodes;
+    for (auto& e : m_road_graph.start_nodes)
+        nodes.push_back({ N - 1, N + e->y });
+    generate_roads(generate_enters(N, { 0, N }, 4), nodes, paths, RoadType::Dirt, sf::IntRect(0, N, N, N));
+    nodes.clear();
+    for (auto& e : m_road_graph.end_nodes)
+        nodes.push_back({ 2 * N, N + e->y });
+    generate_roads(nodes, generate_enters(N, { 3 * N - 1, N }, 4), paths, RoadType::Dirt, sf::IntRect(2 * N, N, N, N));
+    //C. Генерируем нижний слой
+    enters_chain.clear();
+    for (int x = 0; x < 4; ++x)
+        enters_chain.push_back(generate_enters(N, { x * N, 2 * N }, 4, x != 0));
+    generate_by_enters_chain(enters_chain, N, 2, paths);
+
+    //3. Переделываем road_graph.
+
     m_test_texture.loadFromImage(m_test_image);
 }
 

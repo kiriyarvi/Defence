@@ -5,7 +5,7 @@
 enum class TextureID {
     Grass,
     RoadTileset,
-    AlphaltRoadTileset,
+    AsphaltRoadTileset,
     GunBase,
     TwinGunTurret,
     TwinGunUpperBarrel,

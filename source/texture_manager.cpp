@@ -3,7 +3,7 @@
 TextureManager::TextureManager() {
     textures[TextureID::Grass].loadFromFile("tiles/grass.png");
     textures[TextureID::RoadTileset].loadFromFile("tiles/road_tileset.png");
-    textures[TextureID::AlphaltRoadTileset].loadFromFile("tiles/alphalt-road.png");
+    textures[TextureID::AsphaltRoadTileset].loadFromFile("tiles/alphalt-road.png");
 
 
     textures[TextureID::GunBase].loadFromFile("sprites/gun_base.png");

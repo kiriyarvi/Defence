@@ -51,10 +51,17 @@ public:
 
 using Building = std::unique_ptr<IBuilding>;
 
+enum class RoadType {
+    None,
+    Dirt,
+    Asphalt
+};
+
 class Tile {
 public:
     Tile() = default;
     Tile(Tile&&) = default;
+    Tile& operator=(Tile&&) = default;
 	TextureID background_texture = TextureID::Grass;
 	std::array<bool, 4> roads; // Right, Up, Left, Down
 	virtual void draw(sf::RenderWindow& window, int x, int y);
@@ -62,6 +69,7 @@ public:
 
 	Building building = nullptr;
     float height = 0;
+    RoadType road_type = RoadType::None;
 };
 
 
@@ -119,12 +127,23 @@ public:
 	void draw_effects(sf::RenderWindow& window);
 	void logic(double dtime);
     void generate_map();
+    void enlarge_map();
 	std::vector<std::vector<Tile>> map;
 	const RoadGraph& get_road_graph() { return m_road_graph; }
 private:
-    void generate_height_map();
+    void generate_dirt_road_height_map(sf::IntRect prohibited_zone);
+    void generate_asphalt_road_height_map(sf::IntRect prohibited_zone);
+    void generate_by_enters_chain(const std::vector<std::vector<glm::uvec2>>& enters_chain, int N, int y, std::vector<std::vector<glm::uvec2>>& paths);
     void create_map(size_t N);
-    void generate_roads();
+    void generate_roads(
+        const std::vector<glm::uvec2>& enters,
+        const std::vector<glm::uvec2>& exits,
+        std::vector<std::vector<glm::uvec2>>& paths,
+        RoadType road_type,
+        sf::IntRect zone,
+        float road_cost = -1,
+        float direction_change_penalty = -1
+        );
 	TileMap();
 private:
 	RoadGraph m_road_graph;
