@@ -2,18 +2,9 @@
 
 TextureManager::TextureManager() {
     textures[TextureID::Grass].loadFromFile("tiles/grass.png");
-    textures[TextureID::Road1100].loadFromFile("tiles/road1100.png");
-    textures[TextureID::Road0110].loadFromFile("tiles/road0110.png");
-    textures[TextureID::Road0011].loadFromFile("tiles/road0011.png");
-    textures[TextureID::Road1001].loadFromFile("tiles/road1001.png");
-    textures[TextureID::Road1010].loadFromFile("tiles/road1010.png");
-    textures[TextureID::Road0101].loadFromFile("tiles/road0101.png");
-    textures[TextureID::Road0111].loadFromFile("tiles/road0111.png");
-    textures[TextureID::Road1011].loadFromFile("tiles/road1011.png");
-    textures[TextureID::Road1101].loadFromFile("tiles/road1101.png");
-    textures[TextureID::Road1110].loadFromFile("tiles/road1110.png");
-    textures[TextureID::Road1111].loadFromFile("tiles/road1111.png");
     textures[TextureID::RoadTileset].loadFromFile("tiles/road_tileset.png");
+    textures[TextureID::AlphaltRoadTileset].loadFromFile("tiles/alphalt-road.png");
+
 
     textures[TextureID::GunBase].loadFromFile("sprites/gun_base.png");
     textures[TextureID::TwinGunTurret].loadFromFile("sprites/twin_gun_turret.png");

@@ -60,8 +60,6 @@ public:
 	virtual void draw(sf::RenderWindow& window, int x, int y);
 	virtual ~Tile() = default;
 
-    inline static bool new_tiling_mode = true;
-
 	Building building = nullptr;
     float height = 0;
 };

@@ -4,18 +4,8 @@
 
 enum class TextureID {
     Grass,
-    Road1100 = 12, // 1100: 1 - дорога направо, 1 - дорога наверх, 0 - нет дорого налево, 0 - нет дороги наверх
-    Road0110 = 6,
-    Road0011 = 3,
-    Road1001 = 9,
-    Road1010 = 10,
-    Road0101 = 5,
-    Road0111 = 7,
-    Road1011 = 11,
-    Road1101 = 13,
-    Road1110 = 14,
-    Road1111 = 15,
     RoadTileset,
+    AlphaltRoadTileset,
     GunBase,
     TwinGunTurret,
     TwinGunUpperBarrel,
