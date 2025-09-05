@@ -8,6 +8,7 @@
 #include "guns/twin_gun.h"
 #include "guns/mine.h"
 
+
 class UpgradeButton: public IconButton {
 public:
 	UpgradeButton(TextureID icon, int cost, BuildingUpgrade& building_upgrade,  int& achievement_system_upgrade, int goal_upgrade_value, const std::string name);
@@ -40,6 +41,9 @@ public:
 	virtual void visit(Mine& mine);
 	tgui::Group::Ptr panel;
     tgui::Group::Ptr info;
+    ~UpgradePanelCreator();
+    void reset(); //internal use only
+    std::vector<std::function<void()>> m_clear_actions; //internal use only
 private:
 	std::vector<std::vector<UpgradeButton>> m_buttons;
 };

@@ -2,10 +2,11 @@
 #include "enemy_manager.h"
 #include "texture_manager.h"
 #include "sound_manager.h"
+#include "game_state.h"
 
 Spikes::Spikes(): params(ParamsManager::Instance().params.guns.spikes) 
 {
-	health = params.health;
+	set_health(params.health);
 }
 
 sf::Sprite Spikes::get_sprite_for_tile(int x_id, int y_id) {
@@ -63,21 +64,30 @@ void Spikes::draw(sf::RenderWindow& window, int x_id, int y_id) {
 
 
 void Spikes::logic(double dtime, int x_id, int y_id) {
+    if (get_health() <= 0)
+        return;
 	glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);
+    int health = get_health();
 	for (auto& enemy : EnemyManager::Instance().m_enemies) {
         if (enemy->wheels == IEnemy::Wheels::None || enemy->wheels == IEnemy::Wheels::Tracks)
             continue;
-		if (health <= 0)
-			return;
 		if (glm::length(pos - enemy->get_position()) < 0.2 * 32) {
             if (enemy->wheels == IEnemy::Wheels::HeavyTracks)
                 health = 0;
-			else if(enemy->break_enemy(params.delay))
-				--health;
+            else if (enemy->break_enemy(params.delay))
+                --health;
             if (health <= 0) {
-                SoundManager::Instance().play(Sounds::SpikesBreaking);
-                return;
+                if (auto_repair && enemy->wheels != IEnemy::Wheels::HeavyTracks && GameState::Instance().get_player_coins() >= params.cost) {
+                    health = params.health;
+                    GameState::Instance().player_coins_add(-params.cost);
+                }
+                else {
+                    SoundManager::Instance().play(Sounds::SpikesBreaking);
+                    set_health(health);
+                    return;
+                }
             }
 		}
 	}
+    set_health(health);
 }

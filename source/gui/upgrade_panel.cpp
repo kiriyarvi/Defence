@@ -93,9 +93,17 @@ UpgradePanelCreator::UpgradePanelCreator() {
     panel->setSize("100%", "100%");
 }
 
-void UpgradePanelCreator::visit(MiniGun& minigun) {
+void UpgradePanelCreator::reset() {
     m_buttons.clear();
     panel->removeAllWidgets();
+    //panel->onSizeChange.disconnectAll();
+    for (auto& action : m_clear_actions)
+        action();
+    m_clear_actions.clear();
+}
+
+void UpgradePanelCreator::visit(MiniGun& minigun) {
+    reset();
 
     m_buttons.resize(3);
     auto& shells_upgrades = m_buttons[0];
@@ -188,29 +196,97 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
     
 }
 
+template<typename Params, typename Building>
+tgui::Group::Ptr create_panel_for_building_with_health(UpgradePanelCreator* creator, BuildingType type, Params& params, Building& building) {
+    auto label = tgui::RichTextLabel::create();
+    auto update = [&, label = label.get()]() {
+        if (building.get_health() <= 0) {
+            creator->reset();
+            return;
+        }
+        label->setText("<b>" + to_string(BuildingType::Spikes) + "</b>\nПрочность: " + std::to_string(building.get_health()));
+    };
+    update();
+    label->getRenderer()->setTextColor(sf::Color::White);
+    building.set_health_changed_callback(update);
+    creator->m_clear_actions.push_back([&building]() {
+        building.set_health_changed_callback({});
+    });
+
+    auto description = tgui::Label::create();
+    description->setVisible(false);
+    description->getRenderer()->setTextColor(sf::Color::White);
+    auto button = tgui::Button::create("Укрепить");
+    button->onMouseEnter.connect([&params, description = description.get()]() {
+        description->setVisible(true);
+        description->setText("Увеличит прочность на " + std::to_string(params.health)  + " единиц.");
+        GameState::Instance().set_tooltip_content("<color=#ffd303>Стоимость: " + std::to_string(params.cost) + "</color>", { 1.,0. });
+    });
+    button->onMouseLeave.connect([description = description.get()]() {
+        description->setVisible(false);
+        GameState::Instance().set_tooltip_content("");
+    });
+    button->onClick.connect([&params, &building]() {
+        int coins = GameState::Instance().get_player_coins();
+        if (coins >= params.cost) {
+            building.set_health(building.get_health() + 5);
+            GameState::Instance().player_coins_add(-params.cost);
+        }
+    });
+
+    auto auto_repair_button = tgui::ToggleButton::create("Автовосстановление");
+    auto_repair_button->onMouseEnter.connect([type, &params, description = description.get()]() {
+        description->setVisible(true);
+        description->setText("Включает автовосстановление. При достижении нулевой прочности и наличии достаточных средств, " + to_string(type) + " автоматически восстаноят 5 единиц прочности.");
+    });
+    auto_repair_button->onMouseLeave.connect([description = description.get()]() {
+        description->setVisible(false);
+    });
+    auto_repair_button->onToggle([&building](bool isDown) {
+        building.auto_repair = isDown;
+    });
+    auto_repair_button->setDown(building.auto_repair);
+
+
+
+    auto group = tgui::Group::create();
+    group->setSize("100%", "100%");
+
+    group->add(label, "Header");
+    button->setPosition(0, "Header.bottom");
+    group->add(button, "Endurance");
+    auto_repair_button->setPosition(0, "Endurance.bottom");
+    group->add(auto_repair_button, "Repair");
+    description->setPosition(0, "Repair.bottom");
+    group->add(description);
+    group->onSizeChange.connect([group = group.get(), description = description.get()]() {
+        description->setMaximumTextWidth(group->getSize().x);
+    });
+    return group;
+}
+
 void UpgradePanelCreator::visit(Spikes& spikes) {
-    m_buttons.clear();
-    panel->removeAllWidgets();
+    // TODO этот код почему-то вызывает ошибку при закрытии программы
+    reset();   
+    panel->add(create_panel_for_building_with_health(this, BuildingType::Spikes, ParamsManager::Instance().params.guns.spikes, spikes));
 }
 
 void UpgradePanelCreator::visit(Hedgehog& headgehogs) {
-    m_buttons.clear();
-    panel->removeAllWidgets();
+    // TODO этот код почему-то вызывает ошибку при закрытии программы
+    reset();
+    panel->add(create_panel_for_building_with_health(this, BuildingType::Hedgehogs, ParamsManager::Instance().params.guns.hedgehog, headgehogs));
 }
 
 void UpgradePanelCreator::visit(AntitankGun& antitank_gun) {
-    m_buttons.clear();
-    panel->removeAllWidgets();
+    reset();
 }
 
 void UpgradePanelCreator::visit(TwinGun& twingun) {
-    m_buttons.clear();
-    panel->removeAllWidgets();
+    reset();
 }
 
 void UpgradePanelCreator::visit(Mine& mine) {
-    m_buttons.clear();
-    panel->removeAllWidgets();
+    reset();
 }
 
 void UpgradePanelCreator::update() {
@@ -221,3 +297,6 @@ void UpgradePanelCreator::update() {
     }
 }
 
+UpgradePanelCreator::~UpgradePanelCreator() {
+    reset();
+}

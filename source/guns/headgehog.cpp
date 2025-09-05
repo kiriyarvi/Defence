@@ -3,9 +3,10 @@
 #include "enemy_manager.h"
 #include "texture_manager.h"
 #include "sound_manager.h"
+#include "game_state.h"
 
 Hedgehog::Hedgehog(): params(ParamsManager::Instance().params.guns.hedgehog) {
-    health = params.health;
+    set_health(params.health);
 }
 
 void Hedgehog::draw(sf::RenderWindow& window, int x, int y) {
@@ -16,6 +17,7 @@ void Hedgehog::draw(sf::RenderWindow& window, int x, int y) {
 
 void Hedgehog::logic(double dtime, int x_id, int y_id) {
     glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);
+    int health = get_health();
     for (auto& enemy : EnemyManager::Instance().m_enemies) {
         if (enemy->infantry || enemy->wheels == IEnemy::Wheels::None)
             continue;
@@ -28,9 +30,17 @@ void Hedgehog::logic(double dtime, int x_id, int y_id) {
             else if (enemy->break_enemy(params.delay * debuff) && enemy->wheels == IEnemy::Wheels::Tracks)
                 --health;
             if (health <= 0) {
-                SoundManager::Instance().play(Sounds::HedgehogsBreaking);
-                return;
+                if (auto_repair && enemy->wheels != IEnemy::Wheels::HeavyTracks && GameState::Instance().get_player_coins() >= params.cost) {
+                    health = params.health;
+                    GameState::Instance().player_coins_add(-params.cost);
+                }
+                else {
+                    SoundManager::Instance().play(Sounds::HedgehogsBreaking);
+                    set_health(health);
+                    return;
+                }
             }
         }
     }
+    set_health(health);
 }

@@ -88,9 +88,9 @@ private:
 	BuildingButton* m_current_building_construction = nullptr;
 	sf::Vector2f m_mouse_pos;
 	std::list<std::unique_ptr<BuildingButton>> m_building_buttons;
-    tgui::Panel::Ptr m_panel = nullptr;
     tgui::RichTextLabel::Ptr m_mouse_tooltip;
     UpgradePanelCreator m_upgrade_panel_creator;
+    tgui::Panel::Ptr m_panel = nullptr;
     std::vector<Enter> m_enters;
     Enter* m_showed_enter = nullptr;
     tgui::Label::Ptr m_wave_info;

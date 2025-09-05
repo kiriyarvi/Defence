@@ -125,16 +125,27 @@ std::pair<RoadGraph::PathID, RoadGraph::PathID> random_routes_from_to_random_ent
 WaveController::WaveController() {
     int all_paths = EnemyManager::Instance().all_paths.size();
 
-  /*  {
+
+    {
+        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = get_random_route(0);
-        r1->add_spawner(EnemyType::CruiserI, 1);
+        r1->id = id1;
+        r1->add_spawner(EnemyType::Bike, 10);
+        r1->add_spawner(EnemyType::Tank, 14);
+        r1->add_spawner(EnemyType::Truck, 18);
+        r1->add_spawner(EnemyType::Solder, 20);
+        auto r2 = std::make_unique<UniformSpawner>();
+        r2->id = id2;
+        r2->add_spawner(EnemyType::Bike, 10);
+        r2->add_spawner(EnemyType::BTR, 20);
+        r2->add_spawner(EnemyType::Truck, 10);
+        r2->add_spawner(EnemyType::Pickup, 10);
         Wave w;
-        w.prepairing_time = 3;
         w.routes.push_back(std::move(r1));
-        w.reward = 1000;
+        w.routes.push_back(std::move(r2));
+        w.reward = 10000;
         m_waves.push_back(std::move(w));
-    }*/
+    }
 
     // Волна 1
     {

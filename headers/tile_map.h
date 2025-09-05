@@ -51,6 +51,7 @@ public:
 	virtual ~IBuilding() = default;
 };
 
+
 using Building = std::unique_ptr<IBuilding>;
 
 enum class RoadType {
