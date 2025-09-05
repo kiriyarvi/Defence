@@ -154,7 +154,19 @@ void TwinGun::logic(double dtime_microseconds, int x_id, int y_id) {
 }
 
 void TwinGun::shot(int x_id, int y_id, IEnemy& enemy, bool upper_barrel) {
-	enemy.health -= m_params.damage_per_barrel;
+    for (auto& e : EnemyManager::Instance().m_enemies) {
+        if (e->params.armor_level > m_params.armor_penetration_level)
+            continue;
+        float dist = glm::length(e->get_position() - enemy.get_position()) / 32.f;
+        if (dist <= (m_params.splash_radius + m_params.max_damage_zone_radius)) {
+            if (dist <= m_params.max_damage_zone_radius)
+                e->health -= m_params.max_damage;
+            else {
+                float p = 1. - (dist - m_params.max_damage_zone_radius) / m_params.splash_radius;
+                e->health -= m_params.min_damage + (m_params.max_damage - m_params.min_damage) * p;
+            }
+        }
+    }
 	SoundManager::Instance().play(Sounds::TwinGunShot);
 	glm::vec3 gun_pos(x_id * 32 + 16, y_id * 32 + 16, 0);
 	glm::vec3 enemy_pos = glm::vec3(enemy.get_position(), 0.0);
@@ -165,7 +177,6 @@ void TwinGun::shot(int x_id, int y_id, IEnemy& enemy, bool upper_barrel) {
 	glm::vec2& shot_rel_pos = upper_barrel ? animation.upper_shot_fire_pos : animation.lower_shot_fire_pos;
 	save_enemy_id = enemy.id;
 	shot_rel_pos = (upper_barrel ? perp : -perp);
-	
 }
 
 void TwinGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
@@ -185,6 +196,7 @@ void TwinGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
 
 
 IRotatingGun::TargetStatus TwinGun::get_enemy_status(IEnemy& enemy) {
-    TargetStatus status; //TODO добавить хотя бы учет бронепробития.
+    TargetStatus status;
+    status.valid = enemy.params.armor_level <= m_params.armor_penetration_level;
     return status;
 }

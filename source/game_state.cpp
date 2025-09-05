@@ -257,7 +257,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
             else if (event.key.code == sf::Keyboard::Key::Q) {
                 m_is_preparing = false;
                 EnemyManager::Instance().generate_waves();
-                init_stage(1);
+                init_stage(0);
             }
         }
     }
@@ -422,7 +422,7 @@ void GameState::init_stage(int stage) {
         player_coins_add(1000);
     }
     else {
-        player_coins_add(100000);
+        player_coins_add(10000);
         AchievementSystem::Instance().unlock_all();
         enemy_defeated(EnemyType::CruiserI);
     }
@@ -434,6 +434,7 @@ void GameState::update_upgrade_panel() {
 
 void GameState::set_panel_content(tgui::Widget::Ptr content) {
     m_panel->removeAllWidgets();
+    //m_upgrade_panel_creator.reset();
     if (content) {
         m_panel->add(content);
         m_panel->setVisible(true);

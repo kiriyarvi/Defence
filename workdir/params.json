@@ -9,9 +9,13 @@
     },
     "twingun": {
       "radius": 2,
-      "damage_per_barrel": 10,
+      "max_damage": 10,
+      "min_damage": 1,
+      "splash_radius": 0.3,
+      "max_damage_zone_radius": 0.3,
       "cooldown": 2,
       "interleaved_cooldown": 0.2,
+      "armor_penetration_level": 2,
       "cost": 2500
     },
     "minigun": {

@@ -96,7 +96,6 @@ UpgradePanelCreator::UpgradePanelCreator() {
 void UpgradePanelCreator::reset() {
     m_buttons.clear();
     panel->removeAllWidgets();
-    //panel->onSizeChange.disconnectAll();
     for (auto& action : m_clear_actions)
         action();
     m_clear_actions.clear();
@@ -199,7 +198,7 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
 template<typename Params, typename Building>
 tgui::Group::Ptr create_panel_for_building_with_health(UpgradePanelCreator* creator, BuildingType type, Params& params, Building& building) {
     auto label = tgui::RichTextLabel::create();
-    auto update = [&, label = label.get()]() {
+    auto update = [&building, creator, label = label.get()]() {
         if (building.get_health() <= 0) {
             creator->reset();
             return;

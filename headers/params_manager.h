@@ -27,11 +27,15 @@ public:
 			} antitank;
 			struct TwinGun {
 				float radius;
-				float damage_per_barrel;
+				float max_damage;
+                float min_damage;
+                float splash_radius;
+                float max_damage_zone_radius;
 				float cooldown;
 				float interleaved_cooldown;
+                int armor_penetration_level;
                 int cost;
-				NLOHMANN_DEFINE_TYPE_INTRUSIVE(TwinGun, radius, damage_per_barrel, cooldown, interleaved_cooldown, cost)
+				NLOHMANN_DEFINE_TYPE_INTRUSIVE(TwinGun, radius, max_damage, min_damage, splash_radius, max_damage_zone_radius, cooldown, interleaved_cooldown, armor_penetration_level, cost)
 			} twingun;
 			struct Minigun {
 				float radius;
