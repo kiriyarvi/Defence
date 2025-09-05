@@ -146,8 +146,10 @@ public:
 	void logic(double dtime);
     void generate_map();
     void enlarge_map();
+    bool valid_ids(int x, int y);
 	std::vector<std::vector<Tile>> map;
 	const RoadGraph& get_road_graph() { return m_road_graph; }
+    void create_tile_test_map();
 private:
     void generate_dirt_road_height_map(sf::IntRect prohibited_zone);
     void generate_asphalt_road_height_map(sf::IntRect prohibited_zone);

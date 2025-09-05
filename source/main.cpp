@@ -36,6 +36,8 @@ int main() {
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::K) {
                 for (auto& enemy : EnemyManager::Instance().m_enemies)
                     enemy->health = 0;
+            }if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::T) {
+                TileMap::Instance().create_tile_test_map();
             }
             game_state.event(event, window);
 			

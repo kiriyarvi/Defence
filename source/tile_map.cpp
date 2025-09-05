@@ -27,38 +27,97 @@ std::string to_string(BuildingType type) {
     return m[type];
 }
 
-void get_road_sprite(const std::array<bool, 4>& int_nodes, sf::Sprite& sprite) {
-    unsigned int tile_id = 0;
+bool get_road_sprite(const std::array<RoadType, 4>& int_nodes, sf::Sprite& sprite, RoadType type) {
+    unsigned int dirt_id = 0;
+    unsigned int asphalt_id = 0;
     for (int i = 0; i < 4; ++i) {
-        tile_id *= 2;
-        tile_id += int_nodes[i];
+        dirt_id *= 2;
+        asphalt_id *= 2;
+        if (int_nodes[i] != RoadType::None)
+            dirt_id += 1;
+        if (type == RoadType::Asphalt && int_nodes[i] == RoadType::Asphalt)
+            asphalt_id += 1;
     }
-    if (tile_id == 0b1000)
-        sprite.setTextureRect(sf::IntRect(0, 0, 16, 16));
-    else if (tile_id == 0b0100)
-        sprite.setTextureRect(sf::IntRect(16, 0, 16, 16));
-    else if (tile_id == 0b0010)
-        sprite.setTextureRect(sf::IntRect(32, 0, 16, 16));
-    else if (tile_id == 0b0001)
-        sprite.setTextureRect(sf::IntRect(48, 0, 16, 16));
-    else if (tile_id == 0b1100)
-        sprite.setTextureRect(sf::IntRect(0, 16, 16, 16));
-    else if (tile_id == 0b0110)
-        sprite.setTextureRect(sf::IntRect(16, 16, 16, 16));
-    else if (tile_id == 0b0011)
-        sprite.setTextureRect(sf::IntRect(32, 16, 16, 16));
-    else if (tile_id == 0b1001)
-        sprite.setTextureRect(sf::IntRect(48, 16, 16, 16));
-    else if (tile_id == 0b0111)
-        sprite.setTextureRect(sf::IntRect(0, 32, 16, 16));
-    else if (tile_id == 0b1011)
-        sprite.setTextureRect(sf::IntRect(16, 32, 16, 16));
-    else if (tile_id == 0b1101)
-        sprite.setTextureRect(sf::IntRect(32, 32, 16, 16));
-    else if (tile_id == 0b1110)
-        sprite.setTextureRect(sf::IntRect(48, 32, 16, 16));
-    else if (tile_id == 0b1111)
-        sprite.setTextureRect(sf::IntRect(0, 48, 16, 16));
+
+
+    size_t TN  = 0;
+    auto set_texture = [&](int n) {
+        sprite.setTextureRect(sf::IntRect(16 * (n % TN), 16  * (n / TN), 16, 16));
+    };
+
+    if (type == RoadType::Dirt) {
+        TN = 4;
+        if (dirt_id == 0b1000) set_texture(0);
+        else if (dirt_id == 0b0100) set_texture(1);
+        else if (dirt_id == 0b0010) set_texture(2);
+        else if (dirt_id == 0b0001) set_texture(3);
+        else if (dirt_id == 0b1100) set_texture(4);
+        else if (dirt_id == 0b0110) set_texture(5);
+        else if (dirt_id == 0b0011) set_texture(6);
+        else if (dirt_id == 0b1001) set_texture(7);
+        else if (dirt_id == 0b0111) set_texture(8);
+        else if (dirt_id == 0b1011) set_texture(9);
+        else if (dirt_id == 0b1101) set_texture(10);
+        else if (dirt_id == 0b1110) set_texture(11);
+        else if (dirt_id == 0b1111) set_texture(12);
+        else return false;
+    }
+    else if (type == RoadType::Asphalt) {
+        TN = 6;
+        if (dirt_id == asphalt_id) {
+            if (asphalt_id == 0b1000) set_texture(0);
+            else if (asphalt_id == 0b0100) set_texture(1);
+            else if (asphalt_id == 0b0010) set_texture(2);
+            else if (asphalt_id == 0b0001) set_texture(3);
+            else if (asphalt_id == 0b1100) set_texture(4);
+            else if (asphalt_id == 0b0110) set_texture(5);
+            else if (asphalt_id == 0b0011) set_texture(6);
+            else if (asphalt_id == 0b1001) set_texture(7);
+            else if (asphalt_id == 0b0111) set_texture(8);
+            else if (asphalt_id == 0b1011) set_texture(9);
+            else if (asphalt_id == 0b1101) set_texture(10);
+            else if (asphalt_id == 0b1110) set_texture(11);
+            else if (asphalt_id == 0b1111) set_texture(12);
+            else return false;
+        }
+        else {
+
+
+            if (asphalt_id == 0b0011 && dirt_id == 0b0111) set_texture(13);
+            else if (asphalt_id == 0b0011 && dirt_id == 0b1011) set_texture(14);
+            else if (asphalt_id == 0b1100 && dirt_id == 0b1101) set_texture(15);
+            else if (asphalt_id == 0b1100 && dirt_id == 0b1110) set_texture(16);
+            else if (asphalt_id == 0b0110 && dirt_id == 0b0111) set_texture(17);
+            else if (asphalt_id == 0b0110 && dirt_id == 0b1110) set_texture(18);
+            else if (asphalt_id == 0b1001 && dirt_id == 0b1011) set_texture(19);
+            else if (asphalt_id == 0b1001 && dirt_id == 0b1101) set_texture(20);
+            // переход на повороте (одно ответвление)
+            else if (asphalt_id == 0b0001 && dirt_id == (asphalt_id | 0b0010)) set_texture(21);
+            else if (asphalt_id == 0b0010 && dirt_id == (asphalt_id | 0b0001)) set_texture(22);
+            else if (asphalt_id == 0b1000 && dirt_id == (asphalt_id | 0b0100)) set_texture(23);
+            else if (asphalt_id == 0b0100 && dirt_id == (asphalt_id | 0b1000)) set_texture(24);
+
+            else if (asphalt_id == 0b0010 && dirt_id == (asphalt_id | 0b0100)) set_texture(25);
+            else if (asphalt_id == 0b0100 && dirt_id == (asphalt_id | 0b0010)) set_texture(26);
+            else if (asphalt_id == 0b0001 && dirt_id == (asphalt_id | 0b1000)) set_texture(27);
+            else if (asphalt_id == 0b1000 && dirt_id == (asphalt_id | 0b0001)) set_texture(28);
+            //Закругления
+            else if (asphalt_id == 0b1000 && dirt_id == (asphalt_id | 0b0101)) set_texture(29);
+            else if (asphalt_id == 0b0100 && dirt_id == (asphalt_id | 0b1010)) set_texture(30);
+            else if (asphalt_id == 0b0010 && dirt_id == (asphalt_id | 0b0101)) set_texture(31);
+            else if (asphalt_id == 0b0001 && dirt_id == (asphalt_id | 0b1010)) set_texture(32);
+            
+            
+            else return false;
+        }
+    }
+    return true;
+}
+
+
+bool TileMap::valid_ids(int x, int y) {
+    size_t N = map.size();
+    return sf::IntRect(0, 0, N, N).contains(sf::Vector2i{ x, y });
 }
 
 void Tile::draw(sf::RenderWindow& window, int x, int y) {
@@ -66,43 +125,72 @@ void Tile::draw(sf::RenderWindow& window, int x, int y) {
 	sprite.setPosition(x * 32, y * 32);
 	sprite.setTexture(TextureManager::Instance().textures[TextureID::Grass]);
 	window.draw(sprite);
- 
-    std::array<std::array<bool, 3>, 3> int_points;
-    for (auto& row : int_points) for (auto& a : row) a = false;
+
+    auto& tile_map = TileMap::Instance();
+    auto& map = TileMap::Instance().map;
+
+    std::array<std::array<RoadType, 3>, 3> int_points;
+    for (size_t x = 0; x < 3; ++x) for (size_t y = 0; y < 3; ++y)
+        int_points[x][y] = RoadType::None;
     if (std::count(roads.begin(), roads.end(), true) == 0)
         return;
-    int_points[1][1] = true;
+    int_points[1][1] = road_type;
     if (roads[0])
-        int_points[2][1] = true;
+        int_points[2][1] = (road_type == RoadType::Asphalt && tile_map.valid_ids(x + 1, y)) ? map[x + 1][y].road_type : road_type;
     if (roads[1])
-        int_points[1][0] = true;
+        int_points[1][0] = (road_type == RoadType::Asphalt &&  tile_map.valid_ids(x, y - 1)) ? map[x][y - 1].road_type : road_type;
     if (roads[2])
-        int_points[0][1] = true;
+        int_points[0][1] = (road_type == RoadType::Asphalt && tile_map.valid_ids(x - 1, y)) ? map[x - 1][y].road_type : road_type;
     if (roads[3])
-        int_points[1][2] = true;
-    if (road_type == RoadType::Dirt)
-        sprite.setTexture(TextureManager::Instance().textures[TextureID::RoadTileset]);
-    else if (road_type == RoadType::Asphalt)
-        sprite.setTexture(TextureManager::Instance().textures[TextureID::AsphaltRoadTileset]);
-    std::array<bool, 4> top_left = { int_points[1][0], int_points[0][0], int_points[0][1], int_points[1][1] };
-    std::array<bool, 4> bottom_left = { int_points[1][1], int_points[0][1], int_points[0][2], int_points[1][2] };
-    std::array<bool, 4> top_right = { int_points[2][0], int_points[1][0], int_points[1][1], int_points[2][1] };
-    std::array<bool, 4> bottom_right = { int_points[2][1], int_points[1][1], int_points[1][2], int_points[2][2] };
-    sprite.setPosition(x * 32, y * 32);
-    get_road_sprite(top_left, sprite);
-    window.draw(sprite);
+        int_points[1][2] = (road_type == RoadType::Asphalt && tile_map.valid_ids(x, y + 1)) ? map[x][y + 1].road_type : road_type;
 
-    get_road_sprite(bottom_left, sprite);
-    sprite.setPosition(x * 32, y * 32 + 16);
-    window.draw(sprite);
+    std::array<RoadType, 4> top_left = { int_points[1][0], int_points[0][0], int_points[0][1], int_points[1][1] };
+    std::array<RoadType, 4> bottom_left = { int_points[1][1], int_points[0][1], int_points[0][2], int_points[1][2] };
+    std::array<RoadType, 4> top_right = { int_points[2][0], int_points[1][0], int_points[1][1], int_points[2][1] };
+    std::array<RoadType, 4> bottom_right = { int_points[2][1], int_points[1][1], int_points[1][2], int_points[2][2] };
 
-    get_road_sprite(top_right, sprite);
-    sprite.setPosition(x * 32 + 16, y * 32);
-    window.draw(sprite);
 
-    get_road_sprite(bottom_right, sprite);
-    sprite.setPosition(x * 32 + 16, y * 32 + 16);
-    window.draw(sprite);
+    sprite.setTexture(TextureManager::Instance().textures[TextureID::RoadTileset]);
+    if (get_road_sprite(top_left, sprite, RoadType::Dirt)) {
+        sprite.setPosition(x * 32, y * 32);
+        window.draw(sprite);
+    }
+
+    if (get_road_sprite(bottom_left, sprite, RoadType::Dirt)) {
+        sprite.setPosition(x * 32, y * 32 + 16);
+        window.draw(sprite);
+    }
+
+    if (get_road_sprite(top_right, sprite, RoadType::Dirt)) {
+        sprite.setPosition(x * 32 + 16, y * 32);
+        window.draw(sprite);
+    }
+
+    if (get_road_sprite(bottom_right, sprite, RoadType::Dirt)) {
+        sprite.setPosition(x * 32 + 16, y * 32 + 16);
+        window.draw(sprite);
+    }
+
+    sprite.setTexture(TextureManager::Instance().textures[TextureID::AsphaltRoadTileset]);
+    if (get_road_sprite(top_left, sprite, RoadType::Asphalt)) {
+        sprite.setPosition(x * 32, y * 32);
+        window.draw(sprite);
+    }
+
+    if (get_road_sprite(bottom_left, sprite, RoadType::Asphalt)) {
+        sprite.setPosition(x * 32, y * 32 + 16);
+        window.draw(sprite);
+    }
+
+    if (get_road_sprite(top_right, sprite, RoadType::Asphalt)) {
+        sprite.setPosition(x * 32 + 16, y * 32);
+        window.draw(sprite);
+    }
+
+    if (get_road_sprite(bottom_right, sprite, RoadType::Asphalt)) {
+        sprite.setPosition(x * 32 + 16, y * 32 + 16);
+        window.draw(sprite);
+    }
 }
 
 size_t mod(int a, int m) {
@@ -517,6 +605,67 @@ void TileMap::create_road_graph() {
             n.relations.push_back(pos_node[{n.x, n.y + 1}]);
         }
     }
+}
+
+void TileMap::create_tile_test_map() {
+    create_map(10);
+
+    auto add_path = [&](std::vector<glm::ivec2>& path, RoadType road_type, glm::ivec2 offset = {0,0}) {
+        for (auto& p : path)
+            p += offset;
+        if (map[path[0].x][path[0].y].road_type != RoadType::Asphalt)
+;           map[path[0].x][path[0].y].road_type = road_type;
+        for (size_t i = 1; i < path.size(); ++i) {
+            if (map[path[i].x][path[i].y].road_type != RoadType::Asphalt)
+                map[path[i].x][path[i].y].road_type = road_type;
+            auto p = path[i];
+            auto p_prev = path[i - 1];
+            glm::ivec2 dir{ p.x - (int)p_prev.x, p.y - (int)p_prev.y };
+            if (dir.x == 1 && dir.y == 0) {
+                map[p.x][p.y].roads[2] = true;
+                map[p_prev.x][p_prev.y].roads[0] = true;
+            }
+            else if (dir.x == 0 && dir.y == 1) {
+                map[p.x][p.y].roads[1] = true;
+                map[p_prev.x][p_prev.y].roads[3] = true;
+            }
+            else if (dir.x == -1 && dir.y == 0) {
+                map[p.x][p.y].roads[0] = true;
+                map[p_prev.x][p_prev.y].roads[2] = true;
+            }
+            else if (dir.x == 0 && dir.y == -1) {
+                map[p.x][p.y].roads[3] = true;
+                map[p_prev.x][p_prev.y].roads[1] = true;
+            }
+        }
+    };
+    add_path(std::vector<glm::ivec2>{ {1,1}, {2,1}, {3,1}, {3,2}, {3,3}, {2,3}, {1,3}, {1,2}, {1,1} }, RoadType::Asphalt);
+    add_path(std::vector<glm::ivec2>{ {0,1}, { 1,1 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {0,2}, { 1,2 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {0,3}, { 1,3 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {4,1}, { 3,1 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {4,2}, { 3,2 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {4,3}, { 3,3 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {1,0}, { 1,1 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {2,0}, { 2,1 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {3,0}, { 3,1 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {1,4}, { 1,3 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {2,4}, { 2,3 } }, RoadType::Dirt);
+    add_path(std::vector<glm::ivec2>{ {3,4}, { 3,3 } }, RoadType::Dirt);
+
+    add_path(std::vector<glm::ivec2>{ {0, 0}, { 1,0 }, { 2,0 }, { 2,1 }, { 2,2 }, { 1,2 }, { 0, 2 }, { 0, 1 }, { 0,0 } }, RoadType::Dirt, {5, 0});
+    add_path(std::vector<glm::ivec2>{ {0, 1}, { 1,1 }, { 2,1 } }, RoadType::Asphalt, { 5, 0 });
+    add_path(std::vector<glm::ivec2>{ {1, 2}, { 1,1 }, { 1,0 } }, RoadType::Asphalt, { 5, 0 });
+
+    add_path(std::vector<glm::ivec2>{ {0, 0}, { 1,0 }, { 2,0 }, { 2,1 }, { 2,2 }, { 1,2 }, { 0, 2 }, { 0, 1 }, { 0,0 } }, RoadType::Dirt, { 5, 5 });
+    add_path(std::vector<glm::ivec2>{ {0, 1}, { 1,1 }, { 2,1 } }, RoadType::Asphalt, { 5, 5 });
+    add_path(std::vector<glm::ivec2>{ {1, 2}, { 1,1 }, { 1,0 } }, RoadType::Asphalt, { 5, 5 });
+    add_path(std::vector<glm::ivec2>{ {1, -1}, { 1,0 } }, RoadType::Dirt, { 5, 5 });
+    add_path(std::vector<glm::ivec2>{ {1, 3}, { 1,2 } }, RoadType::Dirt, { 5, 5 });
+    add_path(std::vector<glm::ivec2>{ {-1, 1}, { 0, 1 } }, RoadType::Dirt, { 5, 5 });
+    add_path(std::vector<glm::ivec2>{ {3, 1}, { 2, 1 } }, RoadType::Dirt, { 5, 5 });
+
+
 }
 
 TileMap::TileMap() {
