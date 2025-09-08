@@ -68,7 +68,11 @@ enum class TextureID {
     CruiserIDemagedEquipment,
     CruiserISupplementary,
     CruiserIDestroyed,
-    CruiserIBlust
+    CruiserIBlust,
+    Smoke1,
+    Smoke2,
+    SmokeTruck,
+    SmokeTruckDestroyed
 };
 
 class TextureManager {

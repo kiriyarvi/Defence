@@ -64,6 +64,7 @@ int main() {
 		EnemyManager::Instance().draw(window);
 		TileMap::Instance().draw_effects(window);
         AnimationHolder::Instance().draw(window);
+        EnemyManager::Instance().draw_smokes(window);
 		game_state.draw(window);
 		gui.draw();
 		window.display();

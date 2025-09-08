@@ -12,7 +12,8 @@ enum class EnemyType {
     Truck,
     BTR,
     Tank,
-    CruiserI
+    CruiserI,
+    SmokeTruck
 };
 
 std::string to_string(EnemyType type);

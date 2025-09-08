@@ -10,7 +10,8 @@ std::string to_string(EnemyType type) {
         {EnemyType::CruiserI, "Наземный крейсер-I"},
         {EnemyType::Pickup, "Пикап"},
         {EnemyType::Truck, "Грузовик"},
-        {EnemyType::Tank, "Танк"}
+        {EnemyType::Tank, "Танк"},
+        {EnemyType::SmokeTruck, "Грузовик с дымовой завесой"}
     };
     return m[type];
 }

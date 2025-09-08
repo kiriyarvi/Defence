@@ -82,4 +82,10 @@ TextureManager::TextureManager() {
 
     textures[TextureID::NextWaveIcon].loadFromFile("sprites/next_wave_button.png");
     textures[TextureID::Question].loadFromFile("sprites/question.png");
+
+    textures[TextureID::Smoke1].loadFromFile("tiles/smoke1.png");
+    textures[TextureID::Smoke2].loadFromFile("tiles/smoke2.png");
+    textures[TextureID::SmokeTruck].loadFromFile("sprites/smoke_truck.png");
+    textures[TextureID::SmokeTruckDestroyed].loadFromFile("sprites/smoke_truck_destroyed.png");
+
 }

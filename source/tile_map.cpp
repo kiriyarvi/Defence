@@ -470,8 +470,6 @@ void TileMap::generate_roads(const std::vector<glm::uvec2>& enters, const std::v
             if (road_cost >= 0)
                 map[path[i].x][path[i].y].height = road_cost;
             if (map[path[i].x][path[i].y].road_type == RoadType::None) {
-                if (sf::IntRect(8,8,8,8).contains(sf::Vector2i(path[i].x, path[i].y)) && road_type == RoadType::Asphalt)
-                    assert(false);
                 map[path[i].x][path[i].y].road_type = road_type;
             }
             auto p = path[i];
@@ -507,7 +505,7 @@ void TileMap::generate_map() {
     // 2. генерируем дороги
     std::vector<std::vector<glm::uvec2>> paths;
     generate_dirt_road_height_map(sf::IntRect()); // генерируем карту высот
-    generate_roads(enters, exits, paths, RoadType::Dirt, sf::IntRect(0,0,8,8));
+    generate_roads(enters, exits, paths, RoadType::Dirt, sf::IntRect(0,0,N,N));
     // 3. составляем road_graph
     create_road_graph();
     //m_test_texture.loadFromImage(m_test_image);

@@ -112,3 +112,16 @@ private:
     HealthIndicator m_indicator;
 };
 
+
+class SmokeTruck : public SimpleEnemy {
+public:
+    SmokeTruck() : SimpleEnemy(TextureID::SmokeTruck, TextureID::SmokeTruckDestroyed, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.smoke_truck, EnemyType::SmokeTruck) {
+        wheels = Wheels::Wheels;
+        infantry = false;
+    }
+    IDestroyedEnemy::Ptr get_destroyed_enemy() override {
+        EnemyManager::Instance().add_smoke(Smoke(get_position(), 4., 14.));
+        return SimpleEnemy::get_destroyed_enemy();
+    }
+};
+

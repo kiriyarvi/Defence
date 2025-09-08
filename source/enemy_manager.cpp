@@ -7,6 +7,41 @@
 #include "enemies/solder.h"
 #include "enemies/cruiser_I.h"
 
+Smoke::Smoke(const glm::vec2& pos, float r, float duration):
+    m_pos{ pos }, m_radius{ r }, m_duration{ duration }
+{
+    m_circle_shape.setPointCount(20);
+    m_circle_shape.setRadius(m_radius * 32);
+    m_circle_shape.setOrigin(m_radius * 32, m_radius * 32);
+    m_circle_shape.setPosition(pos.x, pos.y);
+}
+
+float triangle(float x) {
+    return (sin(x) + 1.) / 2.;
+}
+
+bool Smoke::logic(double dtime) {
+    m_timer += dtime;
+    float time_s = m_timer / (1000 * 1000);
+    float p = triangle(2 * time_s);
+    float A = 0.5;
+    m_fade_1 = A + p * (1. - A);
+    m_fade_2 = A + (1 - p) * (1 - A);
+    if (m_timer >= m_duration * 1000 * 1000)
+        return false;
+    return true;
+}
+
+void Smoke::draw(sf::RenderWindow& window) {
+    m_circle_shape.setTexture(&TextureManager::Instance().textures[TextureID::Smoke1]);
+    m_circle_shape.setFillColor(sf::Color(255, 255, 255, 255.f * m_fade_1));
+    window.draw(m_circle_shape);
+    m_circle_shape.setTexture(&TextureManager::Instance().textures[TextureID::Smoke2]);
+    m_circle_shape.setFillColor(sf::Color(255, 255, 255, 255.f * m_fade_2));
+    window.draw(m_circle_shape);
+}
+
+
 EnemyManager::EnemyManager() {}
 
 void EnemyManager::generate_waves() {
@@ -36,6 +71,8 @@ void EnemyManager::spawn(EnemyType type, RoadGraph::PathID path_id, bool boss) {
         break;
     case EnemyType::CruiserI:
         m_enemies.push_back(std::make_unique<CruiserI>());
+    case EnemyType::SmokeTruck:
+        m_enemies.push_back(std::make_unique<SmokeTruck>());
         break;
     }
     if (boss)
@@ -78,7 +115,13 @@ void EnemyManager::logic(double dtime) {
             }
         }
     }
-
+    auto it = m_smokes.begin();
+    while (it != m_smokes.end()) {
+        if (!it->logic(dtime))
+            it = m_smokes.erase(it);
+        else
+            ++it;
+    }
 }
 
 
@@ -90,6 +133,11 @@ void EnemyManager::draw(sf::RenderWindow& window) {
 	for (auto& enemy : m_enemies)
 		enemy->draw(window);
 
+}
+
+void EnemyManager::draw_smokes(sf::RenderWindow& window) {
+    for (auto& smoke : m_smokes)
+        smoke.draw(window);
 }
 
 IEnemy* EnemyManager::get_enemy_by_id(uint32_t id) {

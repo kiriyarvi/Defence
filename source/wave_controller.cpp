@@ -16,7 +16,8 @@ std::pair<EnemySpawn, bool> UniformSpawner::next_enemy() {
         { EnemyType::Truck, 1.5f },
         { EnemyType::BTR, 2.f },
         { EnemyType::Tank, 2.f },
-        { EnemyType::CruiserI, 5.f }
+        { EnemyType::CruiserI, 5.f },
+        { EnemyType::SmokeTruck, 1.5f }
     };
     if (m_spawners.empty()) {
         return std::make_pair(EnemySpawn(), false);
@@ -130,19 +131,9 @@ WaveController::WaveController() {
         auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
         r1->id = id1;
-        r1->add_spawner(EnemyType::Bike, 10);
-        r1->add_spawner(EnemyType::Tank, 14);
-        r1->add_spawner(EnemyType::Truck, 18);
-        r1->add_spawner(EnemyType::Solder, 20);
-        auto r2 = std::make_unique<UniformSpawner>();
-        r2->id = id2;
-        r2->add_spawner(EnemyType::Bike, 10);
-        r2->add_spawner(EnemyType::BTR, 20);
-        r2->add_spawner(EnemyType::Truck, 10);
-        r2->add_spawner(EnemyType::Pickup, 10);
+        r1->add_spawner(EnemyType::SmokeTruck, 1);
         Wave w;
         w.routes.push_back(std::move(r1));
-        w.routes.push_back(std::move(r2));
         w.reward = 10000;
         m_waves.push_back(std::move(w));
     }
