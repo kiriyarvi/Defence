@@ -8,11 +8,9 @@
 #include "enemies/cruiser_I.h"
 
 Smoke::Smoke(const glm::vec2& pos, float r, float duration):
-    m_pos{ pos }, m_radius{ r }, m_duration{ duration }
+    m_pos{ pos }, m_max_radius{ r }, m_duration{ duration }, m_animation(duration)
 {
     m_circle_shape.setPointCount(20);
-    m_circle_shape.setRadius(m_radius * 32);
-    m_circle_shape.setOrigin(m_radius * 32, m_radius * 32);
     m_circle_shape.setPosition(pos.x, pos.y);
 }
 
@@ -20,24 +18,45 @@ float triangle(float x) {
     return (sin(x) + 1.) / 2.;
 }
 
+void Smoke::init_animation() {
+    auto& spraying_animation = m_animation.add_subanimation(0., 0.15f * m_duration, Animation());
+    auto& fade_animation = m_animation.add_subanimation(0.6f * m_duration, m_duration, Animation());
+
+    spraying_animation.on_start = [&]() { m_enabled = true; };
+    spraying_animation.on_progress = [&](double p) {
+        m_current_radius = m_max_radius * p;
+    };
+    m_animation.on_progress = [&](double p) {
+        float angle_speed = 5;
+        m_rotation_1 = p * m_duration * angle_speed;
+        m_rotation_2 = -p * m_duration * angle_speed;
+    };
+    fade_animation.on_progress = [&](double p) {
+        m_fade_1 = m_fade_2 = 0.5 - 0.5 * p;
+    };
+    fade_animation.on_end = [&]() { m_enabled = false; };
+    m_animation.start();
+}
+
 bool Smoke::logic(double dtime) {
-    m_timer += dtime;
-    float time_s = m_timer / (1000 * 1000);
-    float p = triangle(2 * time_s);
-    float A = 0.5;
-    m_fade_1 = A + p * (1. - A);
-    m_fade_2 = A + (1 - p) * (1 - A);
-    if (m_timer >= m_duration * 1000 * 1000)
-        return false;
-    return true;
+    if (!m_animation.started())
+        init_animation();
+    else
+        m_animation.logic(dtime);
+    return m_animation.started();
 }
 
 void Smoke::draw(sf::RenderWindow& window) {
+    if (!m_enabled) return;
+    m_circle_shape.setRadius(m_current_radius * 32);
+    m_circle_shape.setOrigin(m_current_radius * 32, m_current_radius * 32);
     m_circle_shape.setTexture(&TextureManager::Instance().textures[TextureID::Smoke1]);
     m_circle_shape.setFillColor(sf::Color(255, 255, 255, 255.f * m_fade_1));
+    m_circle_shape.setRotation(m_rotation_1);
     window.draw(m_circle_shape);
     m_circle_shape.setTexture(&TextureManager::Instance().textures[TextureID::Smoke2]);
     m_circle_shape.setFillColor(sf::Color(255, 255, 255, 255.f * m_fade_2));
+    m_circle_shape.setRotation(m_rotation_2);
     window.draw(m_circle_shape);
 }
 

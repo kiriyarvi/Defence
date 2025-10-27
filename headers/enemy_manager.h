@@ -4,17 +4,27 @@
 #include "enemies/IEnemy.h"
 #include "wave_controller.h"
 
+#include "utils/animation.h"
+
 class Smoke {
 public:
     Smoke(const glm::vec2& pos, float r, float duration);
     bool logic(double dtime);
     void draw(sf::RenderWindow& window);
 private:
+    void init_animation();
+private:
+    Animation m_animation;
     float m_duration;
-    float m_timer = 0;
-    float m_radius;
-    float m_fade_1 = 0;
-    float m_fade_2 = 0;
+    float m_max_radius;
+
+    float m_current_radius = 0.0;
+    float m_fade_1 = 0.5;
+    float m_fade_2 = 0.5;
+    float m_rotation_1 = 0;
+    float m_rotation_2 = 0;
+    bool m_enabled = false;
+
     glm::vec2 m_pos;
     sf::CircleShape m_circle_shape;
 };
