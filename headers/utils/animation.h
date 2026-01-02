@@ -50,7 +50,6 @@ private:
 	double m_duration = 0; // время, используется чтобы конвертироать прошедшее время в progress (нужно только при вызове logic).
 	double m_elapsed_time = 0; // прошедшее время (нужно только при вызове logic).
 	bool m_loop = false; // true, тогда после того, как дойдет до Finished, запуститься снова.
-
 	struct Framer {
 		int last_frame = -1;
 		int frames;

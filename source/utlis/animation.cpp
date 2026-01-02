@@ -95,6 +95,7 @@ void Animation::logic(double dtime_milliseconds) {
 	
 }
 
+
 void Animation::progress_logic(double progress) {
 	if (m_state != State::Started) return;
 	if (progress > 1.0) {

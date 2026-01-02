@@ -120,7 +120,7 @@ public:
         infantry = false;
     }
     IDestroyedEnemy::Ptr get_destroyed_enemy() override {
-        EnemyManager::Instance().add_smoke(Smoke(get_position(), 4., 14.));
+        EnemyManager::Instance().add_smoke(Smoke(get_position(), 4., 20.));
         return SimpleEnemy::get_destroyed_enemy();
     }
 };

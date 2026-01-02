@@ -126,15 +126,15 @@ std::pair<RoadGraph::PathID, RoadGraph::PathID> random_routes_from_to_random_ent
 WaveController::WaveController() {
     int all_paths = EnemyManager::Instance().all_paths.size();
 
-
+    // Волна 0
     {
-        auto [id1, id2] = random_routes_from_to_random_enters();
         auto r1 = std::make_unique<UniformSpawner>();
-        r1->id = id1;
+        r1->id = one_random_route();
         r1->add_spawner(EnemyType::SmokeTruck, 1);
         Wave w;
+        w.prepairing_time = 0;
         w.routes.push_back(std::move(r1));
-        w.reward = 10000;
+        w.reward = 1000;
         m_waves.push_back(std::move(w));
     }
 

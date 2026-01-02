@@ -87,5 +87,6 @@ TextureManager::TextureManager() {
     textures[TextureID::Smoke2].loadFromFile("tiles/smoke2.png");
     textures[TextureID::SmokeTruck].loadFromFile("sprites/smoke_truck.png");
     textures[TextureID::SmokeTruckDestroyed].loadFromFile("sprites/smoke_truck_destroyed.png");
+    textures[TextureID::SmokeParticles].loadFromFile("tiles/Smoke_particles.png");
 
 }

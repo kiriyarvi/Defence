@@ -72,7 +72,8 @@ enum class TextureID {
     Smoke1,
     Smoke2,
     SmokeTruck,
-    SmokeTruckDestroyed
+    SmokeTruckDestroyed,
+    SmokeParticles
 };
 
 class TextureManager {
