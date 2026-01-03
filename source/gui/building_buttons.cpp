@@ -7,6 +7,7 @@
 #include "guns/mine.h"
 #include "guns/spikes.h"
 #include "guns/hedgehog.h"
+#include "guns/radar.h"
 #include "shader_manager.h"
 #include "achievement_system.h"
 #include "gui/info_panel.h"
@@ -261,4 +262,35 @@ void HedgeBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id,
     headge.setPosition(x_id * 32 + 16, y_id * 32 + 16);
     if (!allowed) headge.setColor(sf::Color(255, 0, 0));
     window.draw(headge);
+}
+
+
+RadarBuildingButton::RadarBuildingButton(GameState& game_state):
+    BuildingButton(
+        TextureID::RadarIcon,
+        game_state,
+        make_creator<Radar>(),
+        TileRestrictions::NoRoads,
+        ParamsManager::Instance().params.guns.radar.cost,
+        ParamsManager::Instance().params.guns.radar.radius,
+        BuildingType::Radar,
+        "Радар"
+    )
+{}
+
+void RadarBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
+    bool allowed = is_cell_allowed(x_id, y_id);
+    if (allowed)
+        draw_radius(window, x_id, y_id);
+    sf::Sprite base(TextureManager::Instance().textures[TextureID::GunBase]);
+    base.setPosition(x_id * 32, y_id * 32);
+    if (!allowed) base.setColor(sf::Color(255, 0, 0));
+    window.draw(base);
+
+    sf::Sprite radar(TextureManager::Instance().textures[TextureID::Radar]);
+    radar.setOrigin(16, 16);
+    radar.rotate(180);
+    radar.setPosition(x_id * 32 + 16, y_id * 32 + 16);
+    if (!allowed) radar.setColor(sf::Color(255, 0, 0));
+    window.draw(radar);
 }

@@ -288,6 +288,10 @@ void UpgradePanelCreator::visit(Mine& mine) {
     reset();
 }
 
+void UpgradePanelCreator::visit(Radar& radar) {
+    reset();
+}
+
 void UpgradePanelCreator::update() {
     for (auto& cat : m_buttons) {
         for (auto& up : cat) {

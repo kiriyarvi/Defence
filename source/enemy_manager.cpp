@@ -44,11 +44,13 @@ bool Smoke::logic(double dtime) {
     float dp = dtime / m_particle_produce_duration;
     for (auto& particle : m_particles) {
         particle.m_timer += dtime;
+        float curl_fade = 1.;
         if (particle.m_timer <= m_particle_produce_duration) {
             // учет импульса, данного при рождении частицы.
             float p = particle.m_timer / m_particle_produce_duration;
             particle.m_pos += particle.m_vel * dp * (1 - p) * (m_max_radius * 2);
             particle.m_scale = glm::lerp(0.25f, 1.f, p);
+            curl_fade = p;
         }
         // curl-noise
         float lx = (particle.m_pos.x / m_max_radius + 1) / 2.f;
@@ -57,9 +59,8 @@ bool Smoke::logic(double dtime) {
         ly = glm::clamp(ly, 0.f, 1.f);
         size_t nx = lx * (m_curl_noise.size() - 1) + 0.5;
         size_t ny = ly * (m_curl_noise.size() - 1) + 0.5;
-        particle.m_pos += m_curl_noise[nx][ny] * 20.f * (float)(dtime / (1000.f * 1000.f));
+        particle.m_pos += curl_fade * m_curl_noise[nx][ny] * 20.f * (float)(dtime / (1000.f * 1000.f));
         if (particle.m_timer >= m_particle_produce_duration + m_particle_flow_duration) {
-            //дважды вычитаем produce, потому чтобы последняя сгенерированная частица успела испариться до истечения анимации.
             float p = glm::clamp((particle.m_timer - m_particle_produce_duration - m_particle_flow_duration) / m_particle_fade_duration, 0.f,1.f);
             particle.m_fade = smoothstep(1 - p);
         }

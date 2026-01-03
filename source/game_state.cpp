@@ -75,6 +75,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 	m_building_buttons.push_back(std::make_unique<TwinGunBuildingButton>(*this));
 	m_building_buttons.push_back(std::make_unique<SpikesBuildingButton>(*this));
     m_building_buttons.push_back(std::make_unique<HedgeBuildingButton>(*this));
+    m_building_buttons.push_back(std::make_unique<RadarBuildingButton>(*this));
 	for (auto& button : m_building_buttons) {
 		bottom_panel_group->add(button->m_group);
 	}

@@ -106,6 +106,10 @@
       "delay": 3.5, // на какое время остановиться враг.
       "cost": 750,
       "wheels_debuff": 2
+    },
+    "radar": {
+      "radius": 5,
+      "cost": 1000
     }
   },
   "enemies": {

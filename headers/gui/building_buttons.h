@@ -81,3 +81,9 @@ public:
 	HedgeBuildingButton(GameState& game_state);
 	void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) override;
 };
+
+class RadarBuildingButton : public BuildingButton {
+public:
+    RadarBuildingButton(GameState& game_state);
+    void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) override;
+};

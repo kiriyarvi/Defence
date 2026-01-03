@@ -89,4 +89,7 @@ TextureManager::TextureManager() {
     textures[TextureID::SmokeTruckDestroyed].loadFromFile("sprites/smoke_truck_destroyed.png");
     textures[TextureID::SmokeParticles].loadFromFile("tiles/Smoke_particles.png");
 
+    textures[TextureID::Radar].loadFromFile("sprites/radar.png");
+    textures[TextureID::RadarIcon].loadFromFile("sprites/radar_icon.png");
+
 }

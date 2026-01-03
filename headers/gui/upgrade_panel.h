@@ -39,6 +39,7 @@ public:
 	virtual void visit(AntitankGun& antitank_gun);
 	virtual void visit(TwinGun& twingun);
 	virtual void visit(Mine& mine);
+    virtual void visit(Radar& radar);
 	tgui::Group::Ptr panel;
     tgui::Group::Ptr info;
     ~UpgradePanelCreator();

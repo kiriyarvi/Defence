@@ -59,6 +59,7 @@ AchievementSystem::AchievementSystem() {
     m_achievements.push_back(std::move(cruiserI));
     
     m_unlocked_buildings[BuildingType::Minigun] = true;
+    m_unlocked_buildings[BuildingType::Radar] = true; //TODO
 }
 
 bool AchievementSystem::defeated(EnemyType enemy_type) {

@@ -92,7 +92,12 @@ public:
 				float wheels_debuff;
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Hedgehog, health, delay, cost, wheels_debuff)
 			} hedgehog;
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Guns, antitank, twingun, minigun, mine, spikes, hedgehog)
+            struct Radar {
+                int radius;
+                int cost;
+                NLOHMANN_DEFINE_TYPE_INTRUSIVE(Radar, radius, cost)
+            } radar;
+			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Guns, antitank, twingun, minigun, mine, spikes, hedgehog, radar)
 		} guns;
 		struct Enemies {
 			struct Enemy {
