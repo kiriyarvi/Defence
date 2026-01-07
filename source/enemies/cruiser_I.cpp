@@ -61,14 +61,14 @@ bool CruiserTurretAnimation::logic(double dtime_mc) {
 }
 
 
-CruiserI::CruiserI() : IEnemy(ParamsManager::Instance().params.enemies.CruiserI, EnemyType::CruiserI) {
+CruiserI::CruiserI() : IEnemy(ParamsManager::Instance().params.enemies.CruiserI, EnemyType::CruiserI, Collision(glm::vec2(-13.5, -8.25), glm::vec2(15, 8.25))) {
     wheels = Wheels::HeavyTracks;
     infantry = false;
     m_cruiserI.sprite.setTexture(TextureManager::Instance().textures[TextureID::CruiserIBase]);
     m_cruiserI.sprite.setScale(0.5, 0.5);
     m_cruiserI.layer = 0;
-    m_cruiserI.set_position_origin(16, 16);
-    m_cruiserI.set_rotation_origin(16, 16);
+    m_cruiserI.set_position_origin(16, 16.25);
+    m_cruiserI.set_rotation_origin(16, 16.25);
     m_upper_truck = &m_cruiserI.childs.emplace_back();
     m_lower_truck = &m_cruiserI.childs.emplace_back();
 
@@ -136,8 +136,12 @@ void CruiserI::draw(sf::RenderWindow& window) {
     }
     else
         m_dence_blust_sprite->enabled = false;
-    m_indicator.draw(window, position.x, position.y - (rotation ? 16 : 10), params.health, health);
     m_cruiserI.draw(window);
+}
+
+void CruiserI::draw_effects(sf::RenderWindow& window) {
+    IEnemy::draw_effects(window);
+    m_indicator.draw(window, position.x, position.y - (rotation ? 16 : 10), params.health, health);
 }
 
 bool CruiserI::logic(double dtime_microseconds) {

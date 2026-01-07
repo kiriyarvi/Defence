@@ -92,4 +92,5 @@ TextureManager::TextureManager() {
     textures[TextureID::Radar].loadFromFile("sprites/radar.png");
     textures[TextureID::RadarIcon].loadFromFile("sprites/radar_icon.png");
 
+    textures[TextureID::Capture].loadFromFile("sprites/capture.png");
 }

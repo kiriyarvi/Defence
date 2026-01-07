@@ -1,5 +1,6 @@
 #include "guns/rotating_gun_base.h"
 #include "enemy_manager.h"
+#include "covering_database.h"
 #include "glm/glm.hpp"
 
 void IRotatingGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
@@ -17,9 +18,9 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 	if (m_is_enemy_captured) {
 		// если враг был ранее захвачен, то нужно проверить, жив ли он до сих пор.
 		captured_enemy = EnemyManager::Instance().get_enemy_by_id(m_captured_enemy_id);
-		if (!captured_enemy) { // захваченный враг пропал, видимо он был удален с поля боя.
+		if (!captured_enemy || !CoveringDataBase::Instance().is_available_taget(captured_enemy->id)) { // захваченный враг пропал, видимо он был удален с поля боя или же он замаскирован
 			m_is_enemy_captured = false;
-			captured_enemy = false;
+			captured_enemy = nullptr;
 			if (m_is_gun_pointed) {
 				on_gun_unpointed();
 				m_is_gun_pointed = false;
@@ -27,7 +28,7 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 		}
 		else {
 			double dist = glm::length(captured_enemy->get_position() - gun_pos);
-			if (dist > radius * 32) { // враг вне зоны досигаемости.
+			if (dist > radius * 32) { // враг вне зоны досигаемости или скрыт
 				m_is_enemy_captured = false;
 				captured_enemy = false;
 				if (m_is_gun_pointed) {
@@ -47,6 +48,8 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 		// ищем ближайшего врага в радиусе действия (по приоритету)
 		double best_priority = 0;
 		for (auto& enemy : enemies) {
+            if (!CoveringDataBase::Instance().is_available_taget(enemy->id))
+                continue;
             auto status = get_enemy_status(*enemy.get());
             if (!status.valid)
                 continue;

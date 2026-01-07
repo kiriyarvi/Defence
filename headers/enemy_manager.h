@@ -14,14 +14,15 @@ public:
     Smoke(const glm::vec2& pos, float r, float duration);
     bool logic(double dtime);
     void draw(sf::RenderWindow& window);
+    bool active() const; /// true = smoke может скрывать врагов.
+    glm::vec2 m_pos;
+    float m_max_radius;
 private:
     Animation m_animation;
     float m_duration;
-    float m_max_radius;
 
     bool m_enabled = false;
     size_t m_max_particles = 70;
-    glm::vec2 m_pos;
 
     sf::Sprite m_particle_sprite;
 
@@ -51,9 +52,6 @@ private:
         float m_rot = 0.0;
     };
     std::vector<Particle> m_particles;
-
-    std::vector<std::vector<glm::vec2>> m_curl_noise; //TODO временно.
-
 };
 
 class EnemyManager {
@@ -72,13 +70,14 @@ public:
 	EnemyManager& operator=(EnemyManager&&) = delete;
 	void logic(double dtime); // если возвращает true --- спавнеры кончились.
 	void draw(sf::RenderWindow& window);
-    void draw_smokes(sf::RenderWindow& window);
+    void draw_effects(sf::RenderWindow& window);
     void start_wave() { if (m_wave_controller) m_wave_controller->start_wave(); }
 	IEnemy* get_enemy_by_id(uint32_t id);
     RoadGraph::Paths all_paths;
 	std::vector<IEnemy::Ptr> m_enemies;
     void generate_waves();
     void add_smoke(Smoke&& smoke) { m_smokes.push_back(std::move(smoke)); }
+    const std::list<Smoke>& get_smokes() { return m_smokes; }
 private:
 	EnemyManager();
     std::list<Smoke> m_smokes;

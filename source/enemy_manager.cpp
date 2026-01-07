@@ -1,5 +1,7 @@
 #include "enemy_manager.h"
 #include "sound_manager.h"
+#include "resource_manager.h"
+#include "covering_database.h"
 #include "game_state.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/compatibility.hpp>
@@ -18,18 +20,6 @@ Smoke::Smoke(const glm::vec2& pos, float r, float duration):
     m_particle_flow_duration = 0.5f * m_duration * 1000 * 1000;
     m_particle_fade_duration = 0.3f * m_duration * 1000 * 1000;
     m_enabled = true;
-
-
-    std::ifstream file("noises/curl_noise.bin", std::ios::binary);
-    uint32_t size;
-    file.read(reinterpret_cast<char*>(&size), sizeof(size));
-
-    m_curl_noise.resize(size, std::vector<glm::vec2>(size));
-    for (auto& row : m_curl_noise) {
-        file.read(reinterpret_cast<char*>(row.data()),
-            row.size() * sizeof(glm::vec2));
-    }
-
 }
 
 float smoothstep(float x) {
@@ -57,9 +47,10 @@ bool Smoke::logic(double dtime) {
         float ly = (particle.m_pos.y / m_max_radius + 1) / 2.f;
         lx = glm::clamp(lx, 0.f, 1.f);
         ly = glm::clamp(ly, 0.f, 1.f);
-        size_t nx = lx * (m_curl_noise.size() - 1) + 0.5;
-        size_t ny = ly * (m_curl_noise.size() - 1) + 0.5;
-        particle.m_pos += curl_fade * m_curl_noise[nx][ny] * 20.f * (float)(dtime / (1000.f * 1000.f));
+        auto curl_noise = ResourceManager::Instance().get_smoke_curl_noise();
+        size_t nx = lx * (curl_noise.size() - 1) + 0.5;
+        size_t ny = ly * (curl_noise.size() - 1) + 0.5;
+        particle.m_pos += curl_fade * curl_noise[nx][ny] * 20.f * (float)(dtime / (1000.f * 1000.f));
         if (particle.m_timer >= m_particle_produce_duration + m_particle_flow_duration) {
             float p = glm::clamp((particle.m_timer - m_particle_produce_duration - m_particle_flow_duration) / m_particle_fade_duration, 0.f,1.f);
             particle.m_fade = smoothstep(1 - p);
@@ -75,6 +66,10 @@ bool Smoke::logic(double dtime) {
     return true;
 }
 
+bool Smoke::active() const {
+    return m_global_timer >= m_particle_produce_duration && m_global_timer <= m_particle_produce_duration + m_particle_flow_duration + m_particle_fade_duration / 2;
+}
+
 void Smoke::draw(sf::RenderWindow& window) {
     if (!m_enabled) return;
     for (auto it = m_particles.rbegin(); it != m_particles.rend(); ++it) {
@@ -87,13 +82,16 @@ void Smoke::draw(sf::RenderWindow& window) {
         m_particle_sprite.setRotation(particle.m_rot);
         window.draw(m_particle_sprite);
     }
-    sf::CircleShape circ(m_max_radius, 40);
-    circ.setOrigin(m_max_radius, m_max_radius);
-    circ.setPosition(m_pos.x, m_pos.y);
-    circ.setOutlineThickness(1);
-    circ.setOutlineColor(sf::Color::Red);
-    circ.setFillColor(sf::Color::Transparent);
-    window.draw(circ);
+
+    if (m_global_timer <= m_particle_produce_duration + m_particle_flow_duration + m_particle_fade_duration / 2) {
+        sf::CircleShape circ(m_max_radius, 40);
+        circ.setOrigin(m_max_radius, m_max_radius);
+        circ.setPosition(m_pos.x, m_pos.y);
+        circ.setOutlineThickness(1);
+        circ.setOutlineColor(sf::Color::Red);
+        circ.setFillColor(sf::Color::Transparent);
+        window.draw(circ);
+    }
 
 }
 
@@ -129,6 +127,7 @@ void EnemyManager::spawn(EnemyType type, RoadGraph::PathID path_id, bool boss) {
         break;
     case EnemyType::CruiserI:
         m_enemies.push_back(std::make_unique<CruiserI>());
+        break;
     case EnemyType::SmokeTruck:
         m_enemies.push_back(std::make_unique<SmokeTruck>());
         break;
@@ -137,34 +136,40 @@ void EnemyManager::spawn(EnemyType type, RoadGraph::PathID path_id, bool boss) {
         m_enemies.back()->make_boss();
     m_enemies.back()->path_id = path_id;
 	m_enemies.back()->id = ++current_max_id;
-	m_enemies.back()->logic(0.0); // чтобы установить верную позицию.
+    auto& path = all_paths[path_id.start_node][path_id.path];
+    m_enemies.back()->position = glm::vec2(path[0]->x * 32 + 16, path[0]->y * 32 + 16);
+    m_enemies.back()->goal_path_node = 1;
+    m_enemies.back()->goal = sf::Vector2f(path[1]->x * 32 + 16, path[1]->y * 32 + 16);
+	m_enemies.back()->logic(0.0); // чтобы установить статус маскировки и goal.
 	if (current_max_id > 32768)
 		current_max_id = 0;
 }
 
 void EnemyManager::logic(double dtime) {
 	std::vector<IEnemy::Ptr> new_enemies;
-	for (auto& enemy : m_enemies) {
-		if (enemy->health <= 0) {
-            GameState::Instance().enemy_defeated(enemy->type);
+	for (auto& enemy : m_enemies) { /// проходим по врагам и удаляем уничтоженных.
+		if (enemy->health <= 0) { 
+            GameState::Instance().enemy_defeated(enemy->type); /// для статистики.
 			m_destroyed_enemies.push_back(enemy->get_destroyed_enemy());
-			GameState::Instance().player_coins_add(enemy->params.reward);
+			GameState::Instance().player_coins_add(enemy->params.reward); /// награда.
 		}
 		else {
 			new_enemies.push_back(std::move(enemy));
 		}
 	}
-	m_enemies = std::move(new_enemies);
+	m_enemies = std::move(new_enemies); /// обновление врагов.
 	for (auto& enemy : m_enemies)
-		if (enemy->logic(dtime));
+		if (enemy->logic(dtime)); /// логика врагов, передвижение по маршруту.
 	m_enemies.erase(std::remove_if(m_enemies.begin(), m_enemies.end(),
 		[](const IEnemy::Ptr& enemy) {return enemy->path_is_completed; }),
 		m_enemies.end()
-	);
+	); /// удаляем тех врагов, которые достигли конца маршрута
 
+    /// У уничтоженных врагов есть анимации уничтожения, логику все равно нужно вызывать.
 	for (auto& destroyed_enemy : m_destroyed_enemies)
 		destroyed_enemy->logic(dtime);
 	m_destroyed_enemies.remove_if([](IDestroyedEnemy::Ptr& enemy) { return enemy->is_ready(); });
+    /// Логика волн
     if (m_wave_controller) {
         m_wave_controller->logic(dtime);
         if (m_enemies.empty()) {
@@ -173,6 +178,7 @@ void EnemyManager::logic(double dtime) {
             }
         }
     }
+    /// Анимация дымовых завес.
     auto it = m_smokes.begin();
     while (it != m_smokes.end()) {
         if (!it->logic(dtime))
@@ -180,6 +186,7 @@ void EnemyManager::logic(double dtime) {
         else
             ++it;
     }
+
 }
 
 
@@ -193,9 +200,13 @@ void EnemyManager::draw(sf::RenderWindow& window) {
 
 }
 
-void EnemyManager::draw_smokes(sf::RenderWindow& window) {
+void EnemyManager::draw_effects(sf::RenderWindow& window) {
+    for (auto& e : m_enemies)
+        e->draw_effects(window);
     for (auto& smoke : m_smokes)
         smoke.draw(window);
+    for (auto& e : m_enemies)
+        e->post_smoke_effects(window);
 }
 
 IEnemy* EnemyManager::get_enemy_by_id(uint32_t id) {

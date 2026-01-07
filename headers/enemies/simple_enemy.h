@@ -7,9 +7,10 @@
 
 class SimpleEnemy : public IEnemy {
 public:
-	SimpleEnemy(TextureID enemy_texture, TextureID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params, EnemyType t);
+	SimpleEnemy(TextureID enemy_texture, TextureID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params, EnemyType t, Collision c);
 	IDestroyedEnemy::Ptr get_destroyed_enemy() override;
 	void draw(sf::RenderWindow& window) override;
+    void draw_effects(sf::RenderWindow& window) override;
 protected:
 	sf::Sprite m_enemy_sprite;
     TextureID m_destroyed_enemy_texture;
@@ -33,7 +34,7 @@ private:
 
 class Tank : public SimpleEnemy {
 public:
-	Tank() : SimpleEnemy(TextureID::Tank, TextureID::TankDestroyed, Sounds::DoubleBlust, ParamsManager::Instance().params.enemies.tank, EnemyType::Tank) {
+	Tank() : SimpleEnemy(TextureID::Tank, TextureID::TankDestroyed, Sounds::DoubleBlust, ParamsManager::Instance().params.enemies.tank, EnemyType::Tank, Collision(glm::vec2(-10,-6), glm::vec2(15, 6))) {
 		wheels = Wheels::Tracks;
 		infantry = false;
 	}
@@ -48,7 +49,7 @@ public:
 
 class Truck : public SimpleEnemy {
 public:
-	Truck() : SimpleEnemy(TextureID::Truck, TextureID::TruckDestroyed, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.truck, EnemyType::Truck) {
+	Truck() : SimpleEnemy(TextureID::Truck, TextureID::TruckDestroyed, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.truck, EnemyType::Truck, Collision(glm::vec2(-11,-4), glm::vec2(12, 4))) {
 		wheels = Wheels::Wheels;
 		infantry = false;
 	}
@@ -75,7 +76,7 @@ private:
 
 class Bike : public SimpleEnemy {
 public:
-	Bike() : SimpleEnemy(TextureID::Bike, TextureID::DestroyedBike, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.bike, EnemyType::Bike) {
+	Bike() : SimpleEnemy(TextureID::Bike, TextureID::DestroyedBike, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.bike, EnemyType::Bike, Collision(glm::vec2(-7.75, -3.25), glm::vec2(11, 3.25))) {
 		m_enemy_sprite.setOrigin(64, 64);
 		m_enemy_sprite.setScale(0.25, 0.25);
 		wheels = Wheels::Wheels;
@@ -86,7 +87,7 @@ public:
 
 class Pickup : public SimpleEnemy {
 public:
-    Pickup() : SimpleEnemy(TextureID::Pickup, TextureID::PickupDestroyed, Sounds::PickupDestruction, ParamsManager::Instance().params.enemies.pickup, EnemyType::Pickup) {
+    Pickup() : SimpleEnemy(TextureID::Pickup, TextureID::PickupDestroyed, Sounds::PickupDestruction, ParamsManager::Instance().params.enemies.pickup, EnemyType::Pickup, Collision(glm::vec2(-9, -4), glm::vec2(11, 4))) {
         wheels = Wheels::Wheels;
         infantry = false;
     }
@@ -102,6 +103,7 @@ class BTR : public IEnemy {
 public:
     BTR();
     void draw(sf::RenderWindow& window) override;
+    void draw_effects(sf::RenderWindow& window) override;
     bool logic(double dtime_microseconds) override;
     IDestroyedEnemy::Ptr get_destroyed_enemy();
 private:
@@ -115,7 +117,7 @@ private:
 
 class SmokeTruck : public SimpleEnemy {
 public:
-    SmokeTruck() : SimpleEnemy(TextureID::SmokeTruck, TextureID::SmokeTruckDestroyed, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.smoke_truck, EnemyType::SmokeTruck) {
+    SmokeTruck() : SimpleEnemy(TextureID::SmokeTruck, TextureID::SmokeTruckDestroyed, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.smoke_truck, EnemyType::SmokeTruck, Collision(glm::vec2(-13,-5), glm::vec2(12, 5))) {
         wheels = Wheels::Wheels;
         infantry = false;
     }

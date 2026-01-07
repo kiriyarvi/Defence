@@ -131,6 +131,13 @@ WaveController::WaveController() {
         auto r1 = std::make_unique<UniformSpawner>();
         r1->id = one_random_route();
         r1->add_spawner(EnemyType::SmokeTruck, 1);
+        r1->add_spawner(EnemyType::Solder, 1);
+        r1->add_spawner(EnemyType::Truck, 1);
+        r1->add_spawner(EnemyType::Pickup, 1);
+        r1->add_spawner(EnemyType::BTR, 1);
+        r1->add_spawner(EnemyType::Tank, 1);
+        r1->add_spawner(EnemyType::CruiserI, 1);
+        r1->add_spawner(EnemyType::Bike, 1);
         Wave w;
         w.prepairing_time = 0;
         w.routes.push_back(std::move(r1));

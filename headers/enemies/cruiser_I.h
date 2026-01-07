@@ -32,6 +32,7 @@ class CruiserI : public IEnemy {
 public:
     CruiserI();
     void draw(sf::RenderWindow& window) override;
+    void draw_effects(sf::RenderWindow& window) override;
     bool logic(double dtime_microseconds) override;
     IDestroyedEnemy::Ptr get_destroyed_enemy();
     void make_boss() override;

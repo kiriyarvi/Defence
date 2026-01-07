@@ -95,7 +95,11 @@ public:
             struct Radar {
                 int radius;
                 int cost;
-                NLOHMANN_DEFINE_TYPE_INTRUSIVE(Radar, radius, cost)
+                int max_targets;
+                float uncover_time;
+                int uncovering_level;
+                float aiming_time;
+                NLOHMANN_DEFINE_TYPE_INTRUSIVE(Radar, radius, cost, max_targets, uncover_time, uncovering_level)
             } radar;
 			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Guns, antitank, twingun, minigun, mine, spikes, hedgehog, radar)
 		} guns;

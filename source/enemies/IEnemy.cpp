@@ -1,6 +1,7 @@
 #include "enemies/IEnemy.h"
 #include "game_state.h"
 #include "enemy_manager.h"
+#include "covering_database.h"
 
 std::string to_string(EnemyType type) {
     std::unordered_map<EnemyType, std::string> m{
@@ -32,17 +33,39 @@ void HealthIndicator::draw(sf::RenderWindow& window, float x, float y, float max
 	window.draw(rectangle);
 }
 
-IEnemy::IEnemy(const ParamsManager::Params::Enemies::Enemy& p, EnemyType t) : params{ p }, type{t} {
+IEnemy::IEnemy(const ParamsManager::Params::Enemies::Enemy& p, EnemyType t, Collision c):
+    params{ p }, type{ t }, collision{ c }
+{
 	health = params.health;
 };
 
 bool IEnemy::logic(double dtime) {
+    //1. Определим засекреченность врага
+    bool in_smoke = false;
+    for (auto& s : EnemyManager::Instance().get_smokes()) {
+        if (!s.active()) continue;
+        float d = glm::distance(s.m_pos, position);
+        if (d <= s.m_max_radius) {
+            in_smoke = true;
+            if (!m_in_smoke) { // если не был в дыму
+                m_in_smoke = true; //статус изменилися
+                CoveringDataBase::Instance().make_enemy_covered(id);
+            }
+            break; // если был в дыму, статус тоже не поменялся => в любом случае break.
+        }
+    }
+    if (!in_smoke && m_in_smoke) { // вышли из завесы
+        m_in_smoke = false;
+        CoveringDataBase::Instance().remove_enemy(id);
+    }
+    //2. Логика починки
 	if (repairing) {
 		repairing_timer += dtime;
 		if (repairing_timer >= repairing_time * 1000 * 1000)
 			repairing = false;
 		return false;
 	}
+    // 3. Логика перемещения по маршруту.
 	sf::Vector2f current_pos(position.x, position.y);
 	auto sf_dir = goal - current_pos;
 	glm::vec2 dir = { sf_dir.x, sf_dir.y };
@@ -55,7 +78,7 @@ bool IEnemy::logic(double dtime) {
 		dir = dir * potential / (1000 * 1000.f);
 		position += glm::vec2(dir.x, dir.y);
 	}
-	else { // при старте goal нулевой и current_pos нулевой, поэтому попадаем сюда и выставляем начальную точку маршрута. 
+	else { 
 		auto& enemy_manager = EnemyManager::Instance();
         auto& path = enemy_manager.all_paths[path_id.start_node][path_id.path];
 		if (goal_path_node + 1 == path.size()) {
@@ -92,4 +115,35 @@ void IEnemy::draw_effects(sf::RenderWindow& window) {
 	repairing_wrench.setPosition(position.x, position.y);
 	repairing_wrench.setScale(0.3, 0.3);
 	window.draw(repairing_wrench);
+}
+
+void IEnemy::post_smoke_effects(sf::RenderWindow& window) {
+    if (m_in_smoke && CoveringDataBase::Instance().is_available_taget(id)) {
+        draw_collision(window);
+        draw_effects(window); // будем вызывать дважды, но ничего страшного.
+    }
+}
+
+void IEnemy::draw_collision(sf::RenderWindow& window) {
+    sf::Transform t;
+    t.translate(position.x, position.y);
+    t.rotate(rotation);
+
+    sf::Sprite sp(TextureManager::Instance().textures[TextureID::Capture]);
+    sp.setScale(m_bounding_box_border_scale, m_bounding_box_border_scale);
+    sp.setTextureRect(sf::IntRect(0, 0, 8, 8));
+    sp.setPosition(collision.tl_vertex.x, collision.tl_vertex.y);
+    window.draw(sp, t);
+    sp.setTextureRect(sf::IntRect(8, 0, 8, 8));
+    sp.setPosition(collision.br_vertex.x, collision.tl_vertex.y);
+    sp.setOrigin(8, 0);
+    window.draw(sp, t);
+    sp.setTextureRect(sf::IntRect(0, 8, 8, 8));
+    sp.setPosition(collision.tl_vertex.x, collision.br_vertex.y);
+    sp.setOrigin(0, 8);
+    window.draw(sp, t);
+    sp.setTextureRect(sf::IntRect(8, 8, 8, 8));
+    sp.setPosition(collision.br_vertex.x, collision.br_vertex.y);
+    sp.setOrigin(8, 8);
+    window.draw(sp, t);
 }

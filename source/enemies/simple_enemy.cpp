@@ -3,10 +3,10 @@
 #include "shader_manager.h"
 #include "game_state.h"
 
-SimpleEnemy::SimpleEnemy(TextureID enemy_texture, TextureID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params, EnemyType t):
+SimpleEnemy::SimpleEnemy(TextureID enemy_texture, TextureID destroyed_enemy_texture, Sounds destruction_sound, const ParamsManager::Params::Enemies::Enemy& params, EnemyType t, Collision c):
 	m_destroyed_enemy_texture(destroyed_enemy_texture),
 	m_destruction_sound(destruction_sound),
-	IEnemy(params, t)
+	IEnemy(params, t, c)
 {
 	m_enemy_sprite.setTexture(TextureManager::Instance().textures[enemy_texture]);
 	m_enemy_sprite.setOrigin(16, 16);
@@ -16,8 +16,11 @@ void SimpleEnemy::draw(sf::RenderWindow& window) {
 	m_enemy_sprite.setPosition(position.x, position.y);
 	m_enemy_sprite.setRotation(rotation);
 	window.draw(m_enemy_sprite);
-	draw_effects(window);
-	m_indicator.draw(window, position.x, position.y - 8, params.health, health);
+}
+
+void SimpleEnemy::draw_effects(sf::RenderWindow& window) {
+    IEnemy::draw_effects(window);
+    m_indicator.draw(window, position.x, position.y - 8, params.health, health);
 }
 
 IDestroyedEnemy::Ptr SimpleEnemy::get_destroyed_enemy() {
@@ -117,7 +120,7 @@ IDestroyedEnemy::Ptr Bike::get_destroyed_enemy() {
 }
 
 
-BTR::BTR(): IEnemy(ParamsManager::Instance().params.enemies.BTR, EnemyType::BTR) {
+BTR::BTR(): IEnemy(ParamsManager::Instance().params.enemies.BTR, EnemyType::BTR, Collision(glm::vec2(-9,-6), glm::vec2(16, 6))) {
     wheels = Wheels::Tracks;
     infantry = false;
     m_btr.sprite.setTexture(TextureManager::Instance().textures[TextureID::BTR]);
@@ -150,6 +153,10 @@ void BTR::draw(sf::RenderWindow& window) {
     m_btr.set_rotation(rotation);
     m_btr.set_position(position.x, position.y);
     m_btr.draw(window);
+}
+
+void BTR::draw_effects(sf::RenderWindow& window) {
+    IEnemy::draw_effects(window);
     m_indicator.draw(window, position.x, position.y - 8, params.health, health);
 }
 

@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-Solder::Solder(): m_animation(2), IEnemy(ParamsManager::Instance().params.enemies.solder, EnemyType::Solder) {
+Solder::Solder(): m_animation(2), IEnemy(ParamsManager::Instance().params.enemies.solder, EnemyType::Solder,Collision(glm::vec2(-3.25,-2.75), glm::vec2(6, 2))) {
 	m_solder_sprite.setTexture(TextureManager::Instance().textures[TextureID::SolderWalkAnimation]);
 	m_solder_sprite.setOrigin(16, 16);
 	m_solder_sprite.setScale(0.25, 0.25);
@@ -34,6 +34,11 @@ void Solder::draw(sf::RenderWindow& window) {
 	window.draw(m_solder_sprite);
 	window.draw(m_solder_ammunition);
 	m_health_indicator.draw(window, position.x, position.y - 8, params.health, health);
+}
+
+void Solder::draw_effects(sf::RenderWindow& window) {
+    IEnemy::draw_effects(window);
+    m_health_indicator.draw(window, position.x, position.y - 8, params.health, health);
 }
 
 class DestroyedSolder: public IDestroyedEnemy {

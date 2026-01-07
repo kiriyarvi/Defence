@@ -75,7 +75,8 @@ enum class TextureID {
     SmokeTruckDestroyed,
     SmokeParticles,
     Radar,
-    RadarIcon
+    RadarIcon,
+    Capture
 };
 
 class TextureManager {
