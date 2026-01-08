@@ -164,6 +164,15 @@
       "speed": 0.8,
       "reward": 40,
       "armor_level": 0
+    },
+    "mrew": {
+      "enemy_params": {
+        "health": 50,
+        "speed": 0.8,
+        "reward": 40,
+        "armor_level": 0
+      },
+      "radius": 3
     }
   }
 }

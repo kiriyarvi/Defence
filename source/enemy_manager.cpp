@@ -45,6 +45,9 @@ void EnemyManager::spawn(EnemyType type, RoadGraph::PathID path_id, bool boss) {
     case EnemyType::SmokeTruck:
         m_enemies.push_back(std::make_unique<SmokeTruck>());
         break;
+    case EnemyType::MREW:
+        m_enemies.push_back(std::make_unique<MREW>());
+        break;
     }
     if (boss)
         m_enemies.back()->make_boss();

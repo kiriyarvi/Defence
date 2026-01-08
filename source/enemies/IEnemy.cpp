@@ -69,19 +69,21 @@ bool IEnemy::logic(double dtime) {
 	sf::Vector2f current_pos(position.x, position.y);
 	auto sf_dir = goal - current_pos;
 	glm::vec2 dir = { sf_dir.x, sf_dir.y };
-	float dist = glm::length(dir);
+	float dist = glm::max(glm::abs(dir.x), glm::abs(dir.y)); // можем использовать манхеттеновскую метрику в силу устройства наших путей.
 	dir = dir / dist;
 	float potential = dtime * params.speed * 32;
 	if (dist * 1000 * 1000 > potential) {
-		float angle = glm::degrees(glm::atan(dir.y, dir.x));
-		rotation = angle;
+		//float angle = glm::degrees(glm::atan(dir.y, dir.x));
+        //rotation = angle;
+        rotation = dir.x != 0 ? (dir.x > 0 ? 0 : 180) : (dir.y > 0 ? 90 : -90); // упрощенное вычисление угла
 		dir = dir * potential / (1000 * 1000.f);
 		position += glm::vec2(dir.x, dir.y);
+        path_progress = (goal_path_node - dist / 32) / EnemyManager::Instance().all_paths[path_id.start_node][path_id.path].distance;
 	}
 	else { 
 		auto& enemy_manager = EnemyManager::Instance();
         auto& path = enemy_manager.all_paths[path_id.start_node][path_id.path];
-		if (goal_path_node + 1 == path.size()) {
+		if (goal_path_node + 1 == path.v.size()) {
 			path_is_completed = true;
             if (m_boss)
                 GameState::Instance().kill_player();

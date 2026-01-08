@@ -176,3 +176,16 @@ IDestroyedEnemy::Ptr BTR::get_destroyed_enemy() {
     de->destroyed_enemy_sprite.setTexture(TextureManager::Instance().textures[TextureID::BTRDestroyed]);
     return de;
 }
+
+
+void MREW::draw(sf::RenderWindow& window) {
+    SimpleEnemy::draw(window);
+    m_radar.setRotation(m_radar_rotation);
+    m_radar.setPosition(position.x - 6.5, position.y + 1.5);
+    window.draw(m_radar);
+}
+
+bool MREW::logic(double dtime) {
+    m_radar_rotation += dtime / (1000.f * 1000.f) * 20.f;
+    return SimpleEnemy::logic(dtime);
+}

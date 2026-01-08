@@ -778,16 +778,14 @@ void TileMap::logic(double dtime) {
 		}
 }
 
-// -----------------------------
-// Path hashing function
-// -----------------------------
-std::string RoadGraph::hash_path(const Path& path) const {
-    std::string hash;
-    for (const auto* node : path) {
-        hash += std::to_string(node->x) + "," + std::to_string(node->y) + ";";
-    }
-    return hash;
+void RoadGraph::Path::calc_dist() {
+    distance = v.size() - 1; // поскольку мы строим путь так, что каждая делаем ребра при переходе из ячейку в ячейку.
+    //for (size_t i = 1; i < v.size(); ++i) {
+    //    // можем брать манхеттеновскую метрику, поскольку у нас для путей всегда dx = 0 или dy = 0.
+    //    distance += glm::max(glm::abs(v[i - 1]->x - v[i]->x), glm::abs(v[i - 1]->y - v[i]->y));
+    //}
 }
+
 
 // -----------------------------
 // DFS to find random unique paths
@@ -806,12 +804,13 @@ void RoadGraph::dfs_random_paths(
     if (visited.count(current)) return;
 
     visited.insert(current);
-    current_path.push_back(current);
+    current_path.v.push_back(current);
 
     // Check if reached an end node
     if (std::find(end_nodes.begin(), end_nodes.end(), current) != end_nodes.end()) {
+        current_path.calc_dist();
         result[start_node].push_back(current_path);
-        current_path.pop_back();
+        current_path.v.pop_back();
         visited.erase(current);
         return;
     }
@@ -819,7 +818,7 @@ void RoadGraph::dfs_random_paths(
     std::vector<Node*> neighbors = current->relations;
     // Если уже достаточно много раз сворачивали назад - не позволяем свернуть назад еще раз, если есть выбор.
     if (neighbors.size() == 1) { // нет выбора
-        int new_dx = neighbors[0]->x;
+        int new_dx = current->x - neighbors[0]->x;
         if (new_dx < 0 && dx > 0) {
             ++turns;
             dx = -1;
@@ -834,7 +833,7 @@ void RoadGraph::dfs_random_paths(
         std::shuffle(neighbors.begin(), neighbors.end(), rng);
         for (Node* neighbor : neighbors) {
             if (result[start_node].size() >= max_paths_per_node) break;
-            int new_dx = neighbor->x;
+            int new_dx = current->x - neighbor->x;
             if (new_dx * dx == -1) {
                 ++turns;
                 dx = -dx;
@@ -843,7 +842,7 @@ void RoadGraph::dfs_random_paths(
                 dfs_random_paths(neighbor, start_node, current_path, visited, result, max_paths_per_node, turns, dx, rng);
         }
     }
-    current_path.pop_back();
+    current_path.v.pop_back();
     visited.erase(current);
 }
 
@@ -869,11 +868,11 @@ RoadGraph::Paths RoadGraph::find_all_paths() const {
 
 
 RouteDrawer::RouteDrawer(const RoadGraph::Path& path) {
-    int N = path.size();
+    int N = path.v.size();
     m_vertex_array.resize(N * 2);
     glm::vec2 begin = { path[0]->x * 32 + 16, path[0]->y * 32 + 16 };
     glm::vec2 next_begin = { path[1]->x * 32 + 16, path[1]->y * 32 + 16 };
-    glm::vec2 end = { path.back()->x * 32 + 16, path.back()->y * 32 + 16 };
+    glm::vec2 end = { path.v.back()->x * 32 + 16, path.v.back()->y * 32 + 16 };
     glm::vec2 prev_end = { path[N - 2]->x * 32 + 16, path[N - 2]->y * 32 + 16 };
     glm::vec2 dir_begin = glm::normalize(next_begin - begin);
     dir_begin = glm::vec2{ -dir_begin.y, dir_begin.x };

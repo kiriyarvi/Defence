@@ -119,7 +119,12 @@ public:
             Enemy BTR;
             Enemy CruiserI;
             Enemy smoke_truck;
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Enemies, solder, bike, truck, tank, pickup, BTR, CruiserI, smoke_truck)
+            struct MREW {
+                Enemy enemy_params;
+                int radius;
+                NLOHMANN_DEFINE_TYPE_INTRUSIVE(MREW, enemy_params, radius)
+            } mrew;
+			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Enemies, solder, bike, truck, tank, pickup, BTR, CruiserI, smoke_truck, mrew)
 		} enemies;
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(Params, guns, enemies)
 	} params;

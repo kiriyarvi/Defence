@@ -13,7 +13,8 @@ enum class EnemyType {
     BTR,
     Tank,
     CruiserI,
-    SmokeTruck
+    SmokeTruck,
+    MREW
 };
 
 std::string to_string(EnemyType type);
@@ -87,6 +88,7 @@ public:
     float m_bounding_box_border_scale = 0.5;
 	sf::Vector2f goal; // текущая целевая точка
 	int goal_path_node = 0; // номер узла в пути, к которому враг стремиться на данный момент
+    float path_progress = 0; // прогресс пройденного пути [0,1]
 private:
 	sf::Vector2i last_breaking_cell = { -1, -1 };
 	bool repairing = false;

@@ -76,7 +76,9 @@ enum class TextureID {
     SmokeParticles,
     Radar,
     RadarIcon,
-    Capture
+    Capture,
+    MREW,
+    MREWRadar
 };
 
 class TextureManager {

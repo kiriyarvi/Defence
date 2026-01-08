@@ -98,7 +98,12 @@ public:
     void clear();
 
 	// Найти все пути
-    using Path = std::vector<Node*>;
+    struct Path {
+        Node* operator[](size_t i) const { return v[i]; }
+        std::vector<Node*> v;
+        float distance = 0.0;
+        void calc_dist();
+    };
     using Paths = std::map<Node*, std::vector<Path>>;
     struct PathID {
         RoadGraph::Node* start_node = nullptr;
@@ -118,8 +123,6 @@ private:
         int dx,
         std::mt19937& rng
     ) const;
-
-    std::string hash_path(const Path& path) const;
 };
 
 class RouteDrawer {

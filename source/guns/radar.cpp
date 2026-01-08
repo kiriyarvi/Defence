@@ -82,11 +82,10 @@ void Radar::logic(double dtime_microseconds, int x_id, int y_id) {
             if (d >= m_params.radius * 32) continue;
             if (std::find_if(m_targets.begin(), m_targets.end(), [&](Target& t) {return t.target == e->id; }) != m_targets.end())
                 continue;
-            float m = d + (e->position.x - pos.x); // чем левее, тем выше приоритет.
-            if (enemy == nullptr || m >= metric) {
+            if (enemy == nullptr || e->path_progress < metric) {
                 enemy = e.get();
                 id = enemy->id;
-                metric = m;
+                metric = e->path_progress;
             }
         }
         if (enemy != nullptr) {

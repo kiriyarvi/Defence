@@ -127,3 +127,18 @@ public:
     }
 };
 
+class MREW : public SimpleEnemy {
+public:
+    // TODO уничтоженная версия.
+    MREW() : SimpleEnemy(TextureID::MREW, TextureID::MREW, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.mrew.enemy_params, EnemyType::MREW, Collision(glm::vec2(-11, -6), glm::vec2(11, 6))) {
+        m_radar.setTexture(TextureManager::Instance().textures[TextureID::MREWRadar]);
+        m_radar.setTextureRect(sf::IntRect(5, 10, 9, 9));
+        m_radar.setOrigin(4.5, 4.5);
+    }
+    void draw(sf::RenderWindow& window) override;
+    bool logic(double dtime) override;
+private:
+    float m_radar_rotation = 0;
+    sf::Sprite m_radar;
+};
+

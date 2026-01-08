@@ -17,7 +17,8 @@ std::pair<EnemySpawn, bool> UniformSpawner::next_enemy() {
         { EnemyType::BTR, 2.f },
         { EnemyType::Tank, 2.f },
         { EnemyType::CruiserI, 5.f },
-        { EnemyType::SmokeTruck, 1.5f }
+        { EnemyType::SmokeTruck, 1.5f },
+        { EnemyType::MREW, 1.5f }
     };
     if (m_spawners.empty()) {
         return std::make_pair(EnemySpawn(), false);
@@ -131,7 +132,10 @@ WaveController::WaveController() {
         auto r1 = std::make_unique<UniformSpawner>();
         r1->id = one_random_route();
         r1->add_spawner(EnemyType::SmokeTruck, 1);
-        r1->add_spawner(EnemyType::Solder, 30);
+        r1->add_spawner(EnemyType::MREW, 1);
+        r1->add_spawner(EnemyType::Solder, 10);
+        r1->add_spawner(EnemyType::SmokeTruck, 1);
+        r1->add_spawner(EnemyType::Solder, 10);
         r1->add_spawner(EnemyType::Truck, 1);
         r1->add_spawner(EnemyType::Pickup, 1);
         r1->add_spawner(EnemyType::BTR, 1);
