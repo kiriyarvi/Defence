@@ -9,6 +9,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+add_compile_definitions(DEBUG_ENABLED=true)
+
 file(GLOB_RECURSE DEFENCE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/source/*cpp" )
 add_executable(defence "${DEFENCE_SOURCES}")
 

@@ -6,6 +6,7 @@
 #include "sound_manager.h"
 #include "game_state.h"
 #include "animation_holder.h"
+#include "debugger.h"
 
 int main() {
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
@@ -62,9 +63,10 @@ int main() {
 		window.clear(sf::Color::Black);
 		TileMap::Instance().draw(window);
 		EnemyManager::Instance().draw(window);
-		TileMap::Instance().draw_effects(window);
+		TileMap::Instance().draw_effects(window); // анимации взрывов и выстрелов.
         AnimationHolder::Instance().draw(window);
-        EnemyManager::Instance().draw_effects(window);
+        EnemyManager::Instance().draw_effects(window); // health + smoke + uncovering box
+        Debugger::Instance().draw(window);
 		game_state.draw(window);
 		gui.draw();
 		window.display();

@@ -99,7 +99,7 @@ public:
                 float uncover_time;
                 int uncovering_level;
                 float aiming_time;
-                NLOHMANN_DEFINE_TYPE_INTRUSIVE(Radar, radius, cost, max_targets, uncover_time, uncovering_level)
+                NLOHMANN_DEFINE_TYPE_INTRUSIVE(Radar, radius, cost, max_targets, uncover_time, uncovering_level, aiming_time)
             } radar;
 			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Guns, antitank, twingun, minigun, mine, spikes, hedgehog, radar)
 		} guns;
