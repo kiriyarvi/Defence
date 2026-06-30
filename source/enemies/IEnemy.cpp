@@ -41,22 +41,30 @@ IEnemy::IEnemy(const ParamsManager::Params::Enemies::Enemy& p, EnemyType t, Coll
 
 bool IEnemy::logic(double dtime) {
     //1. Определим засекреченность врага
-    bool in_smoke = false;
+    //1.1 Проверяем нахождение в дымовой завесе
+    int covering_level = 0;
+    m_in_smoke = false;
     for (auto& s : EnemyManager::Instance().get_smokes()) {
         if (!s.active()) continue;
         float d = glm::distance(s.m_pos, position);
         if (d <= s.m_max_radius) {
-            in_smoke = true;
-            if (!m_in_smoke) { // если не был в дыму
-                m_in_smoke = true; //статус изменилися
-                CoveringDataBase::Instance().make_enemy_covered(id);
-            }
-            break; // если был в дыму, статус тоже не поменялся => в любом случае break.
+            ++covering_level;
+            m_in_smoke = true;
+            break;
         }
     }
-    if (!in_smoke && m_in_smoke) { // вышли из завесы
-        m_in_smoke = false;
-        CoveringDataBase::Instance().remove_enemy(id);
+    //1.2 Дополнительный уровень засекреченности от средств радио-электронной борьбы
+    int max_mrew_covering_level = 0;
+    for (auto& [id, enemy_ptr] : EnemyManager::Instance().m_MREW_enemy_info) {
+        float d = glm::distance(enemy_ptr->position, position);
+        if (d <= 32 * enemy_ptr->m_MREW_params_ptr->radius)
+            max_mrew_covering_level = std::max(max_mrew_covering_level, enemy_ptr->m_MREW_params_ptr->covering_level);
+    }
+    //1.3 Заносим информацию в базу данных, если это необходимо.
+    covering_level += max_mrew_covering_level;
+    if (covering_level != m_covering_level) {
+        m_covering_level = covering_level;
+        CoveringDataBase::Instance().enemy_covering_level(id, m_covering_level);
     }
     //2. Логика починки
 	if (repairing) {
@@ -148,4 +156,15 @@ void IEnemy::draw_collision(sf::RenderWindow& window) {
     sp.setPosition(collision.br_vertex.x, collision.br_vertex.y);
     sp.setOrigin(8, 8);
     window.draw(sp, t);
+}
+
+glm::vec2 IEnemy::rotate(const glm::vec2& a) const {
+    if (rotation == 0)
+        return a;
+    else if (rotation == 90)
+        return { -a.y, a.x };
+    else if (rotation == 180)
+        return { -a.x, -a.y };
+    else if (rotation == -90)
+        return { a.y, -a.x };
 }

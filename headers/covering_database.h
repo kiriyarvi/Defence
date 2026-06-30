@@ -15,15 +15,13 @@ public:
     CoveringDataBase(CoveringDataBase&&) = delete;
     CoveringDataBase& operator=(CoveringDataBase&&) = delete;
 
-    void make_enemy_covered(uint32_t id);
-    void make_enemy_uncovered(uint32_t id);
-    void remove_enemy(uint32_t id);
+    void enemy_covering_level(uint32_t id, int level);
+    void enemy_uncovering_level(uint32_t id, int level);
     bool is_available_taget(uint32_t id);
 public:
-    enum class EnemyStatus {
-        Covered,
-        Uncovered,
-        Unknown
+    struct EnemyStatus {
+        int covering_level;
+        int uncovering_level;
     };
     EnemyStatus get_status(uint32_t id);
     std::unordered_map<uint32_t, EnemyStatus> m_enemies;

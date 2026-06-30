@@ -2,6 +2,7 @@
 #include "tile_map.h"
 #include <vector>
 #include "guns/minigun.h"
+#include "guns/radar.h"
 #include "game_state.h"
 #include "achievement_system.h"
 #include "gui/info_panel.h"
@@ -289,6 +290,98 @@ void UpgradePanelCreator::visit(Mine& mine) {
 }
 
 void UpgradePanelCreator::visit(Radar& radar) {
+    reset();
+
+    m_buttons.resize(4);
+    auto& radius_upgrades = m_buttons[0];
+    auto& uncovering_level_upgrades = m_buttons[1];
+    auto& uncovering_speed_upgrades = m_buttons[2];
+    auto& long_distance_communication_upgrade = m_buttons[3];
+
+    auto& params = ParamsManager::Instance().params.guns.radar;
+    UpgradeButton radius_upgrades_I(TextureID::RadarUpgradeRadius, params.radius_upgrades[1].cost, radar.radius_upgrade, AchievementSystem::Instance().radar_upgrades.radius_upgrades, 1, "Радиус обнаружения I");
+    UpgradeButton radius_upgrades_II(TextureID::RadarUpgradeRadius, params.radius_upgrades[2].cost, radar.radius_upgrade, AchievementSystem::Instance().radar_upgrades.radius_upgrades, 2, "Радиус обнаружения II");
+    UpgradeButton radius_upgrades_III(TextureID::RadarUpgradeRadius, params.radius_upgrades[3].cost, radar.radius_upgrade, AchievementSystem::Instance().radar_upgrades.radius_upgrades, 3, "Радиус обнаружения III");
+    radius_upgrades.push_back(std::move(radius_upgrades_I));
+    radius_upgrades.push_back(std::move(radius_upgrades_II));
+    radius_upgrades.push_back(std::move(radius_upgrades_III));
+    for (size_t i = 0; i < 3; ++i) {
+        radius_upgrades[i].on_mouse_enter = [&, i]() {
+            auto& up = radius_upgrades[i];
+            InfoPanel panel;
+            panel.set_name("Радиус обнаружения " + std::string(i + 1, 'I'));
+            panel.set_description("Радиус обнаружения противников увеличиться");
+            panel.add_char("Радиус обнаружения", params.radius_upgrades[i + 1].radius);
+            panel.create();
+            info->removeAllWidgets();
+            info->add(panel.content);
+        };
+    }
+    UpgradeButton uncovering_level_upgrade_I(TextureID::RadarUpgradeInterferrenceSuppression, params.uncovering_level_upgrades[1].cost, radar.uncovering_level_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_level_upgrades, 1, "Система радиоподавления I");
+    UpgradeButton uncovering_level_upgrade_II(TextureID::RadarUpgradeInterferrenceSuppression, params.uncovering_level_upgrades[2].cost, radar.uncovering_level_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_level_upgrades, 2, "Система радиоподавления II");
+    UpgradeButton uncovering_level_upgrade_III(TextureID::RadarUpgradeInterferrenceSuppression, params.uncovering_level_upgrades[3].cost, radar.uncovering_level_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_level_upgrades, 3, "Система радиоподавления III");
+    uncovering_level_upgrades.push_back(std::move(uncovering_level_upgrade_I));
+    uncovering_level_upgrades.push_back(std::move(uncovering_level_upgrade_II));
+    uncovering_level_upgrades.push_back(std::move(uncovering_level_upgrade_III));
+    for (size_t i = 0; i < 3; ++i) {
+        uncovering_level_upgrades[i].on_mouse_enter = [&, i]() {
+            auto& up = uncovering_level_upgrades[i];
+            InfoPanel panel;
+            panel.set_name("Система радиоподавления " + std::string(i + 1, 'I'));
+            panel.set_description("Радар будет обнаруживать противников с более высоким уровнем маскировки.");
+            panel.add_char("Уровень маскировки", params.uncovering_level_upgrades[i + 1].uncovering_level);
+            panel.create();
+            info->removeAllWidgets();
+            info->add(panel.content);
+        };
+    }
+    UpgradeButton uncovering_speed_upgrade_I(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_level_upgrades[1].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 1, "Скорость обнаружения I");
+    UpgradeButton uncovering_speed_upgrade_II(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_level_upgrades[2].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 2, "Скорость обнаружения II");
+    UpgradeButton uncovering_speed_upgrade_III(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_level_upgrades[3].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 3, "Скорость обнаружения III");
+    uncovering_speed_upgrades.push_back(std::move(uncovering_speed_upgrade_I));
+    uncovering_speed_upgrades.push_back(std::move(uncovering_speed_upgrade_II));
+    uncovering_speed_upgrades.push_back(std::move(uncovering_speed_upgrade_III));
+    for (size_t i = 0; i < 3; ++i) {
+        uncovering_speed_upgrades[i].on_mouse_enter = [&, i]() {
+            auto& up = uncovering_speed_upgrades[i];
+            InfoPanel panel;
+            panel.set_name("Скорость обнаружения " + std::string(i + 1, 'I'));
+            panel.set_description("Время выбора цели (наведения) и время её обнаружения уменьшиться.");
+            panel.add_char("Время наведения", params.uncovering_speed_upgrades[i + 1].aiming_time);
+            panel.add_char("Время обнаружения цели", params.uncovering_speed_upgrades[i + 1].uncover_time);
+            panel.create();
+            info->removeAllWidgets();
+            info->add(panel.content);
+        };
+    }
+
+    UpgradeButton long_distace_communication_upgrade(TextureID::RadarUpgradeLongDistanceCommunication, params.long_distance_communication_upgrade_cost, radar.long_distance_communication_upgrade, AchievementSystem::Instance().radar_upgrades.long_distance_communication_upgrade, 1, "Дальняя связь");
+    long_distace_communication_upgrade.on_mouse_enter = [&] () {
+        InfoPanel panel;
+        panel.set_name("Дальняя связь");
+        panel.set_description("Радар получит возможность быть частью сети, образованной радиовышками.");
+        panel.create();
+        info->removeAllWidgets();
+        info->add(panel.content);
+    };
+    long_distance_communication_upgrade.push_back(std::move(long_distace_communication_upgrade));
+
+
+    tgui::Grid::Ptr grid = tgui::Grid::create();
+
+    for (int cat = 0; cat < m_buttons.size(); ++cat)
+        for (int up = 0; up < m_buttons[cat].size(); ++up) {
+            grid->addWidget(m_buttons[cat][up].m_group, cat, up);
+            float size = GameState::Instance().window.getSize().y * 0.1;
+            m_buttons[cat][up].m_group->setSize(size, size);
+        }
+    panel->add(grid, "Grid");
+    info = tgui::Group::create();
+    info->setPosition(0, "Grid.bottom");
+    panel->add(info);
+}
+
+void UpgradePanelCreator::visit(RadioTower& radio_tower) {
     reset();
 }
 

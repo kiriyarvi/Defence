@@ -129,16 +129,29 @@ public:
 
 class MREW : public SimpleEnemy {
 public:
-    // TODO уничтоженная версия.
-    MREW() : SimpleEnemy(TextureID::MREW, TextureID::MREW, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.mrew.enemy_params, EnemyType::MREW, Collision(glm::vec2(-11, -6), glm::vec2(11, 6))) {
+    MREW() : SimpleEnemy(TextureID::MREW, TextureID::MREWDestroyed, Sounds::MedBlustOfDestruction, ParamsManager::Instance().params.enemies.mrew.enemy_params, EnemyType::MREW, Collision(glm::vec2(-11, -6), glm::vec2(11, 6))),
+        m_MREW_params(ParamsManager::Instance().params.enemies.mrew.MREW_params) {
         m_radar.setTexture(TextureManager::Instance().textures[TextureID::MREWRadar]);
         m_radar.setTextureRect(sf::IntRect(5, 10, 9, 9));
-        m_radar.setOrigin(4.5, 4.5);
+        m_radar.setOrigin(3.5, 4.5);
+
+        m_noise.setTexture(&TextureManager::Instance().textures[TextureID::Noise]);
+        m_noise.setTextureRect(sf::IntRect(0, 0, 128, 128));
+        m_noise.setRadius(10);
+        m_noise.setOutlineThickness(2);
+        m_noise.setOutlineColor(sf::Color::Blue);
+        m_noise.setRadius(32 * m_MREW_params.radius);
+        m_noise.setOrigin(32 * m_MREW_params.radius, 32 * m_MREW_params.radius);
+        m_noise.setFillColor(sf::Color(255, 255, 255, 50));
+
+        m_MREW_params_ptr = &m_MREW_params;
     }
     void draw(sf::RenderWindow& window) override;
     bool logic(double dtime) override;
 private:
     float m_radar_rotation = 0;
     sf::Sprite m_radar;
+    sf::CircleShape m_noise;
+    ParamsManager::Params::Enemies::MREWEnemiesParams& m_MREW_params;
 };
 

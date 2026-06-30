@@ -16,7 +16,8 @@ enum class BuildingType {
     Hedgehogs,
     AntitankGun,
     TwinGun,
-    Radar
+    Radar,
+    RadioTower
 };
 
 class MiniGun;
@@ -26,6 +27,7 @@ class AntitankGun;
 class TwinGun;
 class Mine;
 class Radar;
+class RadioTower;
 
 class IBuildingVisitor {
 public:
@@ -36,6 +38,7 @@ public:
     virtual void visit(TwinGun& twingun) = 0;
     virtual void visit(Mine& mine) = 0;
     virtual void visit(Radar& mine) = 0;
+    virtual void visit(RadioTower& radio_tower) = 0;
 };
 
 std::string to_string(BuildingType type);

@@ -180,12 +180,16 @@ IDestroyedEnemy::Ptr BTR::get_destroyed_enemy() {
 
 void MREW::draw(sf::RenderWindow& window) {
     SimpleEnemy::draw(window);
-    m_radar.setRotation(m_radar_rotation);
-    m_radar.setPosition(position.x - 6.5, position.y + 1.5);
+    m_radar.setRotation(m_radar_rotation + rotation); //вращение радара + вращение корпуса
+    glm::vec2 radar_offset = rotate({ -7.5, 0. });
+    m_radar.setPosition(position.x + radar_offset.x, position.y + radar_offset.y);
+    m_noise.setPosition(position.x, position.y);
     window.draw(m_radar);
+    window.draw(m_noise);
+
 }
 
 bool MREW::logic(double dtime) {
-    m_radar_rotation += dtime / (1000.f * 1000.f) * 20.f;
+    m_radar_rotation += dtime / (1000.f * 1000.f) * 40.f;
     return SimpleEnemy::logic(dtime);
 }

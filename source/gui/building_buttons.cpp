@@ -8,6 +8,7 @@
 #include "guns/spikes.h"
 #include "guns/hedgehog.h"
 #include "guns/radar.h"
+#include "guns/radio_tower.h"
 #include "shader_manager.h"
 #include "achievement_system.h"
 #include "gui/info_panel.h"
@@ -272,7 +273,7 @@ RadarBuildingButton::RadarBuildingButton(GameState& game_state):
         make_creator<Radar>(),
         TileRestrictions::NoRoads,
         ParamsManager::Instance().params.guns.radar.cost,
-        ParamsManager::Instance().params.guns.radar.radius,
+        ParamsManager::Instance().params.guns.radar.radius_upgrades[0].radius,
         BuildingType::Radar,
         "Радар"
     )
@@ -293,4 +294,28 @@ void RadarBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id,
     radar.setPosition(x_id * 32 + 16, y_id * 32 + 16);
     if (!allowed) radar.setColor(sf::Color(255, 0, 0));
     window.draw(radar);
+}
+
+
+RadioTowerBuildingButton::RadioTowerBuildingButton(GameState& game_state):
+    BuildingButton(
+        TextureID::RadioTower,
+        game_state,
+        make_creator<RadioTower>(),
+        TileRestrictions::NoRoads,
+        ParamsManager::Instance().params.guns.radio_tower.cost,
+        ParamsManager::Instance().params.guns.radio_tower.radius,
+        BuildingType::RadioTower,
+        "Радиовышка"
+    )
+{}
+
+void RadioTowerBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
+    bool allowed = is_cell_allowed(x_id, y_id);
+    if (allowed)
+        draw_radius(window, x_id, y_id);
+    sf::Sprite radio_tower(TextureManager::Instance().textures[TextureID::RadioTower]);
+    radio_tower.setPosition(x_id * 32, y_id * 32);
+    if (!allowed) radio_tower.setColor(sf::Color(255, 0, 0));
+    window.draw(radio_tower);
 }

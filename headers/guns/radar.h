@@ -1,6 +1,7 @@
 #pragma once
 #include "tile_map.h"
 #include "params_manager.h"
+#include "achievement_system.h"
 #include <list>
 
 class Radar : public IBuilding {
@@ -11,11 +12,16 @@ public:
     void logic(double dtime, int x_id, int y_id) override;
     bool is_destroyed() override { return false; }
     ACCEPT(Radar)
+    BuildingUpgrade radius_upgrade;
+    BuildingUpgrade uncovering_level_upgrade;
+    BuildingUpgrade uncovering_speed_upgrade;
+    BuildingUpgrade long_distance_communication_upgrade;
 private:
     sf::Sprite m_radar_sprite;
     sf::Sprite m_base_sprite;
     float m_rotation = 180;
     const ParamsManager::Params::Guns::Radar& m_params;
+   
 
     struct Target {
         uint32_t target;

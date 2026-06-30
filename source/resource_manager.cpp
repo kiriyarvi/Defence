@@ -12,4 +12,7 @@ ResourceManager::ResourceManager() {
         file.read(reinterpret_cast<char*>(row.data()),
             row.size() * sizeof(glm::vec2));
     }
+
+    GOSTtypeA_font.loadFromFile("fonts/GOSTtypeA.ttf");
+    PixelSplitter_Bold_font.loadFromFile("fonts/PixelSplitter-Bold.ttf");
 }

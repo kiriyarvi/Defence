@@ -93,15 +93,39 @@ public:
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(Hedgehog, health, delay, cost, wheels_debuff)
 			} hedgehog;
             struct Radar {
-                int radius;
                 int cost;
                 int max_targets;
-                float uncover_time;
-                int uncovering_level;
-                float aiming_time;
-                NLOHMANN_DEFINE_TYPE_INTRUSIVE(Radar, radius, cost, max_targets, uncover_time, uncovering_level, aiming_time)
+
+                struct RadiusUpgrade {
+                    int cost;
+                    int radius;
+                    NLOHMANN_DEFINE_TYPE_INTRUSIVE(RadiusUpgrade, cost, radius)
+                };
+                std::vector<RadiusUpgrade> radius_upgrades;
+                struct UncoveringLevelUpgrade {
+                    int cost;
+                    int uncovering_level;
+                    NLOHMANN_DEFINE_TYPE_INTRUSIVE(UncoveringLevelUpgrade, cost, uncovering_level)
+                };
+                std::vector<UncoveringLevelUpgrade> uncovering_level_upgrades;
+                struct UncoveringSpeedUpgrade {
+                    int cost;
+                    float uncover_time;
+                    float aiming_time;
+                    NLOHMANN_DEFINE_TYPE_INTRUSIVE(UncoveringSpeedUpgrade, cost, uncover_time, aiming_time)
+                };
+                std::vector<UncoveringSpeedUpgrade> uncovering_speed_upgrades;
+
+                int long_distance_communication_upgrade_cost;
+
+                NLOHMANN_DEFINE_TYPE_INTRUSIVE(Radar, cost, max_targets, radius_upgrades, uncovering_level_upgrades, uncovering_speed_upgrades, long_distance_communication_upgrade_cost)
             } radar;
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Guns, antitank, twingun, minigun, mine, spikes, hedgehog, radar)
+            struct RadioTower {
+                int radius;
+                int cost;
+                NLOHMANN_DEFINE_TYPE_INTRUSIVE(RadioTower, radius, cost)
+            } radio_tower;
+			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Guns, antitank, twingun, minigun, mine, spikes, hedgehog, radar, radio_tower)
 		} guns;
 		struct Enemies {
 			struct Enemy {
@@ -119,10 +143,15 @@ public:
             Enemy BTR;
             Enemy CruiserI;
             Enemy smoke_truck;
+            struct MREWEnemiesParams { // параметры для врагов, которые одновременно являются средствами радиоэлектронной борьбы
+                int radius; //радиус действия
+                int covering_level; //сила действия
+                NLOHMANN_DEFINE_TYPE_INTRUSIVE(MREWEnemiesParams, radius, covering_level)
+            };
             struct MREW {
                 Enemy enemy_params;
-                int radius;
-                NLOHMANN_DEFINE_TYPE_INTRUSIVE(MREW, enemy_params, radius)
+                MREWEnemiesParams MREW_params;
+                NLOHMANN_DEFINE_TYPE_INTRUSIVE(MREW, enemy_params, MREW_params)
             } mrew;
 			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Enemies, solder, bike, truck, tank, pickup, BTR, CruiserI, smoke_truck, mrew)
 		} enemies;

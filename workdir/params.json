@@ -108,12 +108,71 @@
       "wheels_debuff": 2
     },
     "radar": {
-      "radius": 5,
       "cost": 1000,
       "max_targets": 3, // максимальное число одновременно раскрываемых целей
-      "uncover_time": 5, // скорость раскрытия цели
-      "uncovering_level": 2,
-      "aiming_time": 1 // время наведения на следующую цель (промежуток между захватами целей)
+      "radius_upgrades": [
+        {
+          "radius": 5,
+          "cost": 0
+        },
+        {
+          "radius": 7,
+          "cost": 5000
+        },
+        {
+          "radius": 9,
+          "cost": 15000
+        },
+        {
+          "radius": 14,
+          "cost": 25000
+        }
+      ],
+      "uncovering_level_upgrades": [
+        {
+          "cost": 0,
+          "uncovering_level": 1
+        },
+        {
+          "cost": 2500,
+          "uncovering_level": 2
+        },
+        {
+          "cost": 7500,
+          "uncovering_level": 3
+        },
+        {
+          "cost": 35000,
+          "uncovering_level": 4
+        }
+      ],
+      "uncovering_speed_upgrades": [
+        {
+          "cost": 0,
+          "uncover_time": 5, // скорость раскрытия цели
+          "aiming_time": 1 // время наведения на следующую цель (промежуток между захватами целей)
+        },
+        {
+          "cost": 1000,
+          "uncover_time": 4,
+          "aiming_time": 1
+        },
+        {
+          "cost": 2500,
+          "uncover_time": 3,
+          "aiming_time": 0.7
+        },
+        {
+          "cost": 5000,
+          "uncover_time": 2,
+          "aiming_time": 0.5
+        }
+      ],
+      "long_distance_communication_upgrade_cost": 1000
+    },
+    "radio_tower": {
+      "radius": 5,
+      "cost": 5000
     }
   },
   "enemies": {
@@ -168,11 +227,14 @@
     "mrew": {
       "enemy_params": {
         "health": 50,
-        "speed": 0.8,
+        "speed": 0.5,
         "reward": 40,
         "armor_level": 0
       },
-      "radius": 3
+      "MREW_params": {
+        "radius": 3,
+        "covering_level": 1
+      }
     }
   }
 }

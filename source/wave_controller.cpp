@@ -128,7 +128,7 @@ WaveController::WaveController() {
     int all_paths = EnemyManager::Instance().all_paths.size();
 
     // Волна 0
-    {
+   {
         auto r1 = std::make_unique<UniformSpawner>();
         r1->id = one_random_route();
         r1->add_spawner(EnemyType::SmokeTruck, 1);

@@ -19,6 +19,7 @@ public:
 
     void add_line(const glm::vec2& from, const glm::vec2& to, sf::Color color);
     void add_indicator(uint32_t enemy_id, float p);
+    void add_text(const std::string& text, const glm::vec2& position);
     void draw(sf::RenderWindow& window);
      
 private:
@@ -38,5 +39,11 @@ private:
     };
 
     std::list<EnemyIndicators> m_enemies_indicators;
+
+    struct Text {
+        std::string text;
+        glm::vec2 position;
+    };
+    std::list<Text> m_text_list;
 
 };

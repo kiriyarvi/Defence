@@ -96,4 +96,14 @@ TextureManager::TextureManager() {
 
     textures[TextureID::MREW].loadFromFile("sprites/MREW.png");
     textures[TextureID::MREWRadar].loadFromFile("sprites/MREW_radar.png");
+    textures[TextureID::MREWDestroyed].loadFromFile("sprites/MREW_destroyed.png");
+    textures[TextureID::Noise].loadFromFile("sprites/noise.png");
+    textures[TextureID::Noise].setRepeated(true);
+
+    textures[TextureID::RadioTower].loadFromFile("sprites/Radio Tower.png");
+
+    textures[TextureID::RadarUpgradeInterferrenceSuppression].loadFromFile("sprites/radar_upgrade_interferrence_suppression.png");
+    textures[TextureID::RadarUpgradeLongDistanceCommunication].loadFromFile("sprites/radar_upgrade_long_distance_communication.png");
+    textures[TextureID::RadarUpgradeRadius].loadFromFile("sprites/radar_upgrade_radius.png");
+    textures[TextureID::RadarUpgradeUncoverSpeed].loadFromFile("sprites/radar_upgrade_uncover_speed.png");
 }

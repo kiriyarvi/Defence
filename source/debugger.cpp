@@ -1,5 +1,6 @@
 #include <debugger.h>
 #include <enemy_manager.h>
+#include <resource_manager.h>
 
 void Debugger::add_line(const glm::vec2& from, const glm::vec2& to, sf::Color color) {
     m_lines.push_back({ from, to, color });
@@ -17,6 +18,10 @@ void Debugger::add_indicator(uint32_t enemy_id, float p) {
         i.progresses.push_back(p);
         m_enemies_indicators.push_back(i);
     }
+}
+
+void Debugger::add_text(const std::string& text, const glm::vec2& position) {
+    m_text_list.push_back({ text, position });
 }
 
 void Debugger::draw(sf::RenderWindow& window) {
@@ -40,4 +45,14 @@ void Debugger::draw(sf::RenderWindow& window) {
     }
     m_enemies_indicators.clear();
 
+    sf::Text text;
+    text.setFont(ResourceManager::Instance().PixelSplitter_Bold_font);
+    text.setCharacterSize(8);
+    text.setColor(sf::Color(0, 0, 0, 255));
+    for (auto& t : m_text_list) {
+        text.setString(t.text);
+        text.setPosition(t.position.x, t.position.y);
+        window.draw(text);
+    }
+    m_text_list.clear();
 }

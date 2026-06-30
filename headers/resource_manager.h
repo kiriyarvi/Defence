@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/vec2.hpp>
 #include <vector>
+#include <SFML/Graphics/Font.hpp>
 
 class ResourceManager {
 public:
@@ -16,6 +17,8 @@ public:
     ResourceManager& operator=(ResourceManager&&) = delete;
 
     const std::vector<std::vector<glm::vec2>>& get_smoke_curl_noise() { return m_smoke_curl_noise; }
+    sf::Font GOSTtypeA_font;
+    sf::Font PixelSplitter_Bold_font;
 private:
     ResourceManager();
 private:

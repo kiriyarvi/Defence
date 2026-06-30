@@ -58,30 +58,40 @@ void EnemyManager::spawn(EnemyType type, RoadGraph::PathID path_id, bool boss) {
     m_enemies.back()->goal_path_node = 1;
     m_enemies.back()->goal = sf::Vector2f(path[1]->x * 32 + 16, path[1]->y * 32 + 16);
 	m_enemies.back()->logic(0.0); // чтобы установить статус маскировки и goal.
-	if (current_max_id > 32768)
+    if (m_enemies.back()->m_MREW_params_ptr != nullptr)
+        m_MREW_enemy_info.emplace(m_enemies.back()->id, m_enemies.back().get());
+    if (current_max_id > 32768)
 		current_max_id = 0;
+
 }
 
 void EnemyManager::logic(double dtime) {
-	std::vector<IEnemy::Ptr> new_enemies;
-	for (auto& enemy : m_enemies) { /// проходим по врагам и удаляем уничтоженных.
-		if (enemy->health <= 0) { 
+    size_t old_enemy_size = m_enemies.size();
+    for (auto it = m_enemies.begin(); it != m_enemies.end();) {
+        auto& enemy = *it;
+        if (enemy->health <= 0) { /// удаляем уничтоженных.
             GameState::Instance().enemy_defeated(enemy->type); /// для статистики.
-			m_destroyed_enemies.push_back(enemy->get_destroyed_enemy());
-			GameState::Instance().player_coins_add(enemy->params.reward); /// награда.
-		}
-		else {
-			new_enemies.push_back(std::move(enemy));
-		}
-	}
-	m_enemies = std::move(new_enemies); /// обновление врагов.
-	for (auto& enemy : m_enemies)
-		if (enemy->logic(dtime)); /// логика врагов, передвижение по маршруту.
-	m_enemies.erase(std::remove_if(m_enemies.begin(), m_enemies.end(),
-		[](const IEnemy::Ptr& enemy) {return enemy->path_is_completed; }),
-		m_enemies.end()
-	); /// удаляем тех врагов, которые достигли конца маршрута
-
+            m_destroyed_enemies.push_back(enemy->get_destroyed_enemy());
+            GameState::Instance().player_coins_add(enemy->params.reward); /// награда.
+            if (enemy->m_MREW_params_ptr != nullptr)
+                m_MREW_enemy_info.erase(enemy->id);
+            it = m_enemies.erase(it);
+            continue;
+        }
+        enemy->logic(dtime); // логика врага
+        if (enemy->path_is_completed) { //враг достиг конца маршрута, удаляем его.
+            if (enemy->m_MREW_params_ptr != nullptr)
+                m_MREW_enemy_info.erase(enemy->id);
+            it = m_enemies.erase(it);
+            continue;
+        }
+        ++it;
+    }
+    if (old_enemy_size > m_enemies.size()) { // некоторые враги были удалены => ссылки перестроены, нужно обновить MREW
+        for (auto& [id, ref] : m_MREW_enemy_info) {
+            ref = get_enemy_by_id(id);
+        }
+    }
     /// У уничтоженных врагов есть анимации уничтожения, логику все равно нужно вызывать.
 	for (auto& destroyed_enemy : m_destroyed_enemies)
 		destroyed_enemy->logic(dtime);

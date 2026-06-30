@@ -40,6 +40,7 @@ public:
 	virtual void visit(TwinGun& twingun);
 	virtual void visit(Mine& mine);
     virtual void visit(Radar& radar);
+    virtual void visit(RadioTower& radio_tower);
 	tgui::Group::Ptr panel;
     tgui::Group::Ptr info;
     ~UpgradePanelCreator();

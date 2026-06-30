@@ -78,7 +78,14 @@ enum class TextureID {
     RadarIcon,
     Capture,
     MREW,
-    MREWRadar
+    MREWRadar,
+    MREWDestroyed,
+    Noise,
+    RadioTower,
+    RadarUpgradeLongDistanceCommunication,
+    RadarUpgradeRadius,
+    RadarUpgradeInterferrenceSuppression,
+    RadarUpgradeUncoverSpeed
 };
 
 class TextureManager {

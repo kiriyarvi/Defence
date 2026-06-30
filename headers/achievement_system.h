@@ -78,6 +78,13 @@ public:
         static Upgrade create_cooling_upgrade(int n);
     } minigun_upgrades;
 
+    struct RadarUpgrades {
+        int radius_upgrades = 0;
+        int uncovering_level_upgrades = 0;
+        int uncovering_speed_upgrades = 0;
+        int long_distance_communication_upgrade = 0;
+    } radar_upgrades;
+
 
     void unlock_all();
 private:

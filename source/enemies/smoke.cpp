@@ -40,7 +40,7 @@ bool Smoke::logic(double dtime) {
         float ly = (particle.m_pos.y / m_max_radius + 1) / 2.f;
         lx = glm::clamp(lx, 0.f, 1.f);
         ly = glm::clamp(ly, 0.f, 1.f);
-        auto curl_noise = ResourceManager::Instance().get_smoke_curl_noise();
+        auto& curl_noise = ResourceManager::Instance().get_smoke_curl_noise();
         size_t nx = lx * (curl_noise.size() - 1) + 0.5;
         size_t ny = ly * (curl_noise.size() - 1) + 0.5;
         particle.m_pos += curl_fade * curl_noise[nx][ny] * 20.f * (float)(dtime / (1000.f * 1000.f));
@@ -66,7 +66,6 @@ bool Smoke::active() const {
 void Smoke::draw(sf::RenderWindow& window) {
     if (!m_enabled) return;
     for (auto it = m_particles.rbegin(); it != m_particles.rend(); ++it) {
-        break;
         auto& particle = *it;
         m_particle_sprite.setPosition(m_pos.x + particle.m_pos.x, m_pos.y + particle.m_pos.y);
         m_particle_sprite.setScale(particle.m_scale, particle.m_scale);

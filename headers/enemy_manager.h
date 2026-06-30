@@ -22,13 +22,14 @@ public:
 	EnemyManager& operator=(const EnemyManager&) = delete;
 	EnemyManager(EnemyManager&&) = delete;
 	EnemyManager& operator=(EnemyManager&&) = delete;
-	void logic(double dtime); // если возвращает true --- спавнеры кончились.
+	void logic(double dtime);
 	void draw(sf::RenderWindow& window);
     void draw_effects(sf::RenderWindow& window);
     void start_wave() { if (m_wave_controller) m_wave_controller->start_wave(); }
 	IEnemy* get_enemy_by_id(uint32_t id);
     RoadGraph::Paths all_paths;
-	std::vector<IEnemy::Ptr> m_enemies;
+	std::list<IEnemy::Ptr> m_enemies;
+    std::unordered_map<uint32_t, IEnemy*> m_MREW_enemy_info;
     void generate_waves();
     void add_smoke(Smoke&& smoke) { m_smokes.push_back(std::move(smoke)); }
     const std::list<Smoke>& get_smokes() { return m_smokes; }

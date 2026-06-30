@@ -63,6 +63,8 @@ public:
     virtual void make_boss() { m_boss = true; }
 
     virtual void draw_collision(sf::RenderWindow& window);
+    glm::vec2 rotate(const glm::vec2& a) const;
+
 
 	uint32_t id; // уникальный идентификатор врага
 	const ParamsManager::Params::Enemies::Enemy& params;
@@ -73,7 +75,8 @@ public:
 
     RoadGraph::PathID path_id; // путь по которому движется враг.
 	bool path_is_completed = false;
-	
+    ParamsManager::Params::Enemies::MREWEnemiesParams* m_MREW_params_ptr = nullptr;
+
 	bool infantry; // пехота (мотоциклист считается пехотой)
     EnemyType type;
 	enum class Wheels {
@@ -83,7 +86,9 @@ public:
         HeavyTracks
 	} wheels;
 
-    bool m_in_smoke = false; // находится ли враг внутри завесы.
+    int m_covering_level = 0; //уровень засекреченности
+    bool m_in_smoke = false;
+
     Collision collision;
     float m_bounding_box_border_scale = 0.5;
 	sf::Vector2f goal; // текущая целевая точка
