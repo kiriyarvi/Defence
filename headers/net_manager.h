@@ -1,5 +1,8 @@
 #pragma once
-#include <guns/radar.h>
+#include <glm/vec2.hpp>
+#include <list>
+
+class Radar;
 
 class NetManager {
 public:

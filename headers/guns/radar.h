@@ -2,9 +2,12 @@
 #include "tile_map.h"
 #include "params_manager.h"
 #include "achievement_system.h"
+#include "net_manager.h"
 #include <list>
 
+
 class Radar : public IBuilding {
+    friend class NetManager::Net;
 public:
     Radar(int x_id, int y_id);
     void draw(sf::RenderWindow& window) override;

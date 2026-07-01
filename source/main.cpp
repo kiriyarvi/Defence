@@ -7,6 +7,7 @@
 #include "game_state.h"
 #include "animation_holder.h"
 #include "debugger.h"
+#include "net_manager.h"
 
 int main() {
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
@@ -37,8 +38,14 @@ int main() {
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::K) {
                 for (auto& enemy : EnemyManager::Instance().m_enemies)
                     enemy->health = 0;
-            }if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::T) {
+            }
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::T) {
                 TileMap::Instance().create_tile_test_map();
+            }
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S) {
+                sf::Vector2i mouse_screen_pos = sf::Mouse().getPosition();
+                auto mouse_pos = window.mapPixelToCoords(mouse_screen_pos);
+                EnemyManager::Instance().add_smoke(Smoke({ mouse_pos.x, mouse_pos.y }, 4., 20.));
             }
             game_state.event(event, window);
 			
@@ -53,6 +60,7 @@ int main() {
 			if (!game_state.is_game_over() && !game_state.is_help_displayed()) {
 				EnemyManager::Instance().logic(dtime);
 				TileMap::Instance().logic(dtime);
+                NetManager::Instance().logic(dtime);
 				SoundManager::Instance().logic();
                 AnimationHolder::Instance().logic(dtime);
 			}

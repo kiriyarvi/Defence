@@ -47,10 +47,12 @@ void Debugger::draw(sf::RenderWindow& window) {
 
     sf::Text text;
     text.setFont(ResourceManager::Instance().PixelSplitter_Bold_font);
-    text.setCharacterSize(8);
+    text.setScale({ 0.1, 0.1 });
     text.setColor(sf::Color(0, 0, 0, 255));
     for (auto& t : m_text_list) {
         text.setString(t.text);
+        auto bounds = text.getLocalBounds();
+        text.setOrigin(0.f, bounds.top + bounds.height);
         text.setPosition(t.position.x, t.position.y);
         window.draw(text);
     }

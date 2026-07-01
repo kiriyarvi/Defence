@@ -27,7 +27,7 @@ void Radar::draw(sf::RenderWindow& window) {
             auto status = CoveringDataBase::Instance().get_status(t.target);
             Debugger::Instance().add_text(
                 std::to_string(status.covering_level) + "/" + std::to_string(status.uncovering_level),
-                enemy->position + glm::vec2{8.0, 0});
+                enemy->position + glm::vec2{8.0, 0.5});
         }
     }
 }
@@ -68,7 +68,7 @@ void Radar::logic(double dtime_microseconds) {
     auto& enemy_manager = EnemyManager::Instance();
     for (auto it = m_targets.begin(); it != m_targets.end();) {
         IEnemy* enemy; 
-        if (!(enemy = enemy_manager.get_enemy_by_id(it->target))) { // враг больше не существует. TODO это место очень узкое
+        if (!enemy_manager.get_enemy_by_id(it->target)) { // враг больше не существует. TODO это место очень узкое
             it = m_targets.erase(it);
             continue;
         }
@@ -89,9 +89,10 @@ void Radar::logic(double dtime_microseconds) {
     if (m_status != Status::Aiming && m_targets.size() < m_params.max_targets) {
         // поиск новых целей.
         IEnemy* enemy = nullptr;
-        uint32_t id;
         float metric = 1.;
         for (auto& e : enemy_manager.m_enemies) {
+            if (e->m_covering_level > uncovering_level)
+                continue; //не хватает uncovering для раскрытия цели
             if (CoveringDataBase::Instance().is_available_taget(e->id))
                 continue; //цель рассекречена => пропускаем
             if (std::find_if(m_targets.begin(), m_targets.end(), [&](Target& t) {return t.target == e->id; }) != m_targets.end())
@@ -102,14 +103,13 @@ void Radar::logic(double dtime_microseconds) {
             
             if ((enemy == nullptr || e->path_progress < metric) && e->m_covering_level <= uncovering_level) {
                 enemy = e.get();
-                id = enemy->id;
                 metric = e->path_progress;
             }
         }
         if (enemy != nullptr) {
             m_status = Status::Aiming;
             m_aiming_timer = 0;
-            m_targets.push_back({ id, 0.0 });
+            m_targets.push_back({ enemy->id, 0.0 });
         }
     }
 
