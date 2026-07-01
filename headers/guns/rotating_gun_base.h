@@ -7,9 +7,10 @@ class IEnemy;
 // TODO добавить возможность указания приоритета целей.
 class IRotatingGun : public IBuilding {
 public:
-	void draw(sf::RenderWindow& window, int x_id, int y_id) override;
-	void logic(double dtime_microseconds, int x_id, int y_id) override;
-	virtual void shoot_logic(int x_id, int y_id, IEnemy& enemy) = 0;
+    IRotatingGun(int x_id, int y_id);
+	void draw(sf::RenderWindow& window) override;
+	void logic(double dtime_microseconds) override;
+	virtual void shoot_logic(IEnemy& enemy) = 0;
 	double rotation = 180; //текущее вращение.
 	double rotation_speed = 90; // скорость вращения (градусы в секунду).
 	double radius; // радиус действия (указывается в клетках)

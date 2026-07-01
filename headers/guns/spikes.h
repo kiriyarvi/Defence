@@ -5,10 +5,10 @@
 
 class Spikes : public BuildingWithHealth {
 public:
-	Spikes();
-	void draw(sf::RenderWindow& window, int x, int y) override;
-	void draw_effects(sf::RenderWindow& window, int x, int y) override {}
-	void logic(double dtime, int x, int y) override;
+	Spikes(int x_id, int y_id);
+	void draw(sf::RenderWindow& window) override;
+	void draw_effects(sf::RenderWindow& window) override {}
+	void logic(double dtime) override;
 	static sf::Sprite get_sprite_for_tile(int x_id, int y_id);
     ACCEPT(Spikes)
 private:

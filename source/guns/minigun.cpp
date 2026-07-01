@@ -10,7 +10,7 @@
 #include "glm/gtx/rotate_vector.hpp"
 #include "glm/gtc/random.hpp"
 
-MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
+MiniGun::MiniGun(int x_id, int y_id):  IRotatingGun(x_id, y_id), m_params(ParamsManager::Instance().params.guns.minigun) {
     rotation_speed = m_params.rotation_speed;
 	radius = m_params.radius;
 	
@@ -90,8 +90,8 @@ MiniGun::MiniGun(): m_params(ParamsManager::Instance().params.guns.minigun) {
 }
 
 
-void MiniGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
-	IRotatingGun::draw(window, x_id, y_id);
+void MiniGun::draw(sf::RenderWindow& window) {
+	IRotatingGun::draw(window);
 	m_minigun_sprite.set_position(32 * x_id + 16, 32 * y_id + 16);
 	m_minigun_sprite.set_rotation(rotation);
 	if (m_shoot_state == ShootState::CoolDown && m_shot_animation.started()) {
@@ -113,7 +113,7 @@ void MiniGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
 	}
 }
 
-void MiniGun::draw_effects(sf::RenderWindow& window, int x, int y) {
+void MiniGun::draw_effects(sf::RenderWindow& window) {
 	if (!m_enemy_hit_animation.started() && !m_enemy_rebound_animation.started()) return;
 	IEnemy* enemy = EnemyManager::Instance().get_enemy_by_id(m_shoted_enemy_id);
 	if (!enemy) return;
@@ -153,7 +153,7 @@ void MiniGun::drum_animation() {
 	}
 }
 
-void MiniGun::logic(double dtime_microseconds, int x_id, int y_id) {
+void MiniGun::logic(double dtime_microseconds) {
 	temperature_logic(dtime_microseconds);
 
 	float t = m_temperature / (1000 * 1000);
@@ -191,7 +191,7 @@ void MiniGun::logic(double dtime_microseconds, int x_id, int y_id) {
 			m_dark_shell_on_belt = !m_dark_shell_on_belt;
 		}
 	}
-	IRotatingGun::logic(dtime_microseconds, x_id, y_id);
+	IRotatingGun::logic(dtime_microseconds);
 	compass_logic(x_id, y_id);
 	//GameState::Instance().minigun_state_update(*this);
 }
@@ -246,7 +246,7 @@ void MiniGun::temperature_logic(double dtime_microseconds) {
 	
 }
 
-void MiniGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
+void MiniGun::shoot_logic(IEnemy& enemy) {
 	if (m_shoot_state == ShootState::Ready && m_state != State::CoolDown) {
         float t = m_temperature / (1000 * 1000.f);
         auto& penetration_upgrade = m_params.penetration_upgrades[m_penetration_upgrade];

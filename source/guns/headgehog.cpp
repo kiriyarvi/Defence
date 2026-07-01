@@ -5,17 +5,17 @@
 #include "sound_manager.h"
 #include "game_state.h"
 
-Hedgehog::Hedgehog(): params(ParamsManager::Instance().params.guns.hedgehog) {
+Hedgehog::Hedgehog(int x_id, int y_id): BuildingWithHealth(x_id, y_id), params(ParamsManager::Instance().params.guns.hedgehog) {
     set_health(params.health);
 }
 
-void Hedgehog::draw(sf::RenderWindow& window, int x, int y) {
+void Hedgehog::draw(sf::RenderWindow& window) {
     sf::Sprite sprite(TextureManager::Instance().textures[TextureID::Hedgehog]);
-    sprite.setPosition(x * 32, y * 32);
+    sprite.setPosition(x_id * 32, y_id * 32);
     window.draw(sprite);
 }
 
-void Hedgehog::logic(double dtime, int x_id, int y_id) {
+void Hedgehog::logic(double dtime) {
     glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);
     int health = get_health();
     for (auto& enemy : EnemyManager::Instance().m_enemies) {

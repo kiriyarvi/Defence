@@ -4,10 +4,10 @@
 
 class RadioTower : public IBuilding {
 public:
-    RadioTower();
-    void draw(sf::RenderWindow& window, int x, int y) override;
-    void draw_effects(sf::RenderWindow& window, int x, int y) override;
-    void logic(double dtime, int x_id, int y_id) override;
+    RadioTower(int x_id, int y_id);
+    void draw(sf::RenderWindow& window) override;
+    void draw_effects(sf::RenderWindow& window) override;
+    void logic(double dtime) override;
     ACCEPT(RadioTower)
 private:
     sf::Sprite m_tower_sprite;

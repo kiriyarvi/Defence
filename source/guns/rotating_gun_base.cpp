@@ -3,14 +3,16 @@
 #include "covering_database.h"
 #include "glm/glm.hpp"
 
-void IRotatingGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
+IRotatingGun::IRotatingGun(int x_id, int y_id) : IBuilding(x_id, y_id) {}
+
+void IRotatingGun::draw(sf::RenderWindow& window) {
 	sf::Sprite sprite;
 	sprite.setPosition(32 * x_id, 32 * y_id);
 	sprite.setTexture(TextureManager::Instance().textures[base_texture]);
 	window.draw(sprite);
 }
 
-void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
+void IRotatingGun::logic(double dtime_microseconds) {
 	glm::vec2 gun_pos = glm::vec2(x_id * 32 + 16, y_id * 32 + 16);
 
 	IEnemy* captured_enemy = nullptr;
@@ -92,7 +94,7 @@ void IRotatingGun::logic(double dtime_microseconds, int x_id, int y_id) {
 				on_gun_pointed();
 				m_is_gun_pointed = true;
 			}
-			shoot_logic(x_id, y_id, *captured_enemy);
+			shoot_logic(*captured_enemy);
 		}
 		else {
 			rotation += glm::sign(angle_distance) * angle_potential;

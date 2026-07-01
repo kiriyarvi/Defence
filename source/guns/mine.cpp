@@ -4,7 +4,7 @@
 #include "sound_manager.h"
 #include "texture_manager.h"
 
-Mine::Mine(): m_params(ParamsManager::Instance().params.guns.mine) {
+Mine::Mine(int x_id, int y_id): IBuilding(x_id, y_id), m_params(ParamsManager::Instance().params.guns.mine) {
 	m_mine_sprite.setTexture(TextureManager::Instance().textures[TextureID::Mine]);
 	m_mine_sprite.setOrigin(8, 8);
 
@@ -13,14 +13,14 @@ Mine::Mine(): m_params(ParamsManager::Instance().params.guns.mine) {
 	m_blast_animation.add_framer(m_blast_framer);
 }
 
-void Mine::draw(sf::RenderWindow& window, int x_id, int y_id) {
+void Mine::draw(sf::RenderWindow& window) {
 	if (m_state == State::Ready) {
 		m_mine_sprite.setPosition(x_id * 32 + 16, y_id * 32 + 16);
 		window.draw(m_mine_sprite);
 	}
 }
 
-void Mine::draw_effects(sf::RenderWindow& window, int x_id, int y_id)  {
+void Mine::draw_effects(sf::RenderWindow& window)  {
 	if (m_blast_animation.started()) {
 		m_blast_framer->sprite.setPosition(x_id * 32 + 16, y_id * 32 + 16);
 		window.draw(m_blast_framer->sprite);
@@ -32,7 +32,7 @@ struct EnemyD {
 	double distance;
 };
 
-void Mine::logic(double dtime_microseconds, int x_id, int y_id) {
+void Mine::logic(double dtime_microseconds) {
 	if (m_state == State::Ready) {
 		glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);
 		auto& enemies = EnemyManager::Instance().m_enemies;

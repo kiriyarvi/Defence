@@ -5,11 +5,11 @@
 
 class AntitankGun: public IRotatingGun {
 public:
-	AntitankGun();
-	void draw(sf::RenderWindow& window, int x_id, int y_id) override;
-	void draw_effects(sf::RenderWindow& window, int x, int y) override;
-	void logic(double dtime_microseconds, int x_id, int y_id) override;
-	void shoot_logic(int x_id, int y_id, IEnemy& enemy) override;
+	AntitankGun(int x_id, int y_id);
+	void draw(sf::RenderWindow& window) override;
+	void draw_effects(sf::RenderWindow& window) override;
+	void logic(double dtime_microseconds) override;
+	void shoot_logic(IEnemy& enemy) override;
     ACCEPT(AntitankGun)
 private:
 	enum class State {

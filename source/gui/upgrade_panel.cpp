@@ -3,9 +3,11 @@
 #include <vector>
 #include "guns/minigun.h"
 #include "guns/radar.h"
+#include "guns/radio_tower.h"
 #include "game_state.h"
 #include "achievement_system.h"
 #include "gui/info_panel.h"
+#include "net_manager.h"
 
 UpgradeButton::UpgradeButton(
     TextureID icon,
@@ -382,7 +384,18 @@ void UpgradePanelCreator::visit(Radar& radar) {
 }
 
 void UpgradePanelCreator::visit(RadioTower& radio_tower) {
+    auto& net_manager = NetManager::Instance();
+    auto& net = net_manager.get_net_by_radiotower({ radio_tower.x_id, radio_tower.y_id });
+
     reset();
+    InfoPanel info_panel;
+    info_panel.set_name(to_string(BuildingType::RadioTower));
+    info_panel.set_description("Параметры сети");
+    info_panel.add_char("число радиовышек в сети", std::to_string(net.radio_towers.size()));
+    info_panel.add_char("число радаров в сети", std::to_string(net.radars.size()));
+    info_panel.create();
+    panel->removeAllWidgets();
+    panel->add(info_panel.content);
 }
 
 void UpgradePanelCreator::update() {

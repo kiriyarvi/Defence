@@ -116,4 +116,8 @@ void AchievementSystem::unlock_all() {
     minigun_upgrades.cooling_upgrade = 3;
     minigun_upgrades.lubricant_update = 3;
     minigun_upgrades.penetration_upgrade = 3;
+    radar_upgrades.long_distance_communication_upgrade = 1;
+    radar_upgrades.radius_upgrades = 3;
+    radar_upgrades.uncovering_level_upgrades = 3;
+    radar_upgrades.uncovering_speed_upgrades = 3;
 }

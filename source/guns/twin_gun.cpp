@@ -124,20 +124,20 @@ void TwinGunAnimation::start_barrel_animation(bool upper) {
 }
 
 
-TwinGun::TwinGun(): m_params(ParamsManager::Instance().params.guns.twingun) {
+TwinGun::TwinGun(int x_id, int y_id): IRotatingGun(x_id, y_id), m_params(ParamsManager::Instance().params.guns.twingun) {
 	radius = m_params.radius;
 }
 
-void TwinGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
-	IRotatingGun::draw(window, x_id, y_id);
+void TwinGun::draw(sf::RenderWindow& window) {
+	IRotatingGun::draw(window);
 	animation.draw(window, x_id, y_id, rotation);
 }
 
-void TwinGun::draw_effects(sf::RenderWindow& window, int x, int y) {
-	animation.draw_effects(window, x, y,rotation);
+void TwinGun::draw_effects(sf::RenderWindow& window) {
+	animation.draw_effects(window, x_id, y_id,rotation);
 }
 
-void TwinGun::logic(double dtime_microseconds, int x_id, int y_id) {
+void TwinGun::logic(double dtime_microseconds) {
 	animation.logic(dtime_microseconds, true);
 	animation.logic(dtime_microseconds, false);
 	if (state == State::ShotCD) {
@@ -150,10 +150,10 @@ void TwinGun::logic(double dtime_microseconds, int x_id, int y_id) {
 		if (cd_interleaved >= m_params.interleaved_cooldown * 1000 * 1000)
 			state = State::InterleavedReady;
 	}
-	IRotatingGun::logic(dtime_microseconds, x_id, y_id);
+	IRotatingGun::logic(dtime_microseconds);
 }
 
-void TwinGun::shot(int x_id, int y_id, IEnemy& enemy, bool upper_barrel) {
+void TwinGun::shot(IEnemy& enemy, bool upper_barrel) {
     for (auto& e : EnemyManager::Instance().m_enemies) {
         if (e->params.armor_level > m_params.armor_penetration_level)
             continue;
@@ -179,16 +179,16 @@ void TwinGun::shot(int x_id, int y_id, IEnemy& enemy, bool upper_barrel) {
 	shot_rel_pos = (upper_barrel ? perp : -perp);
 }
 
-void TwinGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
+void TwinGun::shoot_logic(IEnemy& enemy) {
 	if (state == State::Ready) {
 		animation.start_barrel_animation(true);
-		shot(x_id, y_id, enemy, true);
+		shot(enemy, true);
 		cd_interleaved = 0; //уходим на cd для подготовки ко второму выстрелу.
 		state = State::InterleavedCD;
 	}
 	else if (state == State::InterleavedReady) {
 		animation.start_barrel_animation(false);
-		shot(x_id, y_id, enemy, false);
+		shot(enemy, false);
 		cd_shot = 0; //вся башня уходит на перезарядку.
 		state = State::ShotCD;
 	}

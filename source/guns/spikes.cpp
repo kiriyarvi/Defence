@@ -4,7 +4,7 @@
 #include "sound_manager.h"
 #include "game_state.h"
 
-Spikes::Spikes(): params(ParamsManager::Instance().params.guns.spikes) 
+Spikes::Spikes(int x_id, int y_id): BuildingWithHealth(x_id, y_id), params(ParamsManager::Instance().params.guns.spikes)
 {
 	set_health(params.health);
 }
@@ -56,14 +56,14 @@ sf::Sprite Spikes::get_sprite_for_tile(int x_id, int y_id) {
 	return sprite;
 }
 
-void Spikes::draw(sf::RenderWindow& window, int x_id, int y_id) {
+void Spikes::draw(sf::RenderWindow& window) {
 	if (sprite.getTexture() == nullptr)
 		sprite = get_sprite_for_tile(x_id, y_id);
 	window.draw(sprite);
 }
 
 
-void Spikes::logic(double dtime, int x_id, int y_id) {
+void Spikes::logic(double dtime) {
     if (get_health() <= 0)
         return;
 	glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);

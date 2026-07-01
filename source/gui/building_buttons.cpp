@@ -12,6 +12,7 @@
 #include "shader_manager.h"
 #include "achievement_system.h"
 #include "gui/info_panel.h"
+#include "net_manager.h"
 
 BuildingButton::BuildingButton(TextureID gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name)
     : creator{ creator }, restrictions{ restrictions }, m_game_state{ game_state }, cost{ cost }, m_radius(radius), m_type{ type }, m_name{name}, IconButton(gun_icon, TextureID::ButtonBackground, TextureID::ButtonClickedBackground) {
@@ -270,7 +271,11 @@ RadarBuildingButton::RadarBuildingButton(GameState& game_state):
     BuildingButton(
         TextureID::RadarIcon,
         game_state,
-        make_creator<Radar>(),
+        [](int x_id, int y_id) {
+            auto radar = std::make_unique<Radar>(x_id, y_id);
+            NetManager::Instance().new_radar(x_id, y_id, radar.get());
+            return radar;
+        },
         TileRestrictions::NoRoads,
         ParamsManager::Instance().params.guns.radar.cost,
         ParamsManager::Instance().params.guns.radar.radius_upgrades[0].radius,
@@ -301,7 +306,11 @@ RadioTowerBuildingButton::RadioTowerBuildingButton(GameState& game_state):
     BuildingButton(
         TextureID::RadioTower,
         game_state,
-        make_creator<RadioTower>(),
+        [](int x_id, int y_id) {
+            auto radio_tower = std::make_unique<RadioTower>(x_id, y_id);
+            NetManager::Instance().new_radio_tower(x_id, y_id);
+            return radio_tower;
+        },
         TileRestrictions::NoRoads,
         ParamsManager::Instance().params.guns.radio_tower.cost,
         ParamsManager::Instance().params.guns.radio_tower.radius,

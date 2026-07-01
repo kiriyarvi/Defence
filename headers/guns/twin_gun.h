@@ -36,16 +36,16 @@ private:
 
 class TwinGun : public IRotatingGun {
 public:
-	TwinGun();
-	void draw(sf::RenderWindow& window, int x_id, int y_id) override;
-	void draw_effects(sf::RenderWindow& window, int x, int y) override;
-	void logic(double dtime_microseconds, int x_id, int y_id) override;
-	void shoot_logic(int x_id, int y_id, IEnemy& enemy) override;
+	TwinGun(int x_id, int y_id);
+	void draw(sf::RenderWindow& window) override;
+	void draw_effects(sf::RenderWindow& window) override;
+	void logic(double dtime_microseconds) override;
+	void shoot_logic(IEnemy& enemy) override;
     ACCEPT(TwinGun)
 protected:
     IRotatingGun::TargetStatus TwinGun::get_enemy_status(IEnemy& enemy) override;
 private:
-	void shot(int x_id, int y_id, IEnemy& enemy, bool upper_barrel);
+	void shot(IEnemy& enemy, bool upper_barrel);
 private:
 	enum State {
 		InterleavedCD,

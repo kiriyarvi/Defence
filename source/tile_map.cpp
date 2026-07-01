@@ -15,6 +15,8 @@
 #include <iostream>
 #include <random>
 
+IBuilding::IBuilding(int x_id, int y_id) : x_id{ x_id }, y_id{ y_id } {}
+
 std::string to_string(BuildingType type) {
     std::unordered_map<BuildingType, std::string> m{
         {BuildingType::AntitankGun, "Противотанковая пушка"},
@@ -22,7 +24,9 @@ std::string to_string(BuildingType type) {
         {BuildingType::Mine, "Мина"},
         {BuildingType::Minigun, "Пулемет"},
         {BuildingType::Spikes, "Шипы"},
-        {BuildingType::TwinGun, "Сдвоенная пушка"}
+        {BuildingType::TwinGun, "Сдвоенная пушка"},
+        {BuildingType::Radar, "Радар"},
+        {BuildingType::RadioTower, "Радиовышка"}
     };
     return m[type];
 }
@@ -750,7 +754,7 @@ void TileMap::draw(sf::RenderWindow& window) {
 	for (int x = 0; x < map.size(); ++x)
 		for (int y = 0; y < map[x].size(); ++y) {
 			if (map[x][y].building)
-				map[x][y].building->draw(window, x, y);
+				map[x][y].building->draw(window);
 		}
 
     sf::Sprite sp(m_test_texture);
@@ -763,7 +767,7 @@ void TileMap::draw_effects(sf::RenderWindow& window) {
 	for (int x = 0; x < map.size(); ++x)
 		for (int y = 0; y < map[x].size(); ++y) {
 			if (map[x][y].building)
-				map[x][y].building->draw_effects(window, x, y);
+				map[x][y].building->draw_effects(window);
 		}
 }
 
@@ -771,7 +775,7 @@ void TileMap::logic(double dtime) {
 	for (int x = 0; x < map.size(); ++x)
 		for (int y = 0; y < map[x].size(); ++y) {
 			if (map[x][y].building) {
-				map[x][y].building->logic(dtime, x, y);
+				map[x][y].building->logic(dtime);
 				if (map[x][y].building->is_destroyed())
 					map[x][y].building.reset();
 			}

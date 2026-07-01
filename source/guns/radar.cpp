@@ -3,7 +3,7 @@
 #include <covering_database.h>
 #include <debugger.h>
 
-Radar::Radar(): m_params(ParamsManager::Instance().params.guns.radar) {
+Radar::Radar(int x_id, int y_id):IBuilding(x_id, y_id), m_params(ParamsManager::Instance().params.guns.radar) {
     m_radar_sprite.setTexture(TextureManager::Instance().textures[TextureID::Radar]);
     m_radar_sprite.setOrigin(16, 16);
 
@@ -11,7 +11,7 @@ Radar::Radar(): m_params(ParamsManager::Instance().params.guns.radar) {
     m_base_sprite.setOrigin(16, 16);
 }
 
-void Radar::draw(sf::RenderWindow& window, int x_id, int y_id) {
+void Radar::draw(sf::RenderWindow& window) {
     m_base_sprite.setPosition(x_id * 32 + 16, y_id * 32 + 16);
     window.draw(m_base_sprite);
     m_radar_sprite.setPosition(x_id * 32 + 16, y_id * 32 + 16);
@@ -32,7 +32,7 @@ void Radar::draw(sf::RenderWindow& window, int x_id, int y_id) {
     }
 }
 
-void Radar::draw_effects(sf::RenderWindow& window, int x_id, int y_id) {
+void Radar::draw_effects(sf::RenderWindow& window) {
     if (DEBUG_ENABLED) {
         int radius = m_params.radius_upgrades[radius_upgrade].radius;
         sf::CircleShape circ(radius * 32);
@@ -46,8 +46,11 @@ void Radar::draw_effects(sf::RenderWindow& window, int x_id, int y_id) {
 }
 
 
-void Radar::logic(double dtime_microseconds, int x_id, int y_id) {
+void Radar::logic(double dtime_microseconds) {
     m_rotation += dtime_microseconds / (1000.f * 1000.f) * 20.f;
+    if (m_part_of_net)
+        return; //Остальную логику берет на себя сеть
+
     glm::vec2 pos = { x_id * 32 + 16, y_id * 32 + 16 };
 
     float aiming_time = m_params.uncovering_speed_upgrades[uncovering_speed_upgrade].aiming_time;

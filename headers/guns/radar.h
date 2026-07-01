@@ -6,22 +6,22 @@
 
 class Radar : public IBuilding {
 public:
-    Radar();
-    void draw(sf::RenderWindow& window, int x, int y) override;
-    void draw_effects(sf::RenderWindow& window, int x, int y) override;
-    void logic(double dtime, int x_id, int y_id) override;
+    Radar(int x_id, int y_id);
+    void draw(sf::RenderWindow& window) override;
+    void draw_effects(sf::RenderWindow& window) override;
+    void logic(double dtime) override;
     bool is_destroyed() override { return false; }
     ACCEPT(Radar)
     BuildingUpgrade radius_upgrade;
     BuildingUpgrade uncovering_level_upgrade;
     BuildingUpgrade uncovering_speed_upgrade;
     BuildingUpgrade long_distance_communication_upgrade;
+    bool m_part_of_net = false;
 private:
     sf::Sprite m_radar_sprite;
     sf::Sprite m_base_sprite;
     float m_rotation = 180;
     const ParamsManager::Params::Guns::Radar& m_params;
-   
 
     struct Target {
         uint32_t target;

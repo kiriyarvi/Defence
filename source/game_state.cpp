@@ -294,7 +294,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 				bool on_map = m_mouse_pos.x < N * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < N * 32 && m_mouse_pos.y >= 0;
 				sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
 				if (on_map && m_current_building_construction->is_cell_allowed(cell_id.x, cell_id.y)) {
-					TileMap::Instance().map[cell_id.x][cell_id.y].building = m_current_building_construction->creator();
+					TileMap::Instance().map[cell_id.x][cell_id.y].building = m_current_building_construction->creator(cell_id.x, cell_id.y);
 					player_coins_add(-m_current_building_construction->cost);
 					if (m_current_building_construction->get_state() == BuildingButton::State::Disabled) {
 						m_current_building_construction = nullptr;
@@ -424,7 +424,7 @@ void GameState::init_stage(int stage) {
         player_coins_add(1000);
     }
     else {
-        player_coins_add(10000);
+        player_coins_add(1000000);
         AchievementSystem::Instance().unlock_all();
         enemy_defeated(EnemyType::CruiserI);
     }

@@ -12,7 +12,7 @@ class GameState;
 
 class BuildingButton: public IconButton {
 public:
-	using BuildingCreator = std::function<std::unique_ptr<IBuilding>()>;
+	using BuildingCreator = std::function<std::unique_ptr<IBuilding>(int x_id, int y_id)>;
 
 	enum class TileRestrictions {
 		NoRoads,
@@ -24,8 +24,8 @@ public:
 	BuildingCreator creator;
 	template <typename T>
 	static BuildingCreator make_creator() {
-		return []() {
-			return std::make_unique<T>();
+		return [](int x_id, int y_id) {
+			return std::make_unique<T>(x_id, y_id);
 		};
 	}
 	bool is_cell_allowed(int x_id, int y_id);

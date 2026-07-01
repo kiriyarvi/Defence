@@ -49,12 +49,15 @@ void accept(IBuildingVisitor& visitor) override { visitor.visit(*this); }
 
 class IBuilding {
 public:
-	virtual void draw(sf::RenderWindow& window, int x_id, int y_id) = 0;
-	virtual void draw_effects(sf::RenderWindow& window, int x_id, int y_id) = 0;
-	virtual void logic(double dtime, int x_id, int y_id) = 0;
+    IBuilding(int x_id, int y_id);
+	virtual void draw(sf::RenderWindow& window) = 0;
+	virtual void draw_effects(sf::RenderWindow& window) = 0;
+	virtual void logic(double dtime) = 0;
 	virtual bool is_destroyed() { return false; }
     virtual void accept(IBuildingVisitor& visitor) = 0;
 	virtual ~IBuilding() = default;
+    int x_id;
+    int y_id;
 };
 
 

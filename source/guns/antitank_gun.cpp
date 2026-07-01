@@ -3,20 +3,22 @@
 #include "sound_manager.h"
 #include "texture_manager.h"
 
-AntitankGun::AntitankGun(): m_params(ParamsManager::Instance().params.guns.antitank) {
-	radius = m_params.radius;
+AntitankGun::AntitankGun(int x_id, int y_id) : IRotatingGun(x_id, y_id),
+m_params(ParamsManager::Instance().params.guns.antitank) {
+    radius = m_params.radius;
 
-	m_turret_sprite.sprite.setTexture(TextureManager::Instance().textures[TextureID::AntitankGunTurret]);
-	m_barrel = &m_turret_sprite.childs.emplace_back();
-	m_barrel->sprite.setTexture(TextureManager::Instance().textures[TextureID::AntitankGunBarrel]);
-	auto& substrate = m_turret_sprite.childs.emplace_back();
-	substrate.sprite.setTexture(TextureManager::Instance().textures[TextureID::AntitankGunTurretSubstrate]);
-	m_turret_sprite.layer = 2;
-	m_barrel->layer = 1;
+    m_turret_sprite.sprite.setTexture(TextureManager::Instance().textures[TextureID::AntitankGunTurret]);
+    m_barrel = &m_turret_sprite.childs.emplace_back();
+    m_barrel->sprite.setTexture(TextureManager::Instance().textures[TextureID::AntitankGunBarrel]);
+    auto& substrate = m_turret_sprite.childs.emplace_back();
+    substrate.sprite.setTexture(TextureManager::Instance().textures[TextureID::AntitankGunTurretSubstrate]);
+    m_turret_sprite.layer = 2;
+    m_barrel->layer = 1;
 }
 
-void AntitankGun::draw(sf::RenderWindow& window, int x_id, int y_id) {
-	IRotatingGun::draw(window, x_id, y_id);
+
+void AntitankGun::draw(sf::RenderWindow& window) {
+	IRotatingGun::draw(window);
 
 	m_turret_sprite.set_position_origin(9, 16);
 	m_turret_sprite.set_position(x_id * 32 + 16, y_id * 32 + 16);
@@ -44,7 +46,7 @@ void AntitankGun::fire_animation() {
 
 }
 
-void AntitankGun::draw_effects(sf::RenderWindow& window, int x, int y) {
+void AntitankGun::draw_effects(sf::RenderWindow& window) {
 	if (!m_animation) return;
 	IEnemy* enemy = EnemyManager::Instance().get_enemy_by_id(m_shoted_enemy_id);
 	if (!enemy) return;
@@ -62,7 +64,7 @@ void AntitankGun::draw_effects(sf::RenderWindow& window, int x, int y) {
 	}
 }
 
-void AntitankGun::logic(double dtime_microseconds, int x_id, int y_id) {
+void AntitankGun::logic(double dtime_microseconds) {
 	if (m_state == State::CoolDown) {
 		m_cd_time += dtime_microseconds;
 		if (m_cd_time >= m_params.cooldown * 1000 * 1000)
@@ -85,12 +87,12 @@ void AntitankGun::logic(double dtime_microseconds, int x_id, int y_id) {
 			}
 		}
 	}
-	IRotatingGun::logic(dtime_microseconds, x_id, y_id);
+	IRotatingGun::logic(dtime_microseconds);
 }
 
 
 
-void AntitankGun::shoot_logic(int x_id, int y_id, IEnemy& enemy) {
+void AntitankGun::shoot_logic(IEnemy& enemy) {
 	if (m_state == State::Ready) {
         if (enemy.params.armor_level <= m_params.armor_penetration_level) {
             enemy.health -= m_params.damage;
