@@ -1,5 +1,5 @@
-#include <guns/radio_tower.h>
-
+#include "guns/radio_tower.h"
+#include "net_manager.h"
 
 RadioTower::RadioTower(int x_id, int y_id): IBuilding(x_id, y_id) {
     m_tower_sprite.setTexture(TextureManager::Instance().textures[TextureID::RadioTower]);
@@ -14,3 +14,7 @@ void RadioTower::draw(sf::RenderWindow& window) {
 void RadioTower::draw_effects(sf::RenderWindow& window) {}
 
 void RadioTower::logic(double dtime) {}
+
+RadioTower::~RadioTower() {
+    NetManager::Instance().radio_tower_deleted(x_id, y_id);
+}

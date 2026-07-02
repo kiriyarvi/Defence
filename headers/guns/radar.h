@@ -20,6 +20,7 @@ public:
     BuildingUpgrade uncovering_speed_upgrade;
     BuildingUpgrade long_distance_communication_upgrade;
     bool m_part_of_net = false;
+    virtual ~Radar();
 private:
     sf::Sprite m_radar_sprite;
     sf::Sprite m_base_sprite;

@@ -41,6 +41,9 @@ public:
 
     void new_radar(int x_id, int y_id, Radar* radar);
     void new_radio_tower(int x_id, int y_id);
+    void radar_deleted(int x_id, int y_id);
+    void radio_tower_deleted(int x_id, int y_id);
+
 
     void logic(float dtime_microseconds);
 

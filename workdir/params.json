@@ -26,24 +26,28 @@
       "cost": 1000,
       "penetration_upgrades": [
         {
+          "cost":  0,
           "min_damage": 1,
           "max_damage": 1,
           "min_armor_penetration_level": 0,
           "max_armor_penetration_level": 1
         },
         {
+          "cost": 1000,
           "min_damage": 1,
           "max_damage": 1,
           "min_armor_penetration_level": 1,
           "max_armor_penetration_level": 2
         },
         {
+          "cost": 2000,
           "min_damage": 1,
           "max_damage": 2,
           "min_armor_penetration_level": 1,
           "max_armor_penetration_level": 3
         },
         {
+          "cost": 3000,
           "min_damage": 2,
           "max_damage": 4,
           "min_armor_penetration_level": 2,
@@ -52,21 +56,25 @@
       ],
       "cooling_upgrades": [
         {
+          "cost": 0,
           "critical_temperature_work_duration": 4, //максимальное время работы при критическом нагреве.
           "cooling_time": 7, //секунд для остывания с максимальной температуры до минимальной.
           "cooldown_duration": 7 // время остывания после перегрева
         },
         {
+          "cost": 1000,
           "critical_temperature_work_duration": 8, //максимальное время работы при критическом нагреве.
           "cooling_time": 5, //секунд для остывания с максимальной температуры до минимальной.
           "cooldown_duration": 5 // время остывания после перегрева
         },
         {
+          "cost": 2000,
           "critical_temperature_work_duration": 16, //максимальное время работы при критическом нагреве.
           "cooling_time": 3, //секунд для остывания с максимальной температуры до минимальной.
           "cooldown_duration": 3 // время остывания после перегрева
         },
         {
+          "cost": 3000,
           "critical_temperature_work_duration": 20, //максимальное время работы при критическом нагреве.
           "cooling_time": 2, //секунд для остывания с максимальной температуры до минимальной.
           "cooldown_duration": 2 // время остывания после перегрева
@@ -74,15 +82,19 @@
       ],
       "lubricant_upgrades": [
         {
+          "cost": 0,
           "heating_time": 12 // секунд для нагрева с минимальной температуры до максимальной.
         },
         {
+          "cost": 1000,
           "heating_time": 8
         },
         {
+          "cost": 2000,
           "heating_time": 4
         },
         {
+          "cost": 3000,
           "heating_time": 1
         }
       ],

@@ -41,12 +41,14 @@ public:
 	virtual void visit(Mine& mine);
     virtual void visit(Radar& radar);
     virtual void visit(RadioTower& radio_tower);
-	tgui::Group::Ptr panel;
+	tgui::Group::Ptr panel; //основная панель контента. Заполняется в visit
     tgui::Group::Ptr info;
     ~UpgradePanelCreator();
-    void reset(); //internal use only
+    void reset(); //internal use only. Очищает panel панель.
     std::vector<std::function<void()>> m_clear_actions; //internal use only
 private:
+    tgui::Button::Ptr create_sell_button(int x_id, int y_id);
+    std::function<int()> m_compute_cost;
 	std::vector<std::vector<UpgradeButton>> m_buttons;
 };
 

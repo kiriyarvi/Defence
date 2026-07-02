@@ -115,3 +115,7 @@ void Radar::logic(double dtime_microseconds) {
 
  
 }
+
+Radar::~Radar() {
+    NetManager::Instance().radar_deleted(x_id, y_id);
+}

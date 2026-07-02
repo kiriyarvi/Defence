@@ -44,23 +44,26 @@ public:
 				float critical_temperature;
 				int cost;
 				struct PenetrationUpgrade {
+                    int cost;
 					int min_armor_penetration_level;
 					int max_armor_penetration_level;
                     int min_damage;
                     int max_damage;
-					NLOHMANN_DEFINE_TYPE_INTRUSIVE(PenetrationUpgrade, min_armor_penetration_level, max_armor_penetration_level, min_damage, max_damage)
+					NLOHMANN_DEFINE_TYPE_INTRUSIVE(PenetrationUpgrade, cost, min_armor_penetration_level, max_armor_penetration_level, min_damage, max_damage)
 				};
 				std::vector<PenetrationUpgrade> penetration_upgrades;
                 struct CoolingUpgrade {
+                    int cost;
                     float critical_temperature_work_duration;
                     float cooling_time;
                     float cooldown_duration;
-                    NLOHMANN_DEFINE_TYPE_INTRUSIVE(CoolingUpgrade, critical_temperature_work_duration, cooling_time, cooldown_duration)
+                    NLOHMANN_DEFINE_TYPE_INTRUSIVE(CoolingUpgrade, cost, critical_temperature_work_duration, cooling_time, cooldown_duration)
                 };
                 std::vector<CoolingUpgrade> cooling_upgrades;
                 struct LubricantUpgrade {
+                    int cost;
                     float heating_time;
-                    NLOHMANN_DEFINE_TYPE_INTRUSIVE(LubricantUpgrade, heating_time)
+                    NLOHMANN_DEFINE_TYPE_INTRUSIVE(LubricantUpgrade, cost, heating_time)
                 };
                 std::vector<LubricantUpgrade> lubricant_upgrades;
 

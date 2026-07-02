@@ -163,6 +163,7 @@ public:
 	std::vector<std::vector<Tile>> map;
 	const RoadGraph& get_road_graph() { return m_road_graph; }
     void create_tile_test_map();
+    void delete_building(int x_id, int y_id);
 private:
     void generate_dirt_road_height_map(sf::IntRect prohibited_zone);
     void generate_asphalt_road_height_map(sf::IntRect prohibited_zone);

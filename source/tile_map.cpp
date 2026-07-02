@@ -609,6 +609,10 @@ void TileMap::create_road_graph() {
     }
 }
 
+void TileMap::delete_building(int x_id, int y_id) {
+    map[x_id][y_id].building.reset(nullptr);
+}
+
 void TileMap::create_tile_test_map() {
     create_map(10);
 

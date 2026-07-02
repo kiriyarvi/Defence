@@ -38,13 +38,17 @@ std::string to_string_2(double number) {
     return out.str();
 }
 
-tgui::Widget::Ptr InfoPanel::create() {
+tgui::Widget::Ptr InfoPanel::create(bool add_scroll) {
     content = tgui::ScrollablePanel::create();
     content->setSize("100%", "100%");
-    content->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Automatic);
+    if (add_scroll)
+        content->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Automatic);
+    else
+        content->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
     content->setHorizontalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
     content->getRenderer()->setBackgroundColor(sf::Color::Transparent);
-    content->setContentSize({ 10000, 3000 });
+    if (add_scroll)
+        content->setContentSize({ 10000, 3000 });
 
     m_name = tgui::Label::create(name);
     m_name->getRenderer()->setTextColor(tgui::Color(255, 211, 3));

@@ -89,8 +89,6 @@ void UpgradeButton::update() {
 }
 
 
-
-
 UpgradePanelCreator::UpgradePanelCreator() {
     panel = tgui::Group::create();
     panel->setSize("100%", "100%");
@@ -113,9 +111,9 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
     auto& lubricant_upgrades = m_buttons[2];
 
     auto& params = ParamsManager::Instance().params.guns.minigun;
-    UpgradeButton shells_upgrade_I(TextureID::MinigunShellsUpgradeI, 1000, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 1, "Бронебойные снаряды I");
-    UpgradeButton shells_upgrade_II(TextureID::MinigunShellsUpgradeII, 2000, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 2, "Бронебойные снаряды II");
-    UpgradeButton shells_upgrade_III(TextureID::MinigunShellsUpgradeIII, 3000, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 3, "Бронебойные снаряды III");
+    UpgradeButton shells_upgrade_I(TextureID::MinigunShellsUpgradeI, params.penetration_upgrades[1].cost, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 1, "Бронебойные снаряды I");
+    UpgradeButton shells_upgrade_II(TextureID::MinigunShellsUpgradeII, params.penetration_upgrades[2].cost, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 2, "Бронебойные снаряды II");
+    UpgradeButton shells_upgrade_III(TextureID::MinigunShellsUpgradeIII, params.penetration_upgrades[3].cost, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 3, "Бронебойные снаряды III");
     shells_upgrades.push_back(std::move(shells_upgrade_I));
     shells_upgrades.push_back(std::move(shells_upgrade_II));
     shells_upgrades.push_back(std::move(shells_upgrade_III));
@@ -134,9 +132,9 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
             info->add(panel.content);
         };
     }
-    UpgradeButton cooling_upgrade_I(TextureID::MinigunCoolingUpgradeI, 1000, minigun.m_cooling_upgrade, AchievementSystem::Instance().minigun_upgrades.cooling_upgrade, 1, "Система охлаждения I");
-    UpgradeButton cooling_upgrade_II(TextureID::MinigunCoolingUpgradeI, 2000, minigun.m_cooling_upgrade, AchievementSystem::Instance().minigun_upgrades.cooling_upgrade, 2, "Система охлаждения II");
-    UpgradeButton cooling_upgrade_III(TextureID::MinigunCoolingUpgradeI, 3000, minigun.m_cooling_upgrade, AchievementSystem::Instance().minigun_upgrades.cooling_upgrade, 3, "Система охлаждения III");
+    UpgradeButton cooling_upgrade_I(TextureID::MinigunCoolingUpgradeI, params.cooling_upgrades[1].cost, minigun.m_cooling_upgrade, AchievementSystem::Instance().minigun_upgrades.cooling_upgrade, 1, "Система охлаждения I");
+    UpgradeButton cooling_upgrade_II(TextureID::MinigunCoolingUpgradeI, params.cooling_upgrades[2].cost, minigun.m_cooling_upgrade, AchievementSystem::Instance().minigun_upgrades.cooling_upgrade, 2, "Система охлаждения II");
+    UpgradeButton cooling_upgrade_III(TextureID::MinigunCoolingUpgradeI, params.cooling_upgrades[3].cost, minigun.m_cooling_upgrade, AchievementSystem::Instance().minigun_upgrades.cooling_upgrade, 3, "Система охлаждения III");
     cooling_upgrades.push_back(std::move(cooling_upgrade_I));
     cooling_upgrades.push_back(std::move(cooling_upgrade_II));
     cooling_upgrades.push_back(std::move(cooling_upgrade_III));
@@ -154,9 +152,9 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
             info->add(panel.content);
         };
     }
-    UpgradeButton lubricant_upgrade_I(TextureID::MinigunLubricantUpgradeI, 1000, minigun.m_lubricant_upgrade, AchievementSystem::Instance().minigun_upgrades.lubricant_update, 1, "Смазка I");
-    UpgradeButton lubricant_upgrade_II(TextureID::MinigunLubricantUpgradeI, 2000, minigun.m_lubricant_upgrade, AchievementSystem::Instance().minigun_upgrades.lubricant_update, 2, "Смазка II");
-    UpgradeButton lubricant_upgrade_III(TextureID::MinigunLubricantUpgradeI, 3000, minigun.m_lubricant_upgrade, AchievementSystem::Instance().minigun_upgrades.lubricant_update, 3, "Смазка III");
+    UpgradeButton lubricant_upgrade_I(TextureID::MinigunLubricantUpgradeI, params.lubricant_upgrades[1].cost, minigun.m_lubricant_upgrade, AchievementSystem::Instance().minigun_upgrades.lubricant_update, 1, "Смазка I");
+    UpgradeButton lubricant_upgrade_II(TextureID::MinigunLubricantUpgradeI, params.lubricant_upgrades[2].cost, minigun.m_lubricant_upgrade, AchievementSystem::Instance().minigun_upgrades.lubricant_update, 2, "Смазка II");
+    UpgradeButton lubricant_upgrade_III(TextureID::MinigunLubricantUpgradeI, params.lubricant_upgrades[3].cost, minigun.m_lubricant_upgrade, AchievementSystem::Instance().minigun_upgrades.lubricant_update, 3, "Смазка III");
     lubricant_upgrades.push_back(std::move(lubricant_upgrade_I));
     lubricant_upgrades.push_back(std::move(lubricant_upgrade_II));
     lubricant_upgrades.push_back(std::move(lubricant_upgrade_III));
@@ -181,32 +179,33 @@ void UpgradePanelCreator::visit(MiniGun& minigun) {
             float size = GameState::Instance().window.getSize().y * 0.1;
             m_buttons[cat][up].m_group->setSize(size, size);
         }
-    /*grid->setWidth("100%");
-    grid->setHeight("100%");*/
-    /*grid->onSizeChange.connect([=]() {
-        float y = 0;
-        float size = panel->getSize().x / 3.;
-        for (auto& btns : m_buttons) {
-            for (auto& btn : btns)
-                btn.m_group->setSize({ size,size });
-        }   
-    });*/
     panel->add(grid, "Grid");
+
+    m_compute_cost = [&]() {
+        int cost = params.cost;
+        for (int i = 1; i <= minigun.m_lubricant_upgrade; ++i) cost += params.lubricant_upgrades[i].cost;
+        for (int i = 1; i <= minigun.m_cooling_upgrade; ++i) cost += params.cooling_upgrades[i].cost;
+        for (int i = 1; i <= minigun.m_penetration_upgrade; ++i) cost += params.penetration_upgrades[i].cost;
+        return cost;
+    };
+    auto sell_button = create_sell_button(minigun.x_id, minigun.y_id);
+    sell_button->setPosition(0, "Grid.bottom");
+    panel->add(sell_button, "SellButton");
+
     info = tgui::Group::create();
-    info->setPosition(0, "Grid.bottom");
+    info->setPosition(0, "SellButton.bottom");
     panel->add(info);
-    
 }
 
 template<typename Params, typename Building>
 tgui::Group::Ptr create_panel_for_building_with_health(UpgradePanelCreator* creator, BuildingType type, Params& params, Building& building) {
     auto label = tgui::RichTextLabel::create();
-    auto update = [&building, creator, label = label.get()]() {
+    auto update = [&building, creator, label = label.get(), type]() {
         if (building.get_health() <= 0) {
             creator->reset();
             return;
         }
-        label->setText("<b>" + to_string(BuildingType::Spikes) + "</b>\nПрочность: " + std::to_string(building.get_health()));
+        label->setText("<b>" + to_string(type) + "</b>\nПрочность: " + std::to_string(building.get_health()));
     };
     update();
     label->getRenderer()->setTextColor(sf::Color::White);
@@ -265,6 +264,34 @@ tgui::Group::Ptr create_panel_for_building_with_health(UpgradePanelCreator* crea
         description->setMaximumTextWidth(group->getSize().x);
     });
     return group;
+}
+
+tgui::Button::Ptr UpgradePanelCreator::create_sell_button(int x_id, int y_id) {
+    auto sell_button = tgui::Button::create("продать");
+    sell_button->onClick([x_id, y_id, this]() {
+        GameState::Instance().player_coins_add(int(m_compute_cost() * 0.5));
+        TileMap::Instance().delete_building(x_id, y_id);
+        reset();
+    });
+    sell_button->onMouseEnter([this]() {
+        auto content = tgui::ScrollablePanel::create();
+        content->setSize("100%", "100%");
+        content->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Automatic);
+        content->setHorizontalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
+        content->getRenderer()->setBackgroundColor(sf::Color::Transparent);
+        content->setContentSize({ 10000, 3000 });
+
+        auto text = tgui::RichTextLabel::create("<color=#ffd303>" + std::to_string(int(m_compute_cost() * 0.5)) + "</color> (половина от стоимости с учетом улучшений)");
+        text->getRenderer()->setTextColor(tgui::Color::White);
+        text->onSizeChange.connect([d = text, c = content]() {
+            d->setMaximumTextWidth(c->getSize().x);
+        });
+        content->add(text);
+        info->removeAllWidgets();
+        info->add(content);
+    });
+    return sell_button;
+    
 }
 
 void UpgradePanelCreator::visit(Spikes& spikes) {
@@ -337,9 +364,9 @@ void UpgradePanelCreator::visit(Radar& radar) {
             info->add(panel.content);
         };
     }
-    UpgradeButton uncovering_speed_upgrade_I(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_level_upgrades[1].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 1, "Скорость обнаружения I");
-    UpgradeButton uncovering_speed_upgrade_II(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_level_upgrades[2].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 2, "Скорость обнаружения II");
-    UpgradeButton uncovering_speed_upgrade_III(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_level_upgrades[3].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 3, "Скорость обнаружения III");
+    UpgradeButton uncovering_speed_upgrade_I(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_speed_upgrades[1].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 1, "Скорость обнаружения I");
+    UpgradeButton uncovering_speed_upgrade_II(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_speed_upgrades[2].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 2, "Скорость обнаружения II");
+    UpgradeButton uncovering_speed_upgrade_III(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_speed_upgrades[3].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 3, "Скорость обнаружения III");
     uncovering_speed_upgrades.push_back(std::move(uncovering_speed_upgrade_I));
     uncovering_speed_upgrades.push_back(std::move(uncovering_speed_upgrade_II));
     uncovering_speed_upgrades.push_back(std::move(uncovering_speed_upgrade_III));
@@ -378,8 +405,22 @@ void UpgradePanelCreator::visit(Radar& radar) {
             m_buttons[cat][up].m_group->setSize(size, size);
         }
     panel->add(grid, "Grid");
+
+    m_compute_cost = [&]() {
+        int cost = params.cost;
+        for (int i = 1; i <= radar.radius_upgrade; ++i) cost += params.radius_upgrades[i].cost;
+        for (int i = 1; i <= radar.uncovering_level_upgrade; ++i) cost += params.uncovering_level_upgrades[i].cost;
+        for (int i = 1; i <= radar.uncovering_speed_upgrade; ++i) cost += params.uncovering_speed_upgrades[i].cost;
+        if (radar.long_distance_communication_upgrade)
+            cost += params.long_distance_communication_upgrade_cost;
+        return cost;
+    };
+    auto sell_button = create_sell_button(radar.x_id, radar.y_id);
+    sell_button->setPosition(0, "Grid.bottom");
+    panel->add(sell_button, "SellButton");
+
     info = tgui::Group::create();
-    info->setPosition(0, "Grid.bottom");
+    info->setPosition(0, "SellButton.bottom");
     panel->add(info);
 }
 
@@ -388,14 +429,27 @@ void UpgradePanelCreator::visit(RadioTower& radio_tower) {
     auto& net = net_manager.get_net_by_radiotower({ radio_tower.x_id, radio_tower.y_id });
 
     reset();
+
     InfoPanel info_panel;
     info_panel.set_name(to_string(BuildingType::RadioTower));
     info_panel.set_description("Параметры сети");
     info_panel.add_char("число радиовышек в сети", std::to_string(net.radio_towers.size()));
     info_panel.add_char("число радаров в сети", std::to_string(net.radars.size()));
-    info_panel.create();
+    info_panel.create(false);
     panel->removeAllWidgets();
-    panel->add(info_panel.content);
+    panel->add(info_panel.content, "Content");
+
+
+    m_compute_cost = []() {
+        return ParamsManager::Instance().params.guns.radio_tower.cost;
+    };
+    tgui::Button::Ptr sell_button = create_sell_button(radio_tower.x_id, radio_tower.y_id);
+    sell_button->setPosition(0, "Content.top");
+    panel->add(sell_button, "SellButton");
+
+    info = tgui::Group::create();
+    info->setPosition(0, "SellButton.bottom");
+    panel->add(info);
 }
 
 void UpgradePanelCreator::update() {

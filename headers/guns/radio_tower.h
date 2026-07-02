@@ -9,6 +9,7 @@ public:
     void draw_effects(sf::RenderWindow& window) override;
     void logic(double dtime) override;
     ACCEPT(RadioTower)
+    virtual ~RadioTower();
 private:
     sf::Sprite m_tower_sprite;
 };

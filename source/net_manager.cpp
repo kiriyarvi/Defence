@@ -27,10 +27,20 @@ bool NetManager::Net::in_uncover_zone(const glm::vec2& pos) const {
     return false;
 }
 
+static bool in_radio_tower_zone(NetManager::Net::CellID radio_tower_cell_id, const glm::vec2& pos) {
+    static auto& params = ParamsManager::Instance().params.guns.radio_tower;
+    return glm::length(glm::vec2(pos.x - 32 * radio_tower_cell_id.x_id - 16, pos.y - 32 * radio_tower_cell_id.y_id - 16)) <= 32 * params.radius;
+}
+
+static bool in_radio_tower_zone(NetManager::Net::CellID radio_tower_cell_id, NetManager::Net::CellID radar_id) {
+    static auto& params = ParamsManager::Instance().params.guns.radio_tower;
+    return glm::length(glm::vec2(radar_id.x_id - radio_tower_cell_id.x_id, radar_id.y_id - radio_tower_cell_id.y_id)) <= params.radius;
+}
+
 bool NetManager::Net::in_radio_tower_zone(const glm::vec2& pos) const {
     auto& params = ParamsManager::Instance().params.guns.radio_tower;
     for (auto& tower : radio_towers) {
-        if (glm::length(glm::vec2(pos.x - 32 * tower.x_id - 16, pos.y - 32 * tower.y_id - 16)) <= 32 * params.radius)
+        if (::in_radio_tower_zone(tower, pos))
             return true;
     }
     return false;
@@ -185,5 +195,99 @@ const NetManager::Net& NetManager::get_net_by_radiotower(Net::CellID id) const {
             if (tower == id)
                 return net;
         }
+    }
+}
+
+void NetManager::radar_deleted(int x_id, int y_id) {
+    //Определить сеть, в которую входит радар и удалить его из этой сети
+    m_radar_register.erase(std::find(m_radar_register.begin(), m_radar_register.end(), Net::RadarInfo{ {x_id, y_id}, nullptr }));
+    for (auto& net : m_nets) {
+        for (auto it = net.radars.begin(); it != net.radars.end(); ++it) {
+            if (it->cell.x_id == x_id && it->cell.y_id == y_id) {
+                net.radars.erase(it);
+                return;
+            }
+        }
+    }
+}
+
+void NetManager::radio_tower_deleted(int x_id, int y_id) {
+    //A. Найти сеть, в которую входит вышка и удалить вышку из сети
+    std::list<Net>::iterator net = m_nets.end();
+    for (auto net_it = m_nets.begin(); net_it != m_nets.end(); ++net_it) {
+        for (auto radio_tower_it = net_it->radio_towers.begin(); radio_tower_it != net_it->radio_towers.end(); ++radio_tower_it) {
+            if (radio_tower_it->x_id == x_id && radio_tower_it->y_id == y_id) {
+                net = net_it;
+                net->radio_towers.erase(radio_tower_it);
+                break;
+            }
+        }
+        if (net != m_nets.end())
+            break;
+    }
+    assert(net != m_nets.end());
+    //B Удалили последнюю вышку сети => удалили сеть
+    if (net->radio_towers.empty()) {
+        for (auto& radar : net->radars)
+            radar.radar_ptr->m_part_of_net = false;
+        m_nets.erase(net);
+    }
+    else {
+        //C Пересобрать сеть.
+        //1. Удалим старую сеть.
+        Net old_net = std::move(*net);
+        m_nets.erase(net);
+        //2. Объединяем вышки в сеть
+        std::list<Net> new_nets;
+        while (!old_net.radio_towers.empty()) {
+            bool create_new_net = false;
+            if (new_nets.empty())
+                create_new_net = true;
+            else {
+                if (std::none_of(old_net.radio_towers.begin(), old_net.radio_towers.end(), [&](Net::CellID id) {
+                    return new_nets.back().in_radio_tower_zone({ id.x_id * 32 + 16, id.y_id * 32 + 16 });
+                })) //ни одна из вышек не в зоне последней созданной сети.
+                    create_new_net = true;
+            }
+
+            if (create_new_net) {
+                Net new_net;
+                new_net.radio_towers.push_back(old_net.radio_towers.front());
+                old_net.radio_towers.pop_front();
+                new_nets.push_back(new_net);
+            }
+            bool filled = false;
+            auto& filling_net = new_nets.back();
+            for (auto radio_tower_it = old_net.radio_towers.begin(); radio_tower_it != old_net.radio_towers.end();) {
+                if (filling_net.in_radio_tower_zone({ radio_tower_it->x_id * 32 + 16, radio_tower_it->y_id * 32 + 16 })) {
+                    filling_net.radio_towers.push_back(*radio_tower_it);
+                    radio_tower_it = old_net.radio_towers.erase(radio_tower_it);
+                    filled = true;
+                }
+                else
+                    ++radio_tower_it;
+            }
+            if (!filled && !old_net.radio_towers.empty()) { //исчерпали данную сеть, начинаем новую, если еще есть вышки
+                Net new_net;
+                new_net.radio_towers.push_back(old_net.radio_towers.front());
+                old_net.radio_towers.pop_front();
+                new_nets.push_back(new_net);
+            }
+        }
+        //3. Добавляем радары
+        for (auto& radar : old_net.radars) {
+            bool radar_in_net = false;
+            for (auto& net : new_nets) {
+                if (net.in_radio_tower_zone({ radar.cell.x_id * 32 + 16, radar.cell.y_id * 32 + 16 })) {
+                    net.radars.push_back(radar);
+                    radar_in_net = true;
+                    break;
+                }
+            }
+            if (!radar_in_net)
+                radar.radar_ptr->m_part_of_net = false;
+        }
+        //4. Добавляем новые сети.
+        m_nets.splice(m_nets.end(), std::move(new_nets));
     }
 }

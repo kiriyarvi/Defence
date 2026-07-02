@@ -12,7 +12,7 @@ public:
     void add_char(const std::string& c, float value);
     void add_char(const std::string& c, int value);
     void add_char(const std::string& c, const std::string& p);
-    tgui::Widget::Ptr create();
+    tgui::Widget::Ptr create(bool add_scroll = true);
     tgui::ScrollablePanel::Ptr content;
 private:
     tgui::Label::Ptr m_name;
