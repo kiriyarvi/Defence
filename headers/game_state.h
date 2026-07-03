@@ -8,6 +8,8 @@
 #include "enemies/IEnemy.h"
 #include "gui/help.h"
 #include "gui/upgrade_panel.h"
+#include "gui/widget.h"
+
 #include <list>
 
 class GameState {
@@ -23,6 +25,7 @@ public:
 	GameState& operator=(GameState&&) = delete;
 	
 	tgui::Gui& get_tgui();
+    Widget& get_gui() { return m_new_gui; }
 
 	bool event(sf::Event& event, const sf::RenderWindow& current_window);
 	void logic(double dtime_mc);
@@ -72,6 +75,7 @@ private:
 	int m_player_hp = 10;
 	int m_player_coins = 0;
 private:
+    Widget m_new_gui;
 	tgui::Gui m_gui;
     tgui::Group::Ptr m_ui;
     Help m_help;

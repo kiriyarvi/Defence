@@ -12,8 +12,8 @@
 int main() {
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
-
 	auto& game_state = GameState::Instance(&window);
+    game_state.get_gui().size_fixed(window.getSize().x, window.getSize().y);
 	auto& gui = GameState::Instance().get_tgui();
 
 	Camera camera(window);
@@ -24,7 +24,14 @@ int main() {
 	const float dt = 1.f / 60.f; // логика обновляется 60 раз в секунду
 	float accumulator = 0.f;
 
+    size_t frame = 0;
+
 	while (window.isOpen()) {
+        if (frame > 10000000) {
+            frame = 0;
+        }
+        ++frame;
+
 		sf::Event event;
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
@@ -46,6 +53,9 @@ int main() {
                 sf::Vector2i mouse_screen_pos = sf::Mouse().getPosition();
                 auto mouse_pos = window.mapPixelToCoords(mouse_screen_pos);
                 EnemyManager::Instance().add_smoke(Smoke({ mouse_pos.x, mouse_pos.y }, 4., 20.));
+            }
+            if (event.type == sf::Event::Resized) {
+                game_state.get_gui().size_fixed(window.getSize().x, window.getSize().y);
             }
             game_state.event(event, window);
 			
@@ -77,7 +87,12 @@ int main() {
         Debugger::Instance().draw(window);
 		game_state.draw(window);
 		gui.draw();
-		window.display();
+
+        window.setView(sf::View(sf::FloatRect( 0,0 , window.getSize().x, window.getSize().y )));
+        game_state.get_gui().draw_hierarchy(frame, { 0,0 }, window);
+        camera.apply(window);
+
+        window.display();
 	}
 
 	return 0;

@@ -7,6 +7,8 @@
 #include "achievement_system.h"
 #include "enemy_manager.h"
 
+#include "gui/label.h"
+
 GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" };
     PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };
@@ -179,6 +181,23 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 
     TileMap::Instance().generate_map();
     add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.", MessageType::None);
+
+    //Иерархия
+    Panel* panel = (Panel*)m_new_gui.add(Panel::create());
+    Label* label = (Label*)panel->add(Label::create());
+    label->add("Противотанковая пушкаg", sf::Color::White, sf::Text::Style::Italic);
+    label->add("\n500\n\n\ng", Label::gold_color);
+
+ 
+
+    //Layout
+    //Ширина label зависит от m_new_gui, высота вычисляется автоматически на основе текста и ширины
+    label->add_dependent(LayoutNode::Dependency::Size, &m_new_gui, LayoutNode::Dependency::Size);
+    label->width_func = [gui = &m_new_gui]() {
+        return 0.5 * gui->layout.get_content_rect().width;
+    };
+    panel->size_include(label);
+    panel->position_centering(&m_new_gui);
 }
 
 GameState::~GameState() {
