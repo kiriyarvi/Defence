@@ -14,6 +14,137 @@
 #include "gui/info_panel.h"
 #include "net_manager.h"
 
+NBuildingButton::NBuildingButton(std::vector<NBuildingButton*>* buttons, Widget* ui, const BuildingCreator& creator, BuildingType type, TileRestrictions restrictions, int cost, float radius, TextureID icon):
+    m_buttons{ buttons }, m_ui{ui}, m_creator {
+    creator
+}, m_restrictions{ restrictions }, m_radius{ radius }, m_type{ type }, m_icon{ icon }, m_cost{ cost }
+{
+    m_delegate_all_events = false;
+    set_state(State::UNDISCOVERED);
+    on_event = [this](const glm::vec2& position_transform, const sf::Event& event) -> bool {
+        if (m_state == State::UNDISCOVERED || m_state == State::NOT_ENOUGTH_MONEY)
+            return true;
+        if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Button::Left) {
+            set_state(NBuildingButton::State::SELECTED); //select this
+            for (auto btn : *m_buttons) { //unselect others
+                if (btn != this)
+                    btn->unselect();
+            }
+            return true;
+        }
+    };
+    on_hovered = [this]() {
+        Panel* panel = (Panel*)m_ui->add(Panel::create());
+        panel->set_border(0);
+        Label* label = (Label*)panel->add(Label::create(true));
+        label->add_text(to_string(m_type) + "\n", sf::Color::White, sf::Text::Style::Bold);
+        label->add_text("Стоимость: " + std::to_string(m_cost) + "\n", Label::gold_color);
+        if (m_state == State::UNDISCOVERED)
+            label->add_text("Закрыто: " + AchievementSystem::Instance().get_building_unlock_condition_description(m_type), sf::Color::Red);
+        label->add_text("Откройте справку, для получения подробностей", sf::Color::White, sf::Text::Style::Italic);
+
+        panel->size_inherited(label);
+        panel->position_tooltip(m_ui, Anchor::BOTTOM | Anchor::LEFT);
+        m_tooltip = panel;
+    };
+
+    on_unhovered = [this]() {
+        m_ui->delete_widget(m_tooltip);
+    };
+}
+
+void NBuildingButton::coins_update(int current_coins_count) {
+    if (m_state == State::NOT_ENOUGTH_MONEY && m_cost <= current_coins_count)
+        set_state(State::ACTIVE);
+    if ((m_state == State::ACTIVE || m_state == State::SELECTED) && m_cost > current_coins_count)
+        set_state(State::NOT_ENOUGTH_MONEY);
+}
+
+void NBuildingButton::achievement_event(int current_coins_count) {
+    if (m_state == State::UNDISCOVERED && AchievementSystem::Instance().is_unlocked(m_type)) {
+        if (m_cost <= current_coins_count)
+            set_state(State::ACTIVE);
+        else
+            set_state(State::NOT_ENOUGTH_MONEY);
+    }
+}
+
+void NBuildingButton::unselect() {
+    if (m_state == NBuildingButton::State::SELECTED)
+        set_state(NBuildingButton::State::ACTIVE);
+}
+
+void NBuildingButton::set_state(State state) {
+    switch (state) {
+    case NBuildingButton::State::ACTIVE:
+        grayscale = false;
+        layers = { TextureID::ButtonBackground, m_icon };
+        break;
+    case NBuildingButton::State::SELECTED:
+        grayscale = false;
+        layers = { TextureID::ButtonClickedBackground, m_icon };
+        break;
+    case NBuildingButton::State::UNDISCOVERED:
+        grayscale = true;
+        layers = { TextureID::ButtonBackground, m_icon, TextureID::Locked };
+        break;
+    case NBuildingButton::State::NOT_ENOUGTH_MONEY:
+        grayscale = true;
+        layers = { TextureID::ButtonBackground, m_icon };
+        break;
+    default:
+        break;
+    }
+}
+
+
+bool NBuildingButton::is_cell_allowed(int x_id, int y_id) {
+    auto& tile = TileMap::Instance().map[x_id][y_id];
+    if (tile.building)
+        return false;
+    int roads_count = std::count(tile.roads.begin(), tile.roads.end(), true);
+    if (m_restrictions == TileRestrictions::RoadOnly)
+        return roads_count;
+    else if (m_restrictions == TileRestrictions::NoRoads)
+        return !roads_count;
+    return true;
+}
+
+void NBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
+    bool allowed = is_cell_allowed(x_id, y_id);
+    if (allowed && m_radius != 0.0) {
+        sf::CircleShape circle(m_radius * 32, 30);
+        circle.setFillColor(sf::Color(0, 255, 0, 40));
+        circle.setOutlineThickness(2);
+        circle.setOutlineColor(sf::Color(0, 255, 0, 140));
+        circle.setPosition(x_id * 32 + 16, y_id * 32 + 16);
+        circle.setOrigin(m_radius * 32, m_radius * 32);
+        window.draw(circle);
+    }
+    draw_building(window, x_id, y_id, allowed);
+}
+
+
+NMinigunBuildingButton::NMinigunBuildingButton(std::vector<NBuildingButton*>* buttons, Widget* ui):
+    NBuildingButton(
+        buttons,
+        ui,
+        NBuildingButton::make_creator<MiniGun>(),
+        BuildingType::Minigun,
+        NBuildingButton::TileRestrictions::NoRoads,
+        ParamsManager::Instance().params.guns.minigun.cost,
+        ParamsManager::Instance().params.guns.minigun.radius,
+        TextureID::MinigunIcon
+        )
+{}
+
+void NMinigunBuildingButton::draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) {
+    sf::Sprite minigun(TextureManager::Instance().textures[TextureID::MinigunIcon]);
+    minigun.setPosition(x_id * 32, y_id * 32);
+    if (!allowed) minigun.setColor(sf::Color(255, 0, 0));
+    window.draw(minigun);
+}
+
 BuildingButton::BuildingButton(TextureID gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name)
     : creator{ creator }, restrictions{ restrictions }, m_game_state{ game_state }, cost{ cost }, m_radius(radius), m_type{ type }, m_name{name}, IconButton(gun_icon, TextureID::ButtonBackground, TextureID::ButtonClickedBackground) {
     connect();

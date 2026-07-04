@@ -8,6 +8,55 @@
 #include <memory>
 
 
+class NBuildingButton : public LayeredIcon {
+public:
+    using BuildingCreator = std::function<std::unique_ptr<IBuilding>(int x_id, int y_id)>;
+    enum class TileRestrictions {
+        NoRoads,
+        RoadOnly
+    };
+
+    NBuildingButton(std::vector<NBuildingButton*>* buttons, Widget* ui, const BuildingCreator& creator, BuildingType type, TileRestrictions restrictions, int cost, float radius, TextureID icon);
+    template <typename T>
+    static BuildingCreator make_creator() {
+        return [](int x_id, int y_id) {
+            return std::make_unique<T>(x_id, y_id);
+        };
+    }
+
+    void unselect();
+    void coins_update(int current_coins_count);
+    void achievement_event(int current_coins_count);
+    void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id);
+    virtual void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) {}
+private:
+
+    enum class State {
+        ACTIVE,
+        SELECTED,
+        UNDISCOVERED,
+        NOT_ENOUGTH_MONEY
+    } m_state;
+    void set_state(State state);
+    bool is_cell_allowed(int x_id, int y_id);
+    BuildingCreator m_creator;
+    TileRestrictions m_restrictions;
+    TextureID m_icon;
+    std::vector<NBuildingButton*>* m_buttons;
+    Widget* m_ui;
+    Widget* m_tooltip;
+protected:
+    float m_radius;
+    int m_cost;
+    BuildingType m_type;
+};
+
+class NMinigunBuildingButton : public NBuildingButton {
+public:
+    NMinigunBuildingButton(std::vector<NBuildingButton*>* buttons, Widget* ui);
+    void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) override;
+};
+
 class GameState;
 
 class BuildingButton: public IconButton {

@@ -1,148 +1,286 @@
 #include "gui/widget.h"
+#include <numeric>
 
-int LayoutNode::Dependency::Size = 0x01;
-int LayoutNode::Dependency::Position = 0x10;
+
+void GUI::set_root(std::unique_ptr<Widget>&& root, const sf::RenderWindow& window) {
+    m_root = std::move(root);
+    m_root->size_fixed(window.getSize().x, window.getSize().y);
+}
+
+void GUI::draw(sf::RenderWindow& window) {
+    if (frame == std::numeric_limits<size_t>::max()) {
+        frame = 0;
+    }
+    ++frame;
+    if (m_root) {
+        auto view = window.getView();
+        auto w_size = window.getSize();
+        window.setView(sf::View(sf::FloatRect(0, 0, w_size.x, w_size.y)));
+        m_root->draw_hierarchy(frame, { 0,0 }, window);
+        window.setView(view);
+    }
+}
+
+void GUI::event(const sf::Event& event) {
+    if (!m_root)
+        return;
+    if (event.type == sf::Event::Resized) {
+        m_root->size_fixed(event.size.width, event.size.height);
+        return;
+    }
+    Widget* new_hovered = m_root->get_hovered({ 0,0 }, { sf::Mouse::getPosition().x, sf::Mouse::getPosition().y });
+    if (new_hovered != hovered && hovered)
+        hovered->on_unhovered();
+    if (new_hovered)
+        new_hovered->on_hovered();
+    hovered = new_hovered;
+
+    m_root->event_hierarchy({0,0}, event);
+}
+
+Property::Type Property::X =       0x0001;
+Property::Type Property::Y =       0x0010;
+Property::Type Property::WIDTH =   0x0100;
+Property::Type Property::HEIGHT =  0x1000;
+Property::Type Property::SIZE =    0x1100;
+Property::Type Property::POSITION =0x0011;
+Property::Type Property::LAYOUT =  0x1111;
+
+size_t Anchor::LEFT = 0x1000;
+size_t Anchor::RIGHT = 0x0100;
+size_t Anchor::TOP = 0x0010;
+size_t Anchor::BOTTOM = 0x0001;
+size_t Anchor::CENTER = 0;
+
 
 LayoutNode::Rect LayoutNode::Layout::get_content_rect() const {
     Rect r;
-    r.x = layout_rect.x + margin.left + padding.left;
-    r.y = layout_rect.y + margin.top + padding.top;
-    r.height = layout_rect.height - margin.top - margin.bottom - padding.top - padding.bottom;
-    r.width = layout_rect.width - margin.left - margin.right - padding.left - padding.right;
+    r.x = x + padding.left;
+    r.y = y + padding.top;
+    r.height = height - padding.top - padding.bottom;
+    r.width = width - padding.left - padding.right;
     return r;
 }
 
-LayoutNode::Rect LayoutNode::Layout::get_border_rect() const {
+LayoutNode::Rect LayoutNode::Layout::get_layout_rect() const {
     Rect r;
-    r.x = layout_rect.x + margin.left;
-    r.y = layout_rect.y + margin.top ;
-    r.height = layout_rect.height - margin.top - margin.bottom;
-    r.width = layout_rect.width - margin.left - margin.right;
+    r.x = x;
+    r.y = y;
+    r.height = height;
+    r.width = width;
     return r;
 }
+
 
 glm::vec2 LayoutNode::Layout::layout_size(const glm::vec2& content_size) const {
     return {
-        content_size.x + margin.left + margin.right + padding.left + padding.right,
-        content_size.y + margin.top + margin.bottom + padding.top + padding.bottom
+        content_size.x + padding.left + padding.right,
+        content_size.y + padding.top + padding.bottom
     };
 }
 
-void LayoutNode::calc_position(uint32_t update_frame) {
-    if (m_last_position_update == update_frame)
-        return; //уже вычисляли на данном frame => пропускаем
-    for (auto& d : position_dependencies) {
-        if (d.type & Dependency::Size)
-            d.layout_node->calc_size(update_frame);
-        if (d.type & Dependency::Position)
-            d.layout_node->calc_position(update_frame);
-    }
-    if (position_function) {
-        glm::vec2 pos = position_function();
-        layout.layout_rect.x = pos.x;
-        layout.layout_rect.y = pos.y;
-    }
-    m_last_position_update = update_frame;
+//gets anchor relative to center
+glm::vec2 LayoutNode::Layout::get_anchor_relative_to_center(Anchor::Type anchor) const {
+    glm::vec2 r = { width / 2.f , height / 2.f };
+    glm::vec2 center = { 0,0 };
+    if (anchor & Anchor::BOTTOM)
+        center.y += r.y;
+    if (anchor & Anchor::TOP)
+        center.y -= r.y;
+    if (anchor & Anchor::LEFT)
+        center.x -= r.x;
+    if (anchor & Anchor::RIGHT)
+        center.x += r.x;
+    return center;
 }
 
-void LayoutNode::calc_size(uint32_t update_frame) {
-    if (m_last_size_update == update_frame)
-        return; //уже вычисляли на данном frame => пропускаем
-    for (auto& d : size_dependencies) {
-        if (d.type & Dependency::Size)
-            d.layout_node->calc_size(update_frame);
-        if (d.type & Dependency::Position)
-            d.layout_node->calc_position(update_frame);
+glm::vec2 LayoutNode::Layout::center() const {
+    return { x + width / 2.f, y + height / 2.f };
+}
+
+bool LayoutNode::Layout::contains(const glm::vec2& transform, float px, float py) {
+    px -= transform.x;
+    py -= transform.y;
+    return px >= x && px <= x + width && py >= y && py <= y + height;
+}
+
+void LayoutNode::clear_rules(Property::Type properties) {
+    for (auto it = rules.begin(); it != rules.end();) {
+        //нельзя удалить правило частично.
+        if ((it->properties & properties) == it->properties) { //it->properties всключает все флаги что и properties
+            it = rules.erase(it);
+            continue;
+        }   
+        assert((it->properties & properties) == 0 && "Invalid operation");
+        ++it;
     }
-    if (size_function) {
-        glm::vec2 size = size_function();
-        layout.layout_rect.width = size.x;
-        layout.layout_rect.height = size.y;
+}
+
+void LayoutNode::add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Rule::Dependency>& dependencies) {
+    clear_rules(properties);
+    rules.push_back({ properties, calc, dependencies });
+}
+
+void LayoutNode::calc_properties(Property::Type property) {
+#ifdef GUI_DEBUG_ENABLED
+    auto& stack = GUI::Instance().layout_stack;
+    assert(std::find(stack.begin(), stack.end(), GUI::StackElement{ this, property }) == stack.end());
+    stack.push_back(GUI::StackElement{ this, property });
+#endif
+
+    auto current_frame = GUI::Instance().get_current_frame_id();
+    //не будем вычислять то, что уже было вычислено на этом этапе.
+    if (layout.x.last_calculation_frame_id == current_frame)
+        property &= ~Property::X;
+    if (layout.y.last_calculation_frame_id == current_frame)
+        property &= ~Property::Y;
+    if (layout.width.last_calculation_frame_id == current_frame)
+        property &= ~Property::WIDTH;
+    if (layout.width.last_calculation_frame_id == current_frame)
+        property &= ~Property::HEIGHT;
+    //выполним все правила, которые вычисляют properties пересекающиеся с property.
+    for (auto& r : rules) {
+        if ((r.properties & property) != 0) {
+            for (auto& d : r.dependencies) {
+                d.layout_node->calc_properties(d.properties);
+            }
+            //не дадим calc_function менять то, на что она не претендует.
+            layout.x.locked = !(r.properties & Property::X);
+            layout.y.locked = !(r.properties & Property::Y);
+            layout.width.locked = !(r.properties & Property::WIDTH);
+            layout.height.locked = !(r.properties & Property::HEIGHT);
+
+            r.calc_function(layout);
+            //обновляем информацию и frame для вычисленных полей
+            if (!layout.x.locked) layout.x.last_calculation_frame_id = current_frame;
+            if (!layout.y.locked) layout.y.last_calculation_frame_id = current_frame;
+            if (!layout.width.locked) layout.width.last_calculation_frame_id = current_frame;
+            if (!layout.height.locked) layout.height.last_calculation_frame_id = current_frame;
+
+        }
     }
-    m_last_size_update = update_frame;
+    
+
+#ifdef GUI_DEBUG_ENABLED
+    stack.pop_back();
+#endif
 }
 
-void LayoutNode::add_dependent(int that, LayoutNode* depentent, int relation) {
-    Dependency d{ relation, depentent };
-    if (that & Dependency::Position)
-        position_dependencies.push_back(d);
-    if (that & Dependency::Size)
-        size_dependencies.push_back(d);
-}
 
-void LayoutNode::size_options_reset() {
-    size_dependencies.clear();
-    size_function = {};
-}
-
-void LayoutNode::position_options_reset() {
-    position_dependencies.clear();
-    position_function = {};
+void LayoutNode::calc_layout() {
+    calc_properties(Property::LAYOUT);
 }
 
 
 void LayoutNode::vbox(const std::vector<LayoutNode*>& elements) {
-    for (auto& e : elements)
-        add_dependent(Dependency::Size, e, Dependency::Size);
-    size_function = [this, elements]() {
-        glm::vec2 size = {0,0};
-        for (auto& e : elements) {
-            size.x = std::max(e->layout.layout_rect.width, size.x);
-            size.y += e->layout.layout_rect.height;
-        }
-        return layout.layout_size(size);
-    };
     for (size_t i = 1; i < elements.size(); ++i) {
-        elements[i]->add_dependent(Dependency::Position, elements[i - 1], Dependency::Position & Dependency::Size);
-        elements[i]->position_function = [prev = elements[i - 1]]()->glm::vec2 {
-            return { prev->layout.layout_rect.x, prev->layout.layout_rect.y + prev->layout.layout_rect.height };
-        };
+        elements[i]->add_rule(Property::POSITION, [prev = elements[i - 1]](Layout& layout) {
+            layout.x = prev->layout.x;
+            layout.y = prev->layout.y + prev->layout.height;
+        }, { { elements[i - 1], Property::POSITION | Property::HEIGHT } });   
     }
+
+    std::vector<Rule::Dependency> height_dependencies(elements.size());
+    std::vector<Rule::Dependency> width_dependencies(elements.size());
+    for (size_t i = 0; i < elements.size(); ++i) {
+        height_dependencies[i] = { elements[i], Property::HEIGHT };
+        width_dependencies[i] = { elements[i], Property::WIDTH };
+    }
+
+    add_rule(Property::HEIGHT, [elements](Layout& layout) {
+        float height = 0.0;
+        for (auto& e : elements) height += e->layout.height;
+        layout.height = height;
+    }, height_dependencies);
+
+    add_rule(Property::WIDTH, [elements](Layout& layout) {
+        float width = 0.0;
+        for (auto& e : elements) width = std::max(width, static_cast<float>(e->layout.width));
+        layout.width = width;
+    }, width_dependencies);
 }
 
 void LayoutNode::size_fixed(float width, float height) {
-    size_options_reset();
-    this->size_function = [width, height]() {
-        return glm::vec2(width, height);
-    };
+    add_rule(Property::SIZE, [width, height](Layout& properties) {
+        properties.height = height;
+        properties.width = width;
+    }, {});
+}
+
+void LayoutNode::property_inherit(LayoutNode* parent, Property::Type properties, const Modifier& modifier) {
+    assert((properties & Property::POSITION) == 0 && "For size properties only");
+    add_rule(properties, [parent, properties, modifier](Layout& layout) {
+        Rect content = parent->layout.get_content_rect(); 
+        if (properties & Property::WIDTH)
+            layout.width = modifier ? modifier(content.width) : content.width;
+        if (properties & Property::HEIGHT)
+            layout.height = modifier ? modifier(content.height) : content.height;
+    }, { {parent, properties} });
+}
+
+void LayoutNode::property_include(LayoutNode* child, Property::Type properties, const Modifier& modifier) {
+    assert((properties & Property::POSITION) == 0 && "For size properties only");
+    add_rule(properties, [child, properties, modifier](Layout& layout) {
+        glm::vec2 size = layout.layout_size({ child->layout.width, child->layout.height });
+        if (properties & Property::WIDTH)
+            layout.width = modifier ? modifier(size.x) : size.x;
+        if (properties & Property::HEIGHT)
+            layout.height = modifier ? modifier(size.y) : size.y;
+    }, { {child, properties} });
 }
 
 
 void LayoutNode::position_centering(LayoutNode* parent) {
-    position_options_reset();
-    add_dependent(Dependency::Position, parent, Dependency::Size);
-    add_dependent(Dependency::Position, this, Dependency::Size);
-    this->position_function = [parent, this]() {
-        return glm::vec2{ (parent->layout.get_content_rect().width - this->layout.layout_rect.width) / 2., (parent->layout.get_content_rect().height - this->layout.layout_rect.height) / 2};
-    };
+    add_rule(Property::POSITION, [parent](Layout& layout) {
+        layout.x = (parent->layout.width - layout.width) / 2.f;
+        layout.y = (parent->layout.height - layout.height) / 2.f;
+    }, { {parent, Property::SIZE}, {this, Property::SIZE} });
 }
+
+void LayoutNode::position_tooltip(LayoutNode* parent, size_t ancher) {
+    add_rule(Property::POSITION, [parent, ancher](Layout& layout) {
+        auto position = glm::vec2{ sf::Mouse::getPosition().x,sf::Mouse::getPosition().y } - layout.get_anchor_relative_to_center(ancher);
+        auto content = parent->layout.get_content_rect();
+        if (position.x + layout.width > content.width)
+            position.x = content.width - layout.width;
+        if (position.x < 0)
+            position.x = 0;
+        if (position.y + layout.height > content.height)
+            position.y = content.height - layout.height;
+        if (position.y < 0)
+            position.y = 0;
+        layout.x = position.x;
+        layout.y = position.y;
+    }, { {parent, Property::SIZE}, {this, Property::SIZE} });
+}
+
 
 void LayoutNode::size_inherited(LayoutNode* parent) {
-    size_options_reset();
-    add_dependent(Dependency::Size, parent, Dependency::Size);
-    this->size_function = [parent]()->glm::vec2 {
-        auto content = parent->layout.get_content_rect();
-        return { content.width, content.height };
-    };
+    property_inherit(parent, Property::SIZE);
 }
 
-//LayoutNode оборачивает собой child
 void LayoutNode::size_include(LayoutNode* child) {
-    size_options_reset();
-    add_dependent(Dependency::Size, child, Dependency::Size);
-    this->size_function = [child, this]()->glm::vec2 {
-        auto size = layout.layout_size({ child->layout.layout_rect.width, child->layout.layout_rect.height });
-        return { size.x, size.y };
-    };
+    property_include(child, Property::SIZE);
 }
 
 void LayoutNode::size_fraction(LayoutNode* parent, float parent_width_fraction, float parent_height_fraction) {
-    size_options_reset();
-    add_dependent(Dependency::Size, parent, Dependency::Size);
-    this->size_function = [=]()->glm::vec2 {
+    add_rule(Property::SIZE, [parent, parent_width_fraction, parent_height_fraction](Layout& properties) {
         auto content = parent->layout.get_content_rect();
-        return { content.width * parent_width_fraction, content.height * parent_height_fraction };
-    };
+        properties.width = content.width * parent_width_fraction;
+        properties.height = content.height * parent_height_fraction;
+    }, { {parent, Property::SIZE} });
+}
+
+void Widget::position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor) {
+    assert((this->m_parent == to->m_parent || this->m_parent == to) && "position_anchor invalid operation");
+    //TODO проверка родителя
+    add_rule(Property::POSITION, [pivot, to, anchor](Layout& layout) {
+        glm::vec2 anchor_pos = to->layout.get_anchor_relative_to_center(anchor) + to->layout.center();
+        glm::vec2 pivot_anchor = layout.get_anchor_relative_to_center(pivot);
+        glm::vec2 pos = anchor_pos - pivot_anchor - glm::vec2{ layout.width / 2.f, layout.height / 2.f };
+        layout.x = pos.x;
+        layout.y = pos.y;
+    }, { {to, Property::LAYOUT}, {this, Property::SIZE} });
 }
 
 std::unique_ptr<Widget> Widget::create(Widget* parent) {
@@ -150,13 +288,40 @@ std::unique_ptr<Widget> Widget::create(Widget* parent) {
 }
 
 void Widget::draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderWindow& window) {
-    calc_size(frame);
-    calc_position(frame);
+    calc_layout();
     draw(position_transform, window);
-    glm::vec2 transform = position_transform + glm::vec2{layout.layout_rect.x + layout.margin.left + layout.padding.left, layout.layout_rect.y + layout.margin.top + layout.padding.top };
+    glm::vec2 transform = position_transform + glm::vec2{layout.x + layout.padding.left, layout.y + layout.padding.top};
     for (auto& child : m_children) {
         child->draw_hierarchy(frame, transform, window);
     }
+}
+
+ bool Widget::event_filter(const glm::vec2& position_transform, const sf::Event& event) {
+     if (m_delegate_all_events)
+         return true;
+     auto pos = sf::Mouse().getPosition();
+     return layout.contains(position_transform, pos.x, pos.y);
+ }
+
+bool Widget::event_hierarchy(const glm::vec2& position_transform, const sf::Event& event) {
+    if (!event_filter(position_transform, event))
+        return false;
+    glm::vec2 transform = position_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
+    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it){
+        if ((*it)->event_hierarchy(transform, event))
+            return true;
+    }
+    return on_event ? on_event(transform, event) : true;
+}
+
+Widget* Widget::get_hovered(const glm::vec2& position_transform, glm::uvec2 mouse_pos) {
+    glm::vec2 transform = position_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
+    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+        Widget* w = (*it)->get_hovered(transform, mouse_pos);
+        if (!w) return w;
+    }
+    if (layout.contains(position_transform, mouse_pos.x, mouse_pos.y))
+        return this;
 }
 
 Widget* Widget::add(std::unique_ptr<Widget>&& child) {
@@ -165,20 +330,35 @@ Widget* Widget::add(std::unique_ptr<Widget>&& child) {
     return m_children.back().get();
 }
 
+void Widget::delete_widget(Widget* widget) {
+    for (auto it = m_children.begin(); it != m_children.end(); ++it) {
+        if (it->get() == widget) {
+            m_children.erase(it);
+            return;
+        }
+    }
+}
+
 Panel::Panel(sf::Color background_color, sf::Color border_color, float border) {
     m_rect.setFillColor(background_color);
     m_rect.setOutlineColor(border_color);
     m_rect.setOutlineThickness(-border);
     layout.padding = { border, border, border, border };
+    m_delegate_all_events = false;
 }
 
 std::unique_ptr<Panel> Panel::create(sf::Color background_color, sf::Color border_color, float border) {
     return std::make_unique<Panel>(background_color, border_color, border);
 }
 
+void Panel::set_border(float border) {
+    layout.padding = { border, border, border, border };
+    m_rect.setOutlineThickness(-border);
+}
+
 void Panel::draw(const glm::vec2& position_transform, sf::RenderWindow& window) {
-    Rect widget_rect = layout.get_border_rect();
-    m_rect.setSize({ widget_rect.width, widget_rect.height });
-    m_rect.setPosition({ position_transform.x + widget_rect.x, position_transform.y + widget_rect.y });
+    auto layout_rect = layout.get_layout_rect();
+    m_rect.setSize({ layout_rect.width, layout_rect.height });
+    m_rect.setPosition({ position_transform.x + layout_rect.x, position_transform.y + layout_rect.y });
     window.draw(m_rect);
 }

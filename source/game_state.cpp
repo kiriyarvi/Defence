@@ -6,57 +6,62 @@
 #include "guns/antitank_gun.h"
 #include "achievement_system.h"
 #include "enemy_manager.h"
+#include "resource_manager.h"
 
 #include "gui/label.h"
+#include "gui/icon.h"
 
 GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
-    GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" };
-    PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };
-	m_gui.setFont(PixelSplitter_Bold_font);
-	tgui::Texture::setDefaultSmooth(false); // отключим сглаживание текстур
+    Widget* root = GUI::Instance().get_root();
+    m_game_process_ui = root->add(Widget::create());
+    m_game_process_ui->size_inherited(root);
 
-    m_ui = tgui::Group::create();
+    //coin indicator (Hierarchy)
+    m_player_coins_count_widget = (Label*)m_game_process_ui->add(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
+    m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
+    Icon* coin_icon = (Icon*)m_game_process_ui->add(Icon::create(TextureID::Coin));
+    //coin indicator (Layout)
+    // new_m_player_coins_count_widget POS(0,0), SIZE вычисляется автоматически поскольку проставлен флаг inline.
+    coin_icon->add_rule(Property::SIZE, [coins_counter = m_player_coins_count_widget](LayoutNode::Layout& layout) {
+        layout.width = coins_counter->layout.height;
+        layout.height = coins_counter->layout.height;
+    }, { {m_player_coins_count_widget, Property::SIZE} });
+    coin_icon->position_anchor(Anchor::LEFT, m_player_coins_count_widget, Anchor::RIGHT);
 
-	m_player_health_count_widget = tgui::Label::create("X" + std::to_string(m_player_hp));
-	m_player_health_count_widget->setPosition("100%", 0);
-	m_player_health_count_widget->setOrigin(1, 0);
-	m_player_health_count_widget->setTextSize(32);
-	m_player_health_count_widget->ignoreMouseEvents(true);
-	m_player_health_count_widget->getRenderer()->setTextColor(tgui::Color::White);
-    m_ui->add(m_player_health_count_widget, "HealthCountWidget");
+    //health indicator (Hierarchy)
+    m_player_health_count_widget = (Label*)m_game_process_ui->add(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
+    m_player_health_count_widget->add_text("X" + std::to_string(m_player_hp));
+    Icon* heart_icon = (Icon*)m_game_process_ui->add(Icon::create(TextureID::Heart));
+    //health indicator (Layout)
+    m_player_health_count_widget->position_anchor(Anchor::RIGHT | Anchor::TOP, m_game_process_ui, Anchor::RIGHT | Anchor::TOP);
+    heart_icon->add_rule(Property::SIZE, [hp_counter = m_player_health_count_widget](LayoutNode::Layout& layout) {
+        layout.width = hp_counter->layout.height;
+        layout.height = hp_counter->layout.height;
+    }, { {m_player_health_count_widget, Property::SIZE} });
+    heart_icon->position_anchor(Anchor::RIGHT, m_player_health_count_widget, Anchor::LEFT);
 
 
-	tgui::Picture::Ptr heart_icon = tgui::Picture::create("sprites/heart.png");
-	heart_icon->setPosition(
-		"(HealthCountWidget.left - width)", // X: левый край rightWidget минус ширина heart_icon
-		"(HealthCountWidget.top + 5)"       // Y: на той же высоте
-	);
-	heart_icon->setSize(32, 32);
-	heart_icon->ignoreMouseEvents(true);
-    m_ui->add(heart_icon);
+    NMinigunBuildingButton* minigun_button = (NMinigunBuildingButton*)m_game_process_ui->add(std::make_unique<NMinigunBuildingButton>(&new_m_building_buttons, m_game_process_ui));
+    new_m_building_buttons.push_back(minigun_button);
+    minigun_button->position_centering(m_game_process_ui);
+    minigun_button->size_fixed(100, 100);
 
-	m_player_coins_count_widget = tgui::Label::create(std::to_string(m_player_coins));
-	m_player_coins_count_widget->setTextSize(32);
-	m_player_coins_count_widget->ignoreMouseEvents(true);
-	m_player_coins_count_widget->getRenderer()->setTextColor(tgui::Color(255, 211, 3));
+    GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" }; //TODO
+    PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };//TODO
+	m_gui.setFont(PixelSplitter_Bold_font);//TODO
+	tgui::Texture::setDefaultSmooth(false); // отключим сглаживание текстур //TODO
 
+    m_ui = tgui::Group::create(); //TODO
+
+	
     m_wave_info = tgui::Label::create();
     m_wave_info->setTextSize(32);
     m_wave_info->ignoreMouseEvents(true);
     m_wave_info->setOrigin(0.5, 0);
     m_wave_info->setPosition("50%", 0);
     m_wave_info->getRenderer()->setTextColor(sf::Color::White);
-    m_ui->add(m_player_coins_count_widget, "CoinsCountWidget");
     m_ui->add(m_wave_info);
-	tgui::Picture::Ptr coin_picture = tgui::Picture::create("sprites/coin.png");
-	coin_picture->setPosition(
-		"(CoinsCountWidget.right)", // X: левый край rightWidget минус ширина heart_icon
-		"(CoinsCountWidget.top + 5)"       // Y: на той же высоте
-	);
-	coin_picture->ignoreMouseEvents(true);
-	coin_picture->setSize(32, 32);
-    m_ui->add(coin_picture);
-
+	
 	m_centered_message = tgui::Label::create("");
 	m_centered_message->setPosition("50%", "50%");
 	m_centered_message->setOrigin(0.5, 0.5);
@@ -183,21 +188,21 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.", MessageType::None);
 
     //Иерархия
-    Panel* panel = (Panel*)m_new_gui.add(Panel::create());
+   /* Panel* panel = (Panel*)root->add(Panel::create());
     Label* label = (Label*)panel->add(Label::create());
-    label->add("Противотанковая пушкаg", sf::Color::White, sf::Text::Style::Italic);
-    label->add("\n500\n\n\ng", Label::gold_color);
-
- 
+    Panel* panel_2 = (Panel*)root->add(Panel::create());
+    label->add("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.", sf::Color::White, sf::Text::Style::Italic);
+    label->add("\n500\n\n\ng", Label::gold_color);*/
 
     //Layout
-    //Ширина label зависит от m_new_gui, высота вычисляется автоматически на основе текста и ширины
-    label->add_dependent(LayoutNode::Dependency::Size, &m_new_gui, LayoutNode::Dependency::Size);
-    label->width_func = [gui = &m_new_gui]() {
-        return 0.5 * gui->layout.get_content_rect().width;
-    };
-    panel->size_include(label);
-    panel->position_centering(&m_new_gui);
+    //Ширина Label наследуется от panel
+    //label->property_inherit(panel, Property::WIDTH); //WIDTH
+    ////label.height зависит от width (зависимость проставлена в конструкторе label)
+    //panel->property_inherit(root, Property::WIDTH, [](float v) {return 0.5 * v; });
+    //panel->property_include(label, Property::HEIGHT);
+    //panel->position_centering(root); //POSITION
+    //panel_2->size_fixed(100, 100);
+    //panel_2->position_anchor(Anchor::LEFT | Anchor::BOTTOM, panel, Anchor::RIGHT | Anchor::TOP);
 }
 
 GameState::~GameState() {
@@ -422,6 +427,8 @@ void GameState::enemy_defeated(EnemyType type) {
         return;
     for (auto& btn : m_building_buttons)
         btn->defeat_event();
+    for (auto& btn : new_m_building_buttons)
+        btn->achievement_event(m_player_coins);
     m_upgrade_panel_creator.update();
 }
 
@@ -467,18 +474,23 @@ void GameState::set_panel_content(tgui::Widget::Ptr content) {
 
 void GameState::player_health_add(int health) {
 	m_player_hp += health;
-	m_player_health_count_widget->setText("X" + std::to_string(m_player_hp));
+    m_player_health_count_widget->clear();
+	m_player_health_count_widget->add_text("X" + std::to_string(m_player_hp));
 }
 
 void GameState::kill_player() {
     m_player_hp = 0;
-    m_player_health_count_widget->setText("X" + std::to_string(m_player_hp));
+    m_player_health_count_widget->clear();
+    m_player_health_count_widget->add_text("X" + std::to_string(m_player_hp));
 }
 
 void GameState::player_coins_add(int coins) {
 	m_player_coins += coins;
-	m_player_coins_count_widget->setText(std::to_string(m_player_coins));
+    m_player_coins_count_widget->clear();
+    m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
 	for (auto& btn : m_building_buttons)
 		btn->coins_update(m_player_coins);
+    for (auto& btn : new_m_building_buttons)
+        btn->coins_update(m_player_coins);
 }
 

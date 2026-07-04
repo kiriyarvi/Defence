@@ -12,8 +12,8 @@
 int main() {
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
+    GUI::Instance().set_root(Widget::create(),window);
 	auto& game_state = GameState::Instance(&window);
-    game_state.get_gui().size_fixed(window.getSize().x, window.getSize().y);
 	auto& gui = GameState::Instance().get_tgui();
 
 	Camera camera(window);
@@ -53,10 +53,8 @@ int main() {
                 sf::Vector2i mouse_screen_pos = sf::Mouse().getPosition();
                 auto mouse_pos = window.mapPixelToCoords(mouse_screen_pos);
                 EnemyManager::Instance().add_smoke(Smoke({ mouse_pos.x, mouse_pos.y }, 4., 20.));
-            }
-            if (event.type == sf::Event::Resized) {
-                game_state.get_gui().size_fixed(window.getSize().x, window.getSize().y);
-            }
+            }  
+            GUI::Instance().event(event);
             game_state.event(event, window);
 			
 		}
@@ -87,11 +85,7 @@ int main() {
         Debugger::Instance().draw(window);
 		game_state.draw(window);
 		gui.draw();
-
-        window.setView(sf::View(sf::FloatRect( 0,0 , window.getSize().x, window.getSize().y )));
-        game_state.get_gui().draw_hierarchy(frame, { 0,0 }, window);
-        camera.apply(window);
-
+        GUI::Instance().draw(window);
         window.display();
 	}
 

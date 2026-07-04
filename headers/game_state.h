@@ -9,6 +9,7 @@
 #include "gui/help.h"
 #include "gui/upgrade_panel.h"
 #include "gui/widget.h"
+#include "gui/label.h"
 
 #include <list>
 
@@ -25,7 +26,6 @@ public:
 	GameState& operator=(GameState&&) = delete;
 	
 	tgui::Gui& get_tgui();
-    Widget& get_gui() { return m_new_gui; }
 
 	bool event(sf::Event& event, const sf::RenderWindow& current_window);
 	void logic(double dtime_mc);
@@ -75,7 +75,12 @@ private:
 	int m_player_hp = 10;
 	int m_player_coins = 0;
 private:
-    Widget m_new_gui;
+    Widget* m_game_process_ui; // UI во время процесса игры
+    Label* m_player_coins_count_widget;
+    Label* m_player_health_count_widget;
+    std::vector<NBuildingButton*> new_m_building_buttons;
+
+
 	tgui::Gui m_gui;
     tgui::Group::Ptr m_ui;
     Help m_help;
@@ -85,8 +90,6 @@ private:
     float m_prepairing_timer = 0; //пока не используется
     bool m_win = false;
     bool m_is_help_displayed = false;
-	tgui::Label::Ptr m_player_health_count_widget;
-	tgui::Label::Ptr m_player_coins_count_widget;
 	tgui::Label::Ptr m_centered_message; // сообщение по центру
 
 	BuildingButton* m_current_building_construction = nullptr;

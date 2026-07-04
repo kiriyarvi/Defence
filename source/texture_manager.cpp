@@ -106,4 +106,8 @@ TextureManager::TextureManager() {
     textures[TextureID::RadarUpgradeLongDistanceCommunication].loadFromFile("sprites/radar_upgrade_long_distance_communication.png");
     textures[TextureID::RadarUpgradeRadius].loadFromFile("sprites/radar_upgrade_radius.png");
     textures[TextureID::RadarUpgradeUncoverSpeed].loadFromFile("sprites/radar_upgrade_uncover_speed.png");
+
+
+    textures[TextureID::Coin].loadFromFile("sprites/coin.png");
+    textures[TextureID::Heart].loadFromFile("sprites/heart.png");
 }

@@ -2,6 +2,8 @@
 #include "TGUI/TGUI.hpp"
 #include "texture_manager.h"
 
+#include "gui/widget.h"
+
 class IconButton {
 public:
     IconButton(TextureID icon, TextureID active_backgound, TextureID selected_background);
@@ -24,4 +26,15 @@ protected:
     TextureID m_active_background;
     TextureID m_selected_background;
     TextureID m_icon;
+};
+
+
+class LayeredIcon: public Widget {
+public:
+    LayeredIcon() = default;
+    std::vector<TextureID> layers;
+    bool grayscale = false;
+    void draw(const glm::vec2& position_transform, sf::RenderWindow& window) override;
+protected:
+    sf::Sprite m_sprite;
 };

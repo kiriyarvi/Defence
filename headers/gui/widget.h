@@ -5,6 +5,77 @@
 #include <type_traits>
 #include <glm/vec2.hpp>
 #include <memory>
+#include <stack>
+
+class Widget;
+class LayoutNode;
+
+class GUI {
+public:
+    static GUI& Instance() {
+        static GUI instance;
+        return instance;
+    }
+    // Удаляем копирование и перемещение
+    GUI(const GUI&) = delete;
+    GUI& operator=(const GUI&) = delete;
+    GUI(GUI&&) = delete;
+    GUI& operator=(GUI&&) = delete;
+
+    void set_root(std::unique_ptr<Widget>&& root, const sf::RenderWindow& window);
+    Widget* get_root() { return m_root.get(); }
+
+
+    using FrameID = size_t;
+    FrameID get_current_frame_id() { return frame;  }
+    void draw(sf::RenderWindow& window);
+    void event(const sf::Event& event);
+    struct StackElement {
+        LayoutNode* node;
+        size_t properties;
+        bool operator==(const StackElement& element) { return node == element.node && properties == element.properties; }
+    };
+    std::list<StackElement> layout_stack;
+    Widget* hovered = nullptr;
+private:
+    std::unique_ptr<Widget> m_root;
+    GUI() = default;
+    FrameID frame = 0;
+};
+
+
+class LayoutNode;
+
+class Property {
+    friend class LayoutNode;
+public:
+    Property(float initial) : m_value{ initial } {}
+    Property& operator=(float value) { assert(!locked && "attempt to change locked variable");  m_value = value; return *this; }
+    operator float() const { return m_value; }
+
+    float get_value() const { return m_value; }
+    GUI::FrameID last_calculation_frame_id = 0;
+    using Type = size_t;
+    static Type X;
+    static Type Y;
+    static Type WIDTH;
+    static Type HEIGHT;
+    static Type SIZE;
+    static Type POSITION;
+    static Type LAYOUT;
+private:
+    float m_value;
+    bool locked = false;
+};
+
+struct Anchor {
+    using Type = size_t;
+    static Type LEFT;
+    static Type RIGHT;
+    static Type TOP;
+    static Type BOTTOM;
+    static Type CENTER;
+};
 
 class LayoutNode {
 public:
@@ -14,55 +85,61 @@ public:
         float top = 0;
         float bottom = 0;
     };
-
     struct Rect {
-        float x = 0; // относительные координаты
-        float y = 0;
-        float width = 0;
-        float height = 0;
+        float x = 0.f;
+        float y = 0.f;
+        float width = 0.f;
+        float height = 0.f;
     };
 
     struct Layout {
-        Rect layout_rect;
-        //Параметры отступов не вычисляются автоматически и задаются пользователем.
-        Spacing margin; //отступ от родительского виджета.
-        Spacing padding; //отступ для контента.
+        Property x = 0.f; // относительные координаты
+        Property y = 0.f;
+        Property width = 0.f;
+        Property height = 0.f;
+        Spacing padding; //отступ для контента. Параметры отступов не являются Properties и не вычисляются динамически.
         Rect get_content_rect() const;
-        Rect get_border_rect() const; 
+        Rect get_layout_rect() const;
         glm::vec2 layout_size(const glm::vec2& content_size) const;
+        glm::vec2 center() const;
+        bool contains(const glm::vec2& transform, float x, float y);
+        glm::vec2 get_anchor_relative_to_center(Anchor::Type anchor) const;
     } layout;
 
-    struct Dependency {
-        static int Size;
-        static int Position;
-        int type;
-        LayoutNode* layout_node;
+
+    struct Rule {
+        Property::Type properties; //OR-d by |
+        std::function<void(Layout&)> calc_function;
+        struct Dependency {
+            LayoutNode* layout_node;
+            Property::Type properties;
+        };
+        std::vector<Dependency> dependencies;
     };
-    std::list<Dependency> size_dependencies;
-    std::list<Dependency> position_dependencies;
-
-    void add_dependent(int that, LayoutNode* depentent, int relation);
-
-    std::function<glm::vec2()> position_function;
-    std::function<glm::vec2()> size_function;
-    void calc_position(uint32_t update_frame);
-    void calc_size(uint32_t update_frame);
+    std::list<Rule> rules;
+    void clear_rules(Property::Type properties);
+    void add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Rule::Dependency>& dependencies);
+    void calc_properties(Property::Type property);
+    void calc_layout();
 
     //Layout functions
-    void size_options_reset();
-    void position_options_reset();
-    //Simple
+    //SIZE
+    using Modifier = std::function<float(float)>;
+    void property_inherit(LayoutNode* parent, Property::Type properties, const Modifier& modifier = {}); //наследует свойства parent->layout.content
+    void property_include(LayoutNode* child, Property::Type properties, const Modifier& modifier = {}); //делает так, чтобы child->layout помещался в content
     void size_fixed(float width, float height);
     void size_inherited(LayoutNode* parent);
     void size_include(LayoutNode* child);
     void size_fraction(LayoutNode* parent, float parent_width_fraction, float parent_height_fraction);
+    //POSITION
     void position_centering(LayoutNode* parent);
-
-    //Containers
+    void position_tooltip(LayoutNode* parent, size_t ancher);
+    void position_anchor(Anchor::Type pivot, LayoutNode* to, Anchor::Type anchor);
+    //CONTAINERS
     void vbox(const std::vector<LayoutNode*>& elements);
 private:
     uint32_t m_last_size_update = 0;
-    uint32_t m_last_position_update = 0;
+    uint32_t m_last_position_update = 0; private:
 };
 
 class Widget: public LayoutNode {
@@ -71,9 +148,21 @@ public:
     static std::unique_ptr<Widget> create(Widget* parent = nullptr);
     void draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderWindow& window);
     virtual void draw(const glm::vec2& position_transform, sf::RenderWindow& window) {}
+
     Widget* add(std::unique_ptr<Widget>&& child);
+    void delete_widget(Widget* widget); // NOTE: не удаляет автоматически layout rules виджетов, которые сслыаются на widget.
     Widget* m_parent;
     std::list<std::unique_ptr<Widget>> m_children;
+    //Layout functions
+    void position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor);
+
+    std::function<bool(const glm::vec2& position_transform, const sf::Event& event)> on_event;
+    std::function<void()> on_hovered;
+    std::function<void()> on_unhovered;
+    bool event_hierarchy(const glm::vec2& position_transform, const sf::Event& event);
+    virtual bool event_filter(const glm::vec2& position_transform, const sf::Event& event);
+    Widget* get_hovered(const glm::vec2& position_transform, glm::uvec2 mouse_pos);
+    bool m_delegate_all_events = true;
 };
 
 
@@ -84,6 +173,7 @@ public:
         sf::Color background_color = sf::Color(50, 50, 50, 200),
         sf::Color border_color = sf::Color::Black,
         float border = 3);
+    void set_border(float border);
     void draw(const glm::vec2& position_transform, sf::RenderWindow& window) override;
 private:
     sf::RectangleShape m_rect;

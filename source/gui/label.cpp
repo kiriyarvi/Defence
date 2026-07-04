@@ -10,7 +10,9 @@ sf::FloatRect Label::FontInfo::get_text_bounds(const std::basic_string<sf::Uint3
     return widget.getLocalBounds();
 }
 
-Label::Label(sf::Font* font, size_t size) {
+Label::Label(bool inline_text, size_t size, sf::Font* font) {
+    layout.padding = { 3,3,3,3 }; //default padding.
+    m_inline_text = inline_text;
     m_font_info.font = font ? font:  &ResourceManager::Instance().GOSTtypeA_font;
     m_font_info.size = size;
     m_font_info.space_width = m_font_info.font->getGlyph(' ', m_font_info.size, true).advance;
@@ -19,12 +21,18 @@ Label::Label(sf::Font* font, size_t size) {
     m_font_info.sfml_offset = m_font_info.get_text_bounds({ sf::Uint32('A') }, sf::Text::Style::Regular).top;
     m_font_info.line_spacing = m_font_info.font->getLineSpacing(m_font_info.size);
     m_font_info.font->setSmooth(false);
+    if (inline_text)
+        add_inline_text_rule();
+    else
+        add_paragraph_text_rule();
+}
 
-    size_function = [this]() -> glm::vec2 {
-        float width = width_func();
-        if (std::abs(m_cached_width - width) < 10e-6 && !m_invalidated)
-            return m_cached_size;
-        m_cached_width = width;
+void Label::add_paragraph_text_rule() {
+    add_rule(Property::HEIGHT, [this](Layout& layout) {
+        if (std::abs(m_cached_width - layout.width) < 10e-6 && !m_invalidated)
+            return;
+        m_cached_width = layout.width;
+        float content_width = m_cached_width - layout.padding.left - layout.padding.right;
         float line_width = 0;
         int lines = 1;
         std::list<Word>::iterator prev_it = m_text.end();
@@ -38,7 +46,7 @@ Label::Label(sf::Font* font, size_t size) {
                 line_width += word_it->width;
                 if (word_it != m_text.begin())
                     line_width += m_font_info.space_width;
-                if (line_width >= width)
+                if (line_width >= content_width)
                     new_line = true;
             }
             if (new_line) {
@@ -50,12 +58,42 @@ Label::Label(sf::Font* font, size_t size) {
             prev_it = word_it;
         }
         m_invalidated = false;
-        m_cached_size = { width, (lines - 1) * m_font_info.line_spacing + m_font_info.top_line };
-        return m_cached_size;
-    };
+        m_cached_height = (lines - 1) * m_font_info.line_spacing + m_font_info.top_line + layout.padding.top + layout.padding.bottom;
+        layout.height = m_cached_height;
+    }, { {this, Property::WIDTH} });
 }
 
-void Label::add(const std::string& text, sf::Color color, sf::Text::Style style) {
+void Label::add_inline_text_rule() {
+    add_rule(Property::SIZE, [this](Layout& layout) {
+        if (!m_invalidated)
+            return;
+        float max_line_width = 0;
+        float line_width = 0;
+        int lines = 1;
+        std::list<Word>::iterator prev_it = m_text.end();
+        for (auto word_it = m_text.begin(); word_it != m_text.end(); ++word_it) {
+            word_it->break_line = false;
+            if (prev_it != m_text.end() && prev_it->compulsory_line_break == true) {
+                prev_it->break_line = true;
+                max_line_width = std::max(line_width, max_line_width);
+                line_width = word_it->width;
+                ++lines;
+            }
+            else {
+                line_width += word_it->width;
+                if (prev_it != m_text.end())
+                    line_width += m_font_info.space_width;
+            }
+            prev_it = word_it;
+        }
+        max_line_width = std::max(line_width, max_line_width);
+        m_invalidated = false;
+        layout.width = max_line_width + layout.padding.left + layout.padding.right;
+        layout.height = (lines - 1) * m_font_info.line_spacing + m_font_info.top_line + layout.padding.top + layout.padding.bottom;
+    },{});
+}
+
+void Label::add_text(const std::string& text, sf::Color color, sf::Text::Style style) {
     //Переводим в UTF-32
     std::basic_string<sf::Uint32> codepoints_string;
     auto begin = text.begin();
@@ -94,12 +132,16 @@ void Label::add(const std::string& text, sf::Color color, sf::Text::Style style)
     m_invalidated = true;
 }
 
+void Label::clear() {
+    m_text.clear();
+    m_invalidated = true;
+}
+
 
 void Label::draw(const glm::vec2& position_transform, sf::RenderWindow& window) {
     sf::Text widget("", *m_font_info.font, m_font_info.size);
 
-    auto border_rect = layout.get_border_rect();
-    sf::Vector2f text_start{ position_transform.x + border_rect.x, position_transform.y + border_rect.y };
+    sf::Vector2f text_start{ position_transform.x + layout.x + layout.padding.left, position_transform.y + layout.y + layout.padding.top };
 
     int line = 0;
     float x_offset = 0;
