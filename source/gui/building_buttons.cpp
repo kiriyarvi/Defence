@@ -14,67 +14,133 @@
 #include "gui/info_panel.h"
 #include "net_manager.h"
 
-NBuildingButton::NBuildingButton(std::vector<NBuildingButton*>* buttons, Widget* ui, const BuildingCreator& creator, BuildingType type, TileRestrictions restrictions, int cost, float radius, TextureID icon):
-    m_buttons{ buttons }, m_ui{ui}, m_creator {
-    creator
-}, m_restrictions{ restrictions }, m_radius{ radius }, m_type{ type }, m_icon{ icon }, m_cost{ cost }
+
+BuildingPanel::BuildingPanel(Widget* ui) : ui{ui} {
+    Widget* b1 = add(std::make_unique<NMinigunBuildingButton>());
+    Widget* b2 = add(std::make_unique<NMinigunBuildingButton>());
+    Widget* b3 = add(std::make_unique<NMinigunBuildingButton>());
+    Widget* b4 = add(std::make_unique<NMinigunBuildingButton>());
+
+    vbox({ b1, b2, b3, b4 });
+
+    for (auto& button : m_children) {
+        button->size_fixed(100,100);
+    }
+
+}
+
+void BuildingPanel::update(int player_coins) {
+    for (auto& button : m_children)
+        dynamic_cast<NBuildingButton*>(button.get())->update(player_coins);
+    if (m_selected_button && m_selected_button->m_state != NBuildingButton::State::SELECTED)
+        m_selected_button = nullptr;
+}
+
+void BuildingPanel::build_if_allowed(const sf::Vector2f& mouse_pos) {
+    if (!m_selected_button)
+        return;
+    size_t N = TileMap::Instance().map.size();
+    bool on_map = mouse_pos.x < N * 32 && mouse_pos.x >= 0 && mouse_pos.y < N * 32 && mouse_pos.y >= 0;
+    sf::Vector2i cell_id(mouse_pos.x / 32, mouse_pos.y / 32);
+    if (on_map && m_selected_button->is_cell_allowed(cell_id.x, cell_id.y)) {
+        TileMap::Instance().map[cell_id.x][cell_id.y].building = m_selected_button->m_creator(cell_id.x, cell_id.y);
+        GameState::Instance().player_coins_add(-m_selected_button->m_cost);
+    }
+}
+
+void BuildingPanel::select(NBuildingButton* button_to_select) {
+    for (auto& button_ptr : m_children) {
+        NBuildingButton* button = dynamic_cast<NBuildingButton*>(button_ptr.get());
+        if (button == button_to_select) {
+            button->set_state(NBuildingButton::State::SELECTED);
+            m_selected_button = button_to_select;
+        }
+        else if (button->m_state == NBuildingButton::State::SELECTED)
+            button->set_state(NBuildingButton::State::ACTIVE);
+    }
+}
+
+void BuildingPanel::unselect() {
+    if (m_selected_button) {
+        assert(m_selected_button->m_state == NBuildingButton::State::SELECTED);
+        m_selected_button->set_state(NBuildingButton::State::ACTIVE);
+    }
+    m_selected_button = nullptr;
+}
+
+void BuildingPanel::unselect(NBuildingButton* button) {
+    if (m_selected_button == button) {
+        m_selected_button->set_state(NBuildingButton::State::ACTIVE);
+        m_selected_button = nullptr;
+    }
+}
+
+void BuildingPanel::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
+    if (!m_selected_button)
+        return;
+    m_selected_button->draw_building_plan(window, x_id, y_id);
+}
+
+NBuildingButton::NBuildingButton(const BuildingCreator& creator, BuildingType type, TileRestrictions restrictions, int cost, float radius, TextureID icon):
+    m_creator{ creator }, m_restrictions{ restrictions }, m_radius{ radius }, m_type{ type }, m_icon{ icon }, m_cost{ cost }
 {
-    m_delegate_all_events = false;
     set_state(State::UNDISCOVERED);
-    on_event = [this](const glm::vec2& position_transform, const sf::Event& event) -> bool {
+    on_pressed = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos, const sf::Event::MouseButtonEvent& event) {
         if (m_state == State::UNDISCOVERED || m_state == State::NOT_ENOUGTH_MONEY)
-            return true;
-        if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Button::Left) {
-            set_state(NBuildingButton::State::SELECTED); //select this
-            for (auto btn : *m_buttons) { //unselect others
-                if (btn != this)
-                    btn->unselect();
-            }
-            return true;
+            return;
+        if (event.button == sf::Mouse::Button::Left) {
+            BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
+            building_panel->select(this);
+            return;
         }
     };
-    on_hovered = [this]() {
-        Panel* panel = (Panel*)m_ui->add(Panel::create());
-        panel->set_border(0);
+    on_hovered = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos) {
+        BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
+        Panel* panel = (Panel*)building_panel->ui->add(Panel::create(sf::Color(50, 50, 50, 255), sf::Color::Black, 0));
         Label* label = (Label*)panel->add(Label::create(true));
         label->add_text(to_string(m_type) + "\n", sf::Color::White, sf::Text::Style::Bold);
         label->add_text("Стоимость: " + std::to_string(m_cost) + "\n", Label::gold_color);
         if (m_state == State::UNDISCOVERED)
-            label->add_text("Закрыто: " + AchievementSystem::Instance().get_building_unlock_condition_description(m_type), sf::Color::Red);
+            label->add_text("Закрыто: " + AchievementSystem::Instance().get_building_unlock_condition_description(m_type) + "\n", sf::Color::Red);
         label->add_text("Откройте справку, для получения подробностей", sf::Color::White, sf::Text::Style::Italic);
-
-        panel->size_inherited(label);
-        panel->position_tooltip(m_ui, Anchor::BOTTOM | Anchor::LEFT);
+        
+        panel->size_include(label);
+        panel->position_tooltip(building_panel->ui, Anchor::BOTTOM | Anchor::LEFT);
+        panel->receive_mouse_events = false;
         m_tooltip = panel;
     };
 
-    on_unhovered = [this]() {
-        m_ui->delete_widget(m_tooltip);
+    on_unhovered = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos) {
+       BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
+       building_panel->ui->delete_widget(m_tooltip);
     };
 }
 
-void NBuildingButton::coins_update(int current_coins_count) {
-    if (m_state == State::NOT_ENOUGTH_MONEY && m_cost <= current_coins_count)
-        set_state(State::ACTIVE);
-    if ((m_state == State::ACTIVE || m_state == State::SELECTED) && m_cost > current_coins_count)
-        set_state(State::NOT_ENOUGTH_MONEY);
-}
+void NBuildingButton::update(int current_coins_count) {
+    bool unlocked = AchievementSystem::Instance().is_unlocked(m_type);
+    bool enougth_money = m_cost <= current_coins_count;
 
-void NBuildingButton::achievement_event(int current_coins_count) {
-    if (m_state == State::UNDISCOVERED && AchievementSystem::Instance().is_unlocked(m_type)) {
-        if (m_cost <= current_coins_count)
+    if (m_state == State::SELECTED) {
+        if (!enougth_money)
+            set_state(State::NOT_ENOUGTH_MONEY);
+        return;
+    }
+
+    if (!unlocked)
+        set_state(State::UNDISCOVERED);
+    else {
+        if (enougth_money)
             set_state(State::ACTIVE);
         else
             set_state(State::NOT_ENOUGTH_MONEY);
     }
+
 }
 
-void NBuildingButton::unselect() {
-    if (m_state == NBuildingButton::State::SELECTED)
-        set_state(NBuildingButton::State::ACTIVE);
-}
 
 void NBuildingButton::set_state(State state) {
+    if (m_state == state)
+        return;
     switch (state) {
     case NBuildingButton::State::ACTIVE:
         grayscale = false;
@@ -95,6 +161,7 @@ void NBuildingButton::set_state(State state) {
     default:
         break;
     }
+    m_state = state;
 }
 
 
@@ -124,11 +191,8 @@ void NBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int
     draw_building(window, x_id, y_id, allowed);
 }
 
-
-NMinigunBuildingButton::NMinigunBuildingButton(std::vector<NBuildingButton*>* buttons, Widget* ui):
+NMinigunBuildingButton::NMinigunBuildingButton():
     NBuildingButton(
-        buttons,
-        ui,
         NBuildingButton::make_creator<MiniGun>(),
         BuildingType::Minigun,
         NBuildingButton::TileRestrictions::NoRoads,

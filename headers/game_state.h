@@ -46,8 +46,7 @@ public:
     void init_stage(int stage);
     void update_upgrade_panel();
     void set_tooltip_content(const std::string& content, sf::Vector2f origin = {0.,1.});
-    void set_wave_info(const std::string& wave) { m_wave_info->setText(wave); }
-	//void minigun_state_update(const MiniGun& minigun);
+    void set_wave_info(const std::string& wave);
     sf::Window& window;
 
     struct Enter {
@@ -78,8 +77,8 @@ private:
     Widget* m_game_process_ui; // UI во время процесса игры
     Label* m_player_coins_count_widget;
     Label* m_player_health_count_widget;
-    std::vector<NBuildingButton*> new_m_building_buttons;
-
+    Label* m_wave_info;
+    BuildingPanel* m_building_panel;
 
 	tgui::Gui m_gui;
     tgui::Group::Ptr m_ui;
@@ -100,7 +99,6 @@ private:
     tgui::Panel::Ptr m_panel = nullptr;
     std::vector<Enter> m_enters;
     Enter* m_showed_enter = nullptr;
-    tgui::Label::Ptr m_wave_info;
     struct Message {
         tgui::Label::Ptr message;
         Animation animation;

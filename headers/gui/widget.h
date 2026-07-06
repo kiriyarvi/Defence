@@ -27,7 +27,7 @@ public:
 
 
     using FrameID = size_t;
-    FrameID get_current_frame_id() { return frame;  }
+    FrameID get_current_frame_id() { return m_frame;  }
     void draw(sf::RenderWindow& window);
     void event(const sf::Event& event);
     struct StackElement {
@@ -36,11 +36,15 @@ public:
         bool operator==(const StackElement& element) { return node == element.node && properties == element.properties; }
     };
     std::list<StackElement> layout_stack;
-    Widget* hovered = nullptr;
+
+    void invalidate_event_states();
+    glm::vec2 mouse_pos;
 private:
-    std::unique_ptr<Widget> m_root;
     GUI() = default;
-    FrameID frame = 0;
+    std::unique_ptr<Widget> m_root;
+    FrameID m_frame = 0;
+    std::pair<Widget*, glm::vec2> m_hovered = { nullptr, glm::vec2{} };
+    bool m_invalidated = false;
 };
 
 
@@ -156,13 +160,15 @@ public:
     //Layout functions
     void position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor);
 
-    std::function<bool(const glm::vec2& position_transform, const sf::Event& event)> on_event;
-    std::function<void()> on_hovered;
-    std::function<void()> on_unhovered;
-    bool event_hierarchy(const glm::vec2& position_transform, const sf::Event& event);
-    virtual bool event_filter(const glm::vec2& position_transform, const sf::Event& event);
-    Widget* get_hovered(const glm::vec2& position_transform, glm::uvec2 mouse_pos);
-    bool m_delegate_all_events = true;
+    std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos)> on_hovered;
+    std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos)> on_mouse_moved;
+    std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos)> on_unhovered;
+    std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos, const sf::Event::MouseButtonEvent& event)> on_pressed;
+    std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos, const sf::Event::MouseButtonEvent& event)> on_released;
+
+    std::pair<Widget*, glm::vec2> get_widget_under_cursor(const glm::vec2& parent_transform, glm::uvec2 mouse_pos);
+
+    bool receive_mouse_events = true;
 };
 
 

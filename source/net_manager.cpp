@@ -4,9 +4,6 @@
 #include "covering_database.h"
 #include "guns/radar.h"
 
-NetManager::NetManager() {
-
-}
 
 bool NetManager::Net::CellID::operator==(const CellID& cell) const {
     return this->x_id == cell.x_id && this->y_id == cell.y_id;

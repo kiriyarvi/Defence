@@ -12,7 +12,8 @@ std::string to_string(EnemyType type) {
         {EnemyType::Pickup, "Пикап"},
         {EnemyType::Truck, "Грузовик"},
         {EnemyType::Tank, "Танк"},
-        {EnemyType::SmokeTruck, "Грузовик с дымовой завесой"}
+        {EnemyType::SmokeTruck, "Грузовик с дымовой завесой"},
+        {EnemyType::MREW, "MREW"}
     };
     return m[type];
 }
@@ -128,7 +129,7 @@ void IEnemy::draw_effects(sf::RenderWindow& window) {
 }
 
 void IEnemy::post_smoke_effects(sf::RenderWindow& window) {
-    if (m_in_smoke && CoveringDataBase::Instance().is_available_taget(id)) {
+    if (m_covering_level > 0 && CoveringDataBase::Instance().is_available_taget(id)) {
         draw_collision(window);
         draw_effects(window); // будем вызывать дважды, но ничего страшного.
     }

@@ -7,8 +7,24 @@
 #include <functional>
 #include <memory>
 
+class NBuildingButton;
+
+class BuildingPanel : public Widget {
+public:
+    BuildingPanel(Widget* ui);
+    void update(int player_coins);
+    void build_if_allowed(const sf::Vector2f& mouse_pos);
+    void unselect();
+    void unselect(NBuildingButton* button);
+    void select(NBuildingButton* button);
+    void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id);
+    Widget* ui;
+private:
+    NBuildingButton* m_selected_button = nullptr;
+};
 
 class NBuildingButton : public LayeredIcon {
+    friend class BuildingPanel;
 public:
     using BuildingCreator = std::function<std::unique_ptr<IBuilding>(int x_id, int y_id)>;
     enum class TileRestrictions {
@@ -16,7 +32,7 @@ public:
         RoadOnly
     };
 
-    NBuildingButton(std::vector<NBuildingButton*>* buttons, Widget* ui, const BuildingCreator& creator, BuildingType type, TileRestrictions restrictions, int cost, float radius, TextureID icon);
+    NBuildingButton(const BuildingCreator& creator, BuildingType type, TileRestrictions restrictions, int cost, float radius, TextureID icon);
     template <typename T>
     static BuildingCreator make_creator() {
         return [](int x_id, int y_id) {
@@ -24,9 +40,7 @@ public:
         };
     }
 
-    void unselect();
-    void coins_update(int current_coins_count);
-    void achievement_event(int current_coins_count);
+    void update(int current_coins_count);
     void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id);
     virtual void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) {}
 private:
@@ -42,8 +56,6 @@ private:
     BuildingCreator m_creator;
     TileRestrictions m_restrictions;
     TextureID m_icon;
-    std::vector<NBuildingButton*>* m_buttons;
-    Widget* m_ui;
     Widget* m_tooltip;
 protected:
     float m_radius;
@@ -53,7 +65,7 @@ protected:
 
 class NMinigunBuildingButton : public NBuildingButton {
 public:
-    NMinigunBuildingButton(std::vector<NBuildingButton*>* buttons, Widget* ui);
+    NMinigunBuildingButton();
     void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) override;
 };
 

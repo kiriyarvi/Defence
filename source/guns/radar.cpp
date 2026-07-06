@@ -33,7 +33,7 @@ void Radar::draw(sf::RenderWindow& window) {
 }
 
 void Radar::draw_effects(sf::RenderWindow& window) {
-    if (DEBUG_ENABLED) {
+    if (DEBUG_ENABLED && false) {
         int radius = m_params.radius_upgrades[radius_upgrade].radius;
         sf::CircleShape circ(radius * 32);
         circ.setOrigin(radius * 32, radius * 32);

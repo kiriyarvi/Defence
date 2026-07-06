@@ -50,7 +50,7 @@ public:
     const Net& get_net_by_radiotower(Net::CellID id) const;
 
 private:
-    NetManager();
+    NetManager() = default;
     std::list<Net> m_nets;
     std::list<Net::RadarInfo> m_radar_register;
 };

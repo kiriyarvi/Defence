@@ -1,6 +1,6 @@
 #include "gui/widget.h"
 #include <numeric>
-
+#include <iostream>
 
 void GUI::set_root(std::unique_ptr<Widget>&& root, const sf::RenderWindow& window) {
     m_root = std::move(root);
@@ -8,15 +8,15 @@ void GUI::set_root(std::unique_ptr<Widget>&& root, const sf::RenderWindow& windo
 }
 
 void GUI::draw(sf::RenderWindow& window) {
-    if (frame == std::numeric_limits<size_t>::max()) {
-        frame = 0;
+    if (m_frame == std::numeric_limits<size_t>::max()) {
+        m_frame = 0;
     }
-    ++frame;
+    ++m_frame;
     if (m_root) {
         auto view = window.getView();
         auto w_size = window.getSize();
         window.setView(sf::View(sf::FloatRect(0, 0, w_size.x, w_size.y)));
-        m_root->draw_hierarchy(frame, { 0,0 }, window);
+        m_root->draw_hierarchy(m_frame, { 0,0 }, window);
         window.setView(view);
     }
 }
@@ -27,15 +27,68 @@ void GUI::event(const sf::Event& event) {
     if (event.type == sf::Event::Resized) {
         m_root->size_fixed(event.size.width, event.size.height);
         return;
+    } else if (event.type == sf::Event::MouseMoved) {
+        mouse_pos = { event.mouseMove.x, event.mouseMove.y };
+        //функции on_unhovered/on_hovered могут менять дерево виджетов, поэтому после выдова таких функций
+        //данные полученные из get_widget_under_cursor становятся неактуальными.
+        //последствия этого мы обработаем при следующем событии.
+        //то, что было совершено удаление, можно узнать по флагу m_invalidated.
+        do {
+            auto [widget_under_cursor, transform] = m_root->get_widget_under_cursor({ 0,0 }, mouse_pos);
+            auto [old_hovered, old_hovered_transform] = m_hovered;
+            if (widget_under_cursor != old_hovered) {
+                if (old_hovered) {
+                    m_invalidated = false;
+                    m_hovered = { nullptr, glm::vec2{} };
+                    if (old_hovered->on_unhovered) {
+                        old_hovered->on_unhovered(old_hovered_transform, mouse_pos);
+                        if (m_invalidated)
+                            continue; //layout изменился, придется сделать новый запрос.
+                    }
+                    if (widget_under_cursor) { //layout не менялся, можем привязывать новый виджет, если он есть
+                        m_hovered = { widget_under_cursor, transform };
+                        if (widget_under_cursor->on_hovered) {
+                            widget_under_cursor->on_hovered(transform, mouse_pos);
+                            if (m_invalidated)
+                                continue; //делаем новый заброс get_widget_under_cursor
+                        }
+                    }
+                } else if (widget_under_cursor) {
+                    m_invalidated = false;
+                    m_hovered = { widget_under_cursor, transform };
+                    if (widget_under_cursor->on_hovered) {
+                        widget_under_cursor->on_hovered(transform, mouse_pos);
+                        if (m_invalidated)
+                            continue; //делаем новый заброс get_widget_under_cursor
+                    }
+                }
+                else {
+                    m_invalidated = false;
+                    m_hovered = { nullptr, glm::vec2{} };
+                }
+            }
+            else if (widget_under_cursor && widget_under_cursor->on_mouse_moved) {
+                m_invalidated = false;
+                widget_under_cursor->on_mouse_moved(transform, mouse_pos);
+            }
+            else
+                m_invalidated = false;
+        } while (m_invalidated);
     }
-    Widget* new_hovered = m_root->get_hovered({ 0,0 }, { sf::Mouse::getPosition().x, sf::Mouse::getPosition().y });
-    if (new_hovered != hovered && hovered)
-        hovered->on_unhovered();
-    if (new_hovered)
-        new_hovered->on_hovered();
-    hovered = new_hovered;
+    else if (event.type == sf::Event::MouseButtonPressed) {
+        auto [widget_under_cursor, transform] = m_root->get_widget_under_cursor({ 0,0 }, mouse_pos);
+        if (widget_under_cursor && widget_under_cursor->on_pressed)
+            widget_under_cursor->on_pressed(transform, mouse_pos, event.mouseButton);
+    }
+    else if (event.type == sf::Event::MouseButtonReleased) {
+        auto [widget_under_cursor, transform] = m_root->get_widget_under_cursor({ 0,0 }, mouse_pos);
+        if (widget_under_cursor && widget_under_cursor->on_released)
+            widget_under_cursor->on_released(transform, mouse_pos, event.mouseButton);
+    }
+}
 
-    m_root->event_hierarchy({0,0}, event);
+void GUI::invalidate_event_states() {
+    m_invalidated = true;
 }
 
 Property::Type Property::X =       0x0001;
@@ -239,7 +292,7 @@ void LayoutNode::position_centering(LayoutNode* parent) {
 
 void LayoutNode::position_tooltip(LayoutNode* parent, size_t ancher) {
     add_rule(Property::POSITION, [parent, ancher](Layout& layout) {
-        auto position = glm::vec2{ sf::Mouse::getPosition().x,sf::Mouse::getPosition().y } - layout.get_anchor_relative_to_center(ancher);
+        auto position = GUI::Instance().mouse_pos - layout.get_anchor_relative_to_center(ancher) - glm::vec2{layout.width/2.f, layout.height/2.f};
         auto content = parent->layout.get_content_rect();
         if (position.x + layout.width > content.width)
             position.x = content.width - layout.width;
@@ -296,35 +349,21 @@ void Widget::draw_hierarchy(int frame, const glm::vec2& position_transform, sf::
     }
 }
 
- bool Widget::event_filter(const glm::vec2& position_transform, const sf::Event& event) {
-     if (m_delegate_all_events)
-         return true;
-     auto pos = sf::Mouse().getPosition();
-     return layout.contains(position_transform, pos.x, pos.y);
- }
-
-bool Widget::event_hierarchy(const glm::vec2& position_transform, const sf::Event& event) {
-    if (!event_filter(position_transform, event))
-        return false;
-    glm::vec2 transform = position_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
-    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it){
-        if ((*it)->event_hierarchy(transform, event))
-            return true;
-    }
-    return on_event ? on_event(transform, event) : true;
-}
-
-Widget* Widget::get_hovered(const glm::vec2& position_transform, glm::uvec2 mouse_pos) {
-    glm::vec2 transform = position_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
+std::pair<Widget*, glm::vec2> Widget::get_widget_under_cursor(const glm::vec2& parent_transform, glm::uvec2 mouse_pos) {
+    if (!receive_mouse_events)
+        return std::make_pair<Widget*, glm::vec2>(nullptr, glm::vec2{});
+    glm::vec2 transform = parent_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-        Widget* w = (*it)->get_hovered(transform, mouse_pos);
-        if (!w) return w;
+        auto info = (*it)->get_widget_under_cursor(transform, mouse_pos);
+        if (info.first) return info;
     }
-    if (layout.contains(position_transform, mouse_pos.x, mouse_pos.y))
-        return this;
+    if (layout.contains(parent_transform, mouse_pos.x, mouse_pos.y))
+        return std::make_pair<Widget*, glm::vec2>(this, glm::vec2(parent_transform));
+    return std::make_pair<Widget*, glm::vec2>(nullptr, glm::vec2{});
 }
 
 Widget* Widget::add(std::unique_ptr<Widget>&& child) {
+    GUI::Instance().invalidate_event_states();
     child->m_parent = this;
     m_children.push_back(std::move(child));
     return m_children.back().get();
@@ -334,6 +373,7 @@ void Widget::delete_widget(Widget* widget) {
     for (auto it = m_children.begin(); it != m_children.end(); ++it) {
         if (it->get() == widget) {
             m_children.erase(it);
+            GUI::Instance().invalidate_event_states();
             return;
         }
     }
@@ -344,7 +384,6 @@ Panel::Panel(sf::Color background_color, sf::Color border_color, float border) {
     m_rect.setOutlineColor(border_color);
     m_rect.setOutlineThickness(-border);
     layout.padding = { border, border, border, border };
-    m_delegate_all_events = false;
 }
 
 std::unique_ptr<Panel> Panel::create(sf::Color background_color, sf::Color border_color, float border) {

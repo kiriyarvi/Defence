@@ -21,8 +21,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
     Icon* coin_icon = (Icon*)m_game_process_ui->add(Icon::create(TextureID::Coin));
     //coin indicator (Layout)
-    // new_m_player_coins_count_widget POS(0,0), SIZE вычисляется автоматически поскольку проставлен флаг inline.
-    coin_icon->add_rule(Property::SIZE, [coins_counter = m_player_coins_count_widget](LayoutNode::Layout& layout) {
+       coin_icon->add_rule(Property::SIZE, [coins_counter = m_player_coins_count_widget](LayoutNode::Layout& layout) {
         layout.width = coins_counter->layout.height;
         layout.height = coins_counter->layout.height;
     }, { {m_player_coins_count_widget, Property::SIZE} });
@@ -40,11 +39,14 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     }, { {m_player_health_count_widget, Property::SIZE} });
     heart_icon->position_anchor(Anchor::RIGHT, m_player_health_count_widget, Anchor::LEFT);
 
+    //wave info (Hierarchy)
+    m_wave_info = (Label*)m_game_process_ui->add(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
+    //wave info (Layout)
+    m_wave_info->position_anchor(Anchor::TOP, m_game_process_ui, Anchor::TOP);
 
-    NMinigunBuildingButton* minigun_button = (NMinigunBuildingButton*)m_game_process_ui->add(std::make_unique<NMinigunBuildingButton>(&new_m_building_buttons, m_game_process_ui));
-    new_m_building_buttons.push_back(minigun_button);
-    minigun_button->position_centering(m_game_process_ui);
-    minigun_button->size_fixed(100, 100);
+    m_building_panel = (BuildingPanel*)m_game_process_ui->add(std::make_unique<BuildingPanel>(m_game_process_ui));
+    m_building_panel->position_centering(m_game_process_ui);
+    m_building_panel->size_fixed(500, 500);
 
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" }; //TODO
     PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };//TODO
@@ -52,15 +54,6 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 	tgui::Texture::setDefaultSmooth(false); // отключим сглаживание текстур //TODO
 
     m_ui = tgui::Group::create(); //TODO
-
-	
-    m_wave_info = tgui::Label::create();
-    m_wave_info->setTextSize(32);
-    m_wave_info->ignoreMouseEvents(true);
-    m_wave_info->setOrigin(0.5, 0);
-    m_wave_info->setPosition("50%", 0);
-    m_wave_info->getRenderer()->setTextColor(sf::Color::White);
-    m_ui->add(m_wave_info);
 	
 	m_centered_message = tgui::Label::create("");
 	m_centered_message->setPosition("50%", "50%");
@@ -224,6 +217,11 @@ void GameState::set_tooltip_content(const std::string& content, sf::Vector2f ori
     }
 }
 
+void GameState::set_wave_info(const std::string& wave) {
+    m_wave_info->clear();
+    m_wave_info->add_text(wave);
+}
+
 void GameState::add_enter(RoadGraph::PathID id, const std::string& content) {
     auto& path = EnemyManager::Instance().all_paths[id.start_node][id.path];
     Enter enter{ path[0]->x, path[0]->y, id, content, RouteDrawer(path) };
@@ -283,7 +281,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
             else if (event.key.code == sf::Keyboard::Key::Q) {
                 m_is_preparing = false;
                 EnemyManager::Instance().generate_waves();
-                init_stage(1);
+                init_stage(0);
             }
         }
     }
@@ -313,7 +311,8 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 	}
 	if (event.type == sf::Event::MouseButtonPressed) {
 		if (event.mouseButton.button == sf::Mouse::Button::Left) {
-			if (m_current_building_construction) {
+            m_building_panel->build_if_allowed(m_mouse_pos);
+			if (m_current_building_construction) { //TODO
                 size_t N = TileMap::Instance().map.size();
 				bool on_map = m_mouse_pos.x < N * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < N * 32 && m_mouse_pos.y >= 0;
 				sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
@@ -328,6 +327,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 			}
 		}
 		else if (event.mouseButton.button == sf::Mouse::Button::Right) {
+            m_building_panel->unselect();
             if (m_current_building_construction) { // если мы строили, нужно отменить строительство
                 m_current_building_construction = nullptr;
                 for (auto& btn : m_building_buttons)
@@ -405,8 +405,10 @@ void GameState::logic(double dtime_mc) {
 void GameState::draw(sf::RenderWindow& current_window) {
     size_t N = TileMap::Instance().map.size();
 	bool on_map = m_mouse_pos.x < N * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < N * 32 && m_mouse_pos.y >= 0;
+    sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
+    if (on_map)
+        m_building_panel->draw_building_plan(current_window, cell_id.x, cell_id.y);
 	if (m_current_building_construction && on_map) {
-		sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
 		m_current_building_construction->draw_building_plan(current_window, cell_id.x, cell_id.y);
 	}
     if (!m_enters.empty()) {
@@ -427,9 +429,7 @@ void GameState::enemy_defeated(EnemyType type) {
         return;
     for (auto& btn : m_building_buttons)
         btn->defeat_event();
-    for (auto& btn : new_m_building_buttons)
-        btn->achievement_event(m_player_coins);
-    m_upgrade_panel_creator.update();
+    m_building_panel->update(m_player_coins);
 }
 
 void GameState::win() {
@@ -448,6 +448,7 @@ void GameState::display_help(bool help) {
 void GameState::init_stage(int stage) {
     if (stage == 0) {
         player_coins_add(1000);
+        m_building_panel->update(m_player_coins);
     }
     else {
         player_coins_add(1000000);
@@ -490,7 +491,6 @@ void GameState::player_coins_add(int coins) {
     m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
 	for (auto& btn : m_building_buttons)
 		btn->coins_update(m_player_coins);
-    for (auto& btn : new_m_building_buttons)
-        btn->coins_update(m_player_coins);
+    m_building_panel->update(m_player_coins);
 }
 
