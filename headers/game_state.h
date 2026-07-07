@@ -90,10 +90,7 @@ private:
     bool m_win = false;
     bool m_is_help_displayed = false;
 	tgui::Label::Ptr m_centered_message; // сообщение по центру
-
-	BuildingButton* m_current_building_construction = nullptr;
 	sf::Vector2f m_mouse_pos;
-	std::list<std::unique_ptr<BuildingButton>> m_building_buttons;
     tgui::RichTextLabel::Ptr m_mouse_tooltip;
     UpgradePanelCreator m_upgrade_panel_creator;
     tgui::Panel::Ptr m_panel = nullptr;

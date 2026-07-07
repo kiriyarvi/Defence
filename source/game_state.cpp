@@ -68,17 +68,6 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 	auto bottom_panel_group = tgui::Group::create(tgui::Layout2d("100%", "10%"));
 	bottom_panel_group->setPosition("0%", "100%");
 	bottom_panel_group->setOrigin(0, 1.);
-	m_building_buttons.push_back(std::make_unique<MineBuildingButton>(*this));
-	m_building_buttons.push_back(std::make_unique<MinigunBuildingButton>(*this));
-	m_building_buttons.push_back(std::make_unique<AntitankGunBuildingButton>(*this));
-	m_building_buttons.push_back(std::make_unique<TwinGunBuildingButton>(*this));
-	m_building_buttons.push_back(std::make_unique<SpikesBuildingButton>(*this));
-    m_building_buttons.push_back(std::make_unique<HedgeBuildingButton>(*this));
-    m_building_buttons.push_back(std::make_unique<RadarBuildingButton>(*this));
-    m_building_buttons.push_back(std::make_unique<RadioTowerBuildingButton>(*this));
-	for (auto& button : m_building_buttons) {
-		bottom_panel_group->add(button->m_group);
-	}
 
     auto help_button = tgui::BitmapButton::create("?");
     help_button->setImage(TextureManager::Instance().textures[TextureID::Question]);
@@ -119,12 +108,6 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 	bottom_panel_group->onSizeChange([=]() {
 		const float spacing = 4.f;
 		float size = bottom_panel_group->getSize().y;
-		float x = 0;
-		for (auto& button : m_building_buttons){
-			button->m_group->setSize({ size, size });
-			button->m_group->setPosition({ x, 0 });
-			x += size + spacing;
-		}
         help_button->setSize({ size, size });
         next_wave_button->setSize({ size, size });
 	});
@@ -280,7 +263,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
             else if (event.key.code == sf::Keyboard::Key::Q) {
                 m_is_preparing = false;
                 EnemyManager::Instance().generate_waves();
-                init_stage(1);
+                init_stage(0);
             }
         }
     }
@@ -311,26 +294,11 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 	if (event.type == sf::Event::MouseButtonPressed) {
 		if (event.mouseButton.button == sf::Mouse::Button::Left) {
             m_building_panel->build_if_allowed(m_mouse_pos);
-			if (m_current_building_construction) { //TODO
-                size_t N = TileMap::Instance().map.size();
-				bool on_map = m_mouse_pos.x < N * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < N * 32 && m_mouse_pos.y >= 0;
-				sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
-				if (on_map && m_current_building_construction->is_cell_allowed(cell_id.x, cell_id.y)) {
-					TileMap::Instance().map[cell_id.x][cell_id.y].building = m_current_building_construction->creator(cell_id.x, cell_id.y);
-					player_coins_add(-m_current_building_construction->cost);
-					if (m_current_building_construction->get_state() == BuildingButton::State::Disabled) {
-						m_current_building_construction = nullptr;
-					}
-					return true;
-				}
-			}
 		}
 		else if (event.mouseButton.button == sf::Mouse::Button::Right) {
             m_building_panel->unselect();
-            if (m_current_building_construction) { // если мы строили, нужно отменить строительство
-                m_current_building_construction = nullptr;
-                for (auto& btn : m_building_buttons)
-                    btn->unselect();
+            if (m_building_panel->is_seleted()) { // если мы строили, нужно отменить строительство
+                m_building_panel->unselect();
             }
             else { // если не строили, значит запросили открыть окно постройки
                 sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
@@ -407,9 +375,6 @@ void GameState::draw(sf::RenderWindow& current_window) {
     sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
     if (on_map)
         m_building_panel->draw_building_plan(current_window, cell_id.x, cell_id.y);
-	if (m_current_building_construction && on_map) {
-		m_current_building_construction->draw_building_plan(current_window, cell_id.x, cell_id.y);
-	}
     if (!m_enters.empty()) {
         sf::Sprite wave_arrow(TextureManager::Instance().textures[TextureID::Arrow]);
         for (auto& enter : m_enters) {
@@ -426,8 +391,6 @@ void GameState::enemy_defeated(EnemyType type) {
     bool achievement = AchievementSystem::Instance().defeated(type);
     if (!achievement)
         return;
-    for (auto& btn : m_building_buttons)
-        btn->defeat_event();
     m_building_panel->update(m_player_coins);
 }
 
@@ -488,8 +451,6 @@ void GameState::player_coins_add(int coins) {
 	m_player_coins += coins;
     m_player_coins_count_widget->clear();
     m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
-	for (auto& btn : m_building_buttons)
-		btn->coins_update(m_player_coins);
     m_building_panel->update(m_player_coins);
 }
 
