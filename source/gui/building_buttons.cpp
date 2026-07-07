@@ -16,16 +16,52 @@
 
 
 BuildingPanel::BuildingPanel(Widget* ui) : ui{ui} {
+    m_parent = ui;
+
     Widget* b1 = add(std::make_unique<NMinigunBuildingButton>());
-    Widget* b2 = add(std::make_unique<NMinigunBuildingButton>());
-    Widget* b3 = add(std::make_unique<NMinigunBuildingButton>());
-    Widget* b4 = add(std::make_unique<NMinigunBuildingButton>());
+    Widget* b2 = add(std::make_unique<NMineBuildingButton>());
+    Widget* b3 = add(std::make_unique<NSpikesBuildingButton>());
+    Widget* b4 = add(std::make_unique<NHedgehogBuildingButton>());
+    Widget* b5 = add(std::make_unique<NAntitankBuildingButton>());
+    Widget* b6 = add(std::make_unique<NTwinGunBuildingButton>());
+    Widget* b7 = add(std::make_unique<NRadarBuildingButton>());
+    Widget* b8 = add(std::make_unique<NRadioMastBuildingButton>());
 
-    vbox({ b1, b2, b3, b4 });
-
-    for (auto& button : m_children) {
-        button->size_fixed(100,100);
+    auto prev_it = m_children.end();
+    for (auto button_it = m_children.begin(); button_it != m_children.end(); ++button_it) {
+        Widget* button = button_it->get();
+        button->add_rule(Property::SIZE, [ui](LayoutNode::Layout& layout) {
+            layout.height = ui->layout.height * 0.1;
+            layout.width = layout.height;
+        }, { { ui, Property::HEIGHT } });
+        Widget* prev = nullptr;
+        if (prev_it != m_children.end())
+            prev = prev_it->get();
+        Widget* button_panel = this;
+        button->add_rule(Property::POSITION, [button_panel, prev](LayoutNode::Layout& layout) {
+            if (!prev)
+                return;
+            float line_width = prev->layout.x + prev->layout.width + layout.width;
+            if (line_width >= button_panel->layout.width) {
+                layout.x = 0;
+                layout.y = prev->layout.y + prev->layout.height;
+            }
+            else {
+                layout.x = prev->layout.x + prev->layout.width;
+                layout.y = prev->layout.y;
+            }
+        }, { {button_panel, Property::WIDTH} });
+        prev_it = button_it;
     }
+
+    //position_anchor(Anchor::LEFT | Anchor::T, ui, Anchor::LEFT);
+    add_rule(Property::WIDTH, [ui](LayoutNode::Layout& layout) {
+        layout.width = ui->layout.width * 0.7;
+    }, { {ui, Property::WIDTH} });
+    Widget* last_button = m_children.back().get();
+    add_rule(Property::HEIGHT, [last_button](LayoutNode::Layout& layout) {
+        layout.height = last_button->layout.y + last_button->layout.height;
+    }, { {last_button, Property::Y | Property::HEIGHT} });
 
 }
 
@@ -95,6 +131,7 @@ NBuildingButton::NBuildingButton(const BuildingCreator& creator, BuildingType ty
         }
     };
     on_hovered = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos) {
+        //TODO здесь есть проблема. Допустим показывается tooltip и вдруг кнопка разблокировалась, а описание не поменялось
         BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
         Panel* panel = (Panel*)building_panel->ui->add(Panel::create(sf::Color(50, 50, 50, 255), sf::Color::Black, 0));
         Label* label = (Label*)panel->add(Label::create(true));
@@ -177,6 +214,16 @@ bool NBuildingButton::is_cell_allowed(int x_id, int y_id) {
     return true;
 }
 
+void NBuildingButton::draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) {
+    sf::Texture& texture = TextureManager::Instance().textures[m_icon];
+    sf::Sprite building(texture);
+    building.setPosition(x_id * 32 + 16, y_id * 32 + 16);
+    building.setOrigin(texture.getSize().x / 2, texture.getSize().y / 2);
+    building.rotate(180);
+    if (!allowed) building.setColor(sf::Color(255, 0, 0));
+    window.draw(building);
+}
+
 void NBuildingButton::draw_building_plan(sf::RenderWindow& window, int x_id, int y_id) {
     bool allowed = is_cell_allowed(x_id, y_id);
     if (allowed && m_radius != 0.0) {
@@ -202,12 +249,107 @@ NMinigunBuildingButton::NMinigunBuildingButton():
         )
 {}
 
-void NMinigunBuildingButton::draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) {
-    sf::Sprite minigun(TextureManager::Instance().textures[TextureID::MinigunIcon]);
-    minigun.setPosition(x_id * 32, y_id * 32);
-    if (!allowed) minigun.setColor(sf::Color(255, 0, 0));
-    window.draw(minigun);
+NMineBuildingButton::NMineBuildingButton() :
+    NBuildingButton(
+        NBuildingButton::make_creator<Mine>(),
+        BuildingType::Mine,
+        NBuildingButton::TileRestrictions::RoadOnly,
+        ParamsManager::Instance().params.guns.mine.cost,
+        ParamsManager::Instance().params.guns.mine.damage_radius,
+        TextureID::Mine
+    ) {}
+
+
+NSpikesBuildingButton::NSpikesBuildingButton():
+    NBuildingButton(
+        NBuildingButton::make_creator<Spikes>(),
+        BuildingType::Spikes,
+        NBuildingButton::TileRestrictions::RoadOnly,
+        ParamsManager::Instance().params.guns.spikes.cost,
+        0,
+        TextureID::SpikesIcon
+    ) {}
+
+void NSpikesBuildingButton::draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) {
+    sf::Sprite spikes = Spikes::get_sprite_for_tile(x_id, y_id);
+    spikes.setOrigin(16, 16);
+    spikes.setPosition(x_id * 32 + 16, y_id * 32 + 16);
+    if (!allowed) spikes.setColor(sf::Color(255, 0, 0));
+    window.draw(spikes);
 }
+
+NHedgehogBuildingButton::NHedgehogBuildingButton():
+    NBuildingButton(
+        NBuildingButton::make_creator<Hedgehog>(),
+        BuildingType::Hedgehogs,
+        NBuildingButton::TileRestrictions::RoadOnly,
+        ParamsManager::Instance().params.guns.hedgehog.cost,
+        0,
+        TextureID::Hedgehog
+    ) {}
+
+NAntitankBuildingButton::NAntitankBuildingButton():
+    NBuildingButton(
+        NBuildingButton::make_creator<AntitankGun>(),
+        BuildingType::AntitankGun,
+        NBuildingButton::TileRestrictions::NoRoads,
+        ParamsManager::Instance().params.guns.antitank.cost,
+        ParamsManager::Instance().params.guns.antitank.radius,
+        TextureID::AntitankGunIcon
+    ) {}
+
+void NAntitankBuildingButton::draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) {
+    sf::Sprite base(TextureManager::Instance().textures[TextureID::GunBase]);
+    base.setPosition(x_id * 32, y_id * 32);
+    if (!allowed) base.setColor(sf::Color(255, 0, 0));
+    window.draw(base);
+    sf::Sprite gun(TextureManager::Instance().textures[TextureID::AntitankGunConstructed]);
+    gun.setOrigin(9, 16);
+    gun.rotate(180);
+    gun.setPosition(x_id * 32 + 16, y_id * 32 + 16);
+    if (!allowed) gun.setColor(sf::Color(255, 0, 0));
+    window.draw(gun);
+}
+
+
+NTwinGunBuildingButton::NTwinGunBuildingButton():
+    NBuildingButton(
+        NBuildingButton::make_creator<TwinGun>(),
+        BuildingType::TwinGun,
+        NBuildingButton::TileRestrictions::NoRoads,
+        ParamsManager::Instance().params.guns.twingun.cost,
+        ParamsManager::Instance().params.guns.twingun.radius,
+        TextureID::TwingunIcon
+    ) {}
+
+NRadarBuildingButton::NRadarBuildingButton():
+    NBuildingButton(
+        [](int x_id, int y_id) {
+            auto radar = std::make_unique<Radar>(x_id, y_id);
+            NetManager::Instance().new_radar(x_id, y_id, radar.get());
+            return radar;
+        },
+        BuildingType::Radar,
+        NBuildingButton::TileRestrictions::NoRoads,
+        ParamsManager::Instance().params.guns.radar.cost,
+        ParamsManager::Instance().params.guns.radar.radius_upgrades[0].radius,
+        TextureID::RadarIcon
+    ) {}
+
+NRadioMastBuildingButton::NRadioMastBuildingButton():
+    NBuildingButton(
+        [](int x_id, int y_id) {
+            auto radio_tower = std::make_unique<RadioTower>(x_id, y_id);
+            NetManager::Instance().new_radio_tower(x_id, y_id);
+            return radio_tower;
+        },
+        BuildingType::RadioTower,
+        NBuildingButton::TileRestrictions::NoRoads,
+        ParamsManager::Instance().params.guns.radio_tower.cost,
+        ParamsManager::Instance().params.guns.radio_tower.radius,
+        TextureID::RadioTower
+    ) {}
+
 
 BuildingButton::BuildingButton(TextureID gun_icon, GameState& game_state, const BuildingCreator& creator, TileRestrictions restrictions, int cost, float radius, BuildingType type, const std::string& name)
     : creator{ creator }, restrictions{ restrictions }, m_game_state{ game_state }, cost{ cost }, m_radius(radius), m_type{ type }, m_name{name}, IconButton(gun_icon, TextureID::ButtonBackground, TextureID::ButtonClickedBackground) {

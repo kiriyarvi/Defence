@@ -45,8 +45,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     m_wave_info->position_anchor(Anchor::TOP, m_game_process_ui, Anchor::TOP);
 
     m_building_panel = (BuildingPanel*)m_game_process_ui->add(std::make_unique<BuildingPanel>(m_game_process_ui));
-    m_building_panel->position_centering(m_game_process_ui);
-    m_building_panel->size_fixed(500, 500);
+
 
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" }; //TODO
     PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };//TODO
@@ -281,7 +280,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
             else if (event.key.code == sf::Keyboard::Key::Q) {
                 m_is_preparing = false;
                 EnemyManager::Instance().generate_waves();
-                init_stage(0);
+                init_stage(1);
             }
         }
     }

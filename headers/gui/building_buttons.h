@@ -42,7 +42,7 @@ public:
 
     void update(int current_coins_count);
     void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id);
-    virtual void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) {}
+    virtual void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed);
 private:
 
     enum class State {
@@ -66,8 +66,48 @@ protected:
 class NMinigunBuildingButton : public NBuildingButton {
 public:
     NMinigunBuildingButton();
+};
+
+class NMineBuildingButton : public NBuildingButton {
+public:
+    NMineBuildingButton();
+};
+
+class NSpikesBuildingButton : public NBuildingButton {
+public:
+    NSpikesBuildingButton();
     void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) override;
 };
+
+class NHedgehogBuildingButton : public NBuildingButton {
+public:
+    NHedgehogBuildingButton();
+};
+
+class NAntitankBuildingButton : public NBuildingButton {
+public:
+    NAntitankBuildingButton();
+    void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) override;
+};
+
+class NTwinGunBuildingButton : public NBuildingButton {
+public:
+    NTwinGunBuildingButton();
+};
+
+
+class NRadarBuildingButton : public NBuildingButton {
+public:
+    NRadarBuildingButton();
+};
+
+class NRadioMastBuildingButton : public NBuildingButton {
+public:
+    NRadioMastBuildingButton();
+};
+
+
+
 
 class GameState;
 
