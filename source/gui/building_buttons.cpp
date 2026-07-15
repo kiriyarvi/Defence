@@ -24,6 +24,15 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
     Widget* b6 = add(std::make_unique<TwinGunBuildingButton>());
     Widget* b7 = add(std::make_unique<RadarBuildingButton>());
     Widget* b8 = add(std::make_unique<RadioMastBuildingButton>());
+    DEBUG_TAG(b1, "MinigunBuildingButton")
+    DEBUG_TAG(b2, "MineBuildingButton")
+    DEBUG_TAG(b3, "SpikesBuildingButton")
+    DEBUG_TAG(b4, "HedgehogBuildingButton")
+    DEBUG_TAG(b5, "AntitankBuildingButton")
+    DEBUG_TAG(b6, "TwinGunBuildingButton")
+    DEBUG_TAG(b7, "RadarBuildingButton")
+    DEBUG_TAG(b8, "RadioMastBuildingButton")
+
 
     auto prev_it = m_children.end();
     for (auto button_it = m_children.begin(); button_it != m_children.end(); ++button_it) {
@@ -33,8 +42,11 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
             layout.width = layout.height;
         }, { { ui, Property::HEIGHT } });
         Widget* prev = nullptr;
-        if (prev_it != m_children.end())
-            prev = prev_it->get();
+        if (prev_it == m_children.end()) {
+            prev_it = button_it;
+            continue;
+        }
+        prev = prev_it->get();
         Widget* button_panel = this;
         button->add_rule(Property::POSITION, [button_panel, prev](Widget::Layout& layout) {
             if (!prev)
@@ -48,7 +60,7 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
                 layout.x = prev->layout.x + prev->layout.width;
                 layout.y = prev->layout.y;
             }
-        }, { {button_panel, Property::WIDTH} });
+        }, { {button_panel, Property::WIDTH}, { prev, Property::LAYOUT } });
         prev_it = button_it;
     }
 
@@ -132,7 +144,9 @@ BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type
         //TODO здесь есть проблема. Допустим показывается tooltip и вдруг кнопка разблокировалась, а описание не поменялось
         BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
         Panel* panel = (Panel*)m_parent->add(Panel::create(sf::Color(50, 50, 50, 255), sf::Color::Black, 0));
+        DEBUG_TAG(panel, "tooltip_panel")
         Label* label = (Label*)panel->add(Label::create(true));
+        DEBUG_TAG(label, "tooltip_label")
         label->add_text(to_string(m_type) + "\n", sf::Color::White, sf::Text::Style::Bold);
         label->add_text("Стоимость: " + std::to_string(m_cost) + "\n", Label::gold_color);
         if (m_state == State::UNDISCOVERED)

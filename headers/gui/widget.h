@@ -7,6 +7,12 @@
 #include <memory>
 #include <stack>
 
+#ifdef GUI_DEBUG_ENABLED
+    #define DEBUG_TAG(widget, tag) widget->debug_name = tag;
+#else
+    #define DEBUG_TAG(widget, tag)
+#endif
+
 class Widget;
 
 class GUI {
@@ -50,6 +56,7 @@ private:
 
 class Widget;
 
+
 class Property {
     friend class Widget;
 public:
@@ -67,9 +74,18 @@ public:
     static Type SIZE;
     static Type POSITION;
     static Type LAYOUT;
+
 private:
     float m_value;
     bool locked = false;
+
+    struct Dependent {
+        Widget* widget; //зависимый виджет
+        Property::Type output; //поля, расчитываемые widget на основе данного Property.
+    };
+    void add_depentent(Dependent dependent); //< вспомогательная функция для добавления зависимого виджета.
+    void clear_dependent(Dependent dependent); //< вспомогательная функция, которая вызывается, когда dependent.widget больше не зависит от данного layout.
+    std::list<Dependent> dependents;
 };
 
 struct Anchor {
@@ -100,8 +116,21 @@ class Widget {
 public:
     Widget(Widget* parent = nullptr) : m_parent{ parent } {}
     static std::unique_ptr<Widget> create(Widget* parent = nullptr);
-    //LAYOUT
-    struct Layout {
+
+    struct Dependency {
+        Widget* widget;
+        Property::Type properties;
+    };
+
+    //LAYOUT SYSTEM
+    ///Каждый виджет ассоциирован с прямоугольнком, называемым layout
+    ///его задают четыре свойства x,y,width, height.
+    ///эти свойства вычисляются динамически с помощью "правил"
+    ///пользователь может задать правила вычисления свойств с помощью
+    ///метода add_rule.
+    class Layout {
+        friend class Widget;
+    public:
         /// Вычисляемые динамически свойства layout
         Property x = 0.f;
         Property y = 0.f;
@@ -110,29 +139,30 @@ public:
         /// Невычисляемые динамически свойства (параметры)
         Spacing padding; //отступ для контента.
         bool absolute = false; //по умолчанию координаты x,y указываются относительно родительского виджета.
-
+    public:
         Rect get_content_rect() const;
         Rect get_layout_rect() const;
         glm::vec2 layout_size(const glm::vec2& content_size) const;
         glm::vec2 center() const;
         bool contains(const glm::vec2& transform, float x, float y);
         glm::vec2 get_anchor_relative_to_center(Anchor::Type anchor) const;
+        Property::Type invalidated_props() const { return m_invalidated_props; }
+    private:
+        void invalidate(Property::Type props) { m_invalidated_props |= props; }
+        Property::Type m_invalidated_props = Property::LAYOUT; //< в начале инвалидированы все свойства.
     } layout;
 
     struct Rule {
         Property::Type properties; //OR-d by |
         std::function<void(Layout&)> calc_function;
-        struct Dependency {
-            Widget* widget;
-            Property::Type properties;
-        };
         std::vector<Dependency> dependencies;
     };
 
-    void clear_rules(Property::Type properties);
-    void add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Rule::Dependency>& dependencies);
+    void add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Dependency>& dependencies);
     void calc_properties(Property::Type property);
     void calc_layout();
+    void invalidate(Property::Type property);
+    void clear_rules(Property::Type properties);
     //LAYOUT FUNCTIONS
     //SIZE
     using Modifier = std::function<float(float)>;
@@ -162,6 +192,11 @@ public:
 
     std::pair<Widget*, glm::vec2> get_widget_under_cursor(const glm::vec2& parent_transform, glm::uvec2 mouse_pos);
     bool receive_mouse_events = true;
+
+    virtual ~Widget();
+#ifdef GUI_DEBUG_ENABLED
+    std::string debug_name;
+#endif
 protected:
     Widget* m_parent;
     std::list<std::unique_ptr<Widget>> m_children;

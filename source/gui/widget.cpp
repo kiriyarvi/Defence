@@ -5,7 +5,10 @@
 void GUI::set_root(std::unique_ptr<Widget>&& root, const sf::RenderWindow& window) {
     m_root = std::move(root);
     window_size = { window.getSize().x ,  window.getSize().y };
-    m_root->size_fixed(window_size.x, window_size.y);
+    m_root->add_rule(Property::SIZE, [this](Widget::Layout& layout) {
+        layout.width = window_size.x;
+        layout.height = window_size.y;
+    }, {});
 }
 
 void GUI::draw(sf::RenderWindow& window) {
@@ -20,14 +23,17 @@ void GUI::draw(sf::RenderWindow& window) {
         m_root->draw_hierarchy(m_frame, { 0,0 }, window);
         window.setView(view);
     }
+#ifdef GUI_DEBUG_ENABLED
+    //std::cout << "Done draw call\n\n";
+#endif
 }
 
 void GUI::event(const sf::Event& event) {
     if (!m_root)
         return;
     if (event.type == sf::Event::Resized) {
-        m_root->size_fixed(event.size.width, event.size.height);
         window_size = { event.size.width , event.size.height };
+        m_root->invalidate(Property::SIZE);
         return;
     } else if (event.type == sf::Event::MouseMoved) {
         mouse_pos = { event.mouseMove.x, event.mouseMove.y };
@@ -93,18 +99,18 @@ void GUI::invalidate_event_states() {
     m_invalidated = true;
 }
 
-Property::Type Property::X =       0x0001;
-Property::Type Property::Y =       0x0010;
-Property::Type Property::WIDTH =   0x0100;
-Property::Type Property::HEIGHT =  0x1000;
-Property::Type Property::SIZE =    0x1100;
-Property::Type Property::POSITION =0x0011;
-Property::Type Property::LAYOUT =  0x1111;
+Property::Type Property::X =       0b0001;
+Property::Type Property::Y =       0b0010;
+Property::Type Property::WIDTH =   0b0100;
+Property::Type Property::HEIGHT =  0b1000;
+Property::Type Property::SIZE =    0b1100;
+Property::Type Property::POSITION =0b0011;
+Property::Type Property::LAYOUT =  0b1111;
 
-size_t Anchor::LEFT = 0x1000;
-size_t Anchor::RIGHT = 0x0100;
-size_t Anchor::TOP = 0x0010;
-size_t Anchor::BOTTOM = 0x0001;
+size_t Anchor::LEFT = 0b1000;
+size_t Anchor::RIGHT = 0b0100;
+size_t Anchor::TOP = 0b0010;
+size_t Anchor::BOTTOM = 0b0001;
 size_t Anchor::CENTER = 0;
 
 
@@ -163,23 +169,74 @@ bool Widget::Layout::contains(const glm::vec2& transform, float px, float py) {
     return px >= x && px <= x + width && py >= y && py <= y + height;
 }
 
-/// Удаляет правила вычисления layout.
+//Dependent = {виджет, какие поля виджета зависят от каких полей }
+void Property::add_depentent(Dependent dependent) {
+    auto it = std::find_if(dependents.begin(), dependents.end(), [widget = dependent.widget](const Dependent& d) { return widget == d.widget; });
+    if (it == dependents.end())
+        dependents.push_back(dependent);
+    else {
+        assert((it->output & dependent.output) == 0 || "Invalid operations"); //иначе некорректно удаление
+        it->output |= dependent.output;
+    }
+}
+
+void Property::clear_dependent(Dependent dependent) {
+    auto it = std::find_if(dependents.begin(), dependents.end(), [widget = dependent.widget](const Dependent& d) { return widget == d.widget; });
+    if (it == dependents.end())
+        return;
+    it->output &= ~dependent.output;
+    if (it->output == 0)
+        dependents.erase(it);
+}
+
+/// Удаляет правила вычисления свойств properties.
 void Widget::clear_rules(Property::Type properties) {
     for (auto it = m_rules.begin(); it != m_rules.end();) {
-        //нельзя удалить правило частично.
         if ((it->properties & properties) == it->properties) { //it->properties всключает все флаги что и properties
-            it = m_rules.erase(it);
+            for (auto& dependency : it->dependencies) {
+                //должны сказать зависимостям, что мы больше не завсим от их свойств dependency.properties.
+                if (dependency.properties & Property::X) //зависили от свойства X
+                    dependency.widget->layout.x.clear_dependent({ this, it->properties }); //говорим свойству X виджета dependency.widget, что мы от него больше не зависим.
+                if (dependency.properties & Property::Y)
+                    dependency.widget->layout.y.clear_dependent({ this, it->properties });
+                if (dependency.properties & Property::WIDTH)
+                    dependency.widget->layout.width.clear_dependent({ this, it->properties });
+                if (dependency.properties & Property::HEIGHT)
+                    dependency.widget->layout.height.clear_dependent({ this, it->properties });
+            }
+            it = m_rules.erase(it);            
             continue;
-        }   
-        assert((it->properties & properties) == 0 && "Invalid operation");
+        }
+        assert((it->properties & properties) == 0 && "Invalid operation"); //правило должно быть перпендикулярно properties.
+        //если правило вычисляет X,Y, то мы не можем попросить удалить только X.
         ++it;
     }
 }
 
-/// Добавляет новое правило вычисления Layout
-void Widget::add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Rule::Dependency>& dependencies) {
+
+/**
+ * @brief Добавляет новое правило вычисления.
+ * @param properties Свойства, для которых будет применяться аднное правило
+ * @param calc функция, вычисляющая данные свойства
+ * @param dependencies зависимости, т.е. виджеты и их свойства, которые должны быть вычислены на момент выполнения calc.
+ * @details удаляет правила, которые ранее вычисляли свойства properties.
+ * @note поскольку эта функция используется в основном при инициализации,
+ * соотвествующие свойства не инвализируются. Это сделано для избежания множества
+ * холостых вызовов invalidate.
+ */
+void Widget::add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Dependency>& dependencies) {
     clear_rules(properties);
     m_rules.push_back({ properties, calc, dependencies });
+    for (auto& dependency : dependencies) {
+        if (dependency.properties & Property::X) //зависили от свойства X
+            dependency.widget->layout.x.add_depentent({ this, properties }); //говорим свойству X виджета dependency.widget, что мы от него больше не зависим.
+        if (dependency.properties & Property::Y)
+            dependency.widget->layout.y.add_depentent({ this, properties });
+        if (dependency.properties & Property::WIDTH)
+            dependency.widget->layout.width.add_depentent({ this, properties });
+        if (dependency.properties & Property::HEIGHT)
+            dependency.widget->layout.height.add_depentent({ this, properties });
+    }
 }
 
 /// Вычисляет свойства виджета (свойства - это x,y,width, height), указанные в битовой маске property.
@@ -191,15 +248,32 @@ void Widget::calc_properties(Property::Type property) {
 #endif
 
     auto current_frame = GUI::Instance().get_current_frame_id();
-    //не будем вычислять то, что уже было вычислено на этом этапе.
-    if (layout.x.last_calculation_frame_id == current_frame)
+    //не будем вычислять то, что не было инвалидировано и что уже было вычислено на этом этапе.
+    Property::Type invalidated_props = layout.invalidated_props();
+    
+    if (!(invalidated_props & Property::X) || layout.x.last_calculation_frame_id == current_frame)
         property &= ~Property::X;
-    if (layout.y.last_calculation_frame_id == current_frame)
+    if (!(invalidated_props & Property::Y) || layout.y.last_calculation_frame_id == current_frame)
         property &= ~Property::Y;
-    if (layout.width.last_calculation_frame_id == current_frame)
+    if (!(invalidated_props & Property::WIDTH) || layout.width.last_calculation_frame_id == current_frame)
         property &= ~Property::WIDTH;
-    if (layout.width.last_calculation_frame_id == current_frame)
+    if (!(invalidated_props & Property::HEIGHT) || layout.height.last_calculation_frame_id == current_frame)
         property &= ~Property::HEIGHT;
+    if (property == 0) {
+#ifdef GUI_DEBUG_ENABLED
+        //std::cout << "properties have been calculated." << std::endl;
+        stack.pop_back();
+#endif
+        return;
+    }
+
+#ifdef GUI_DEBUG_ENABLED
+    std::cout << "calc " << current_frame << " [" <<
+        ((property & Property::X) ? "X," : "") <<
+        ((property & Property::Y) ? "Y," : "") <<
+        ((property & Property::WIDTH) ? "WIDTH," : "") <<
+        ((property & Property::HEIGHT) ? "HEIGHT," : "") << "] for " << debug_name << std::endl;
+#endif
     //выполним все правила, которые вычисляют properties пересекающиеся с property.
     for (auto& r : m_rules) {
         if ((r.properties & property) != 0) {
@@ -213,6 +287,8 @@ void Widget::calc_properties(Property::Type property) {
             layout.height.locked = !(r.properties & Property::HEIGHT);
 
             r.calc_function(layout);
+            layout.m_invalidated_props &= ~(r.properties & property); //validation.
+
             //обновляем информацию и frame для вычисленных полей
             if (!layout.x.locked) layout.x.last_calculation_frame_id = current_frame;
             if (!layout.y.locked) layout.y.last_calculation_frame_id = current_frame;
@@ -221,7 +297,23 @@ void Widget::calc_properties(Property::Type property) {
 
         }
     }
-    
+    //для некоторых свойств не нашлось правил для их вычисления => применяем правила по умолчанию
+    Property::Type required = layout.m_invalidated_props & property;
+    if (required != 0) {
+        if (required & Property::X) {
+            layout.x.locked = false;
+            layout.x = 0;
+            layout.x = current_frame;
+        }
+        if (required & Property::Y) {
+            layout.y.locked = false;
+            layout.y = 0;
+            layout.y = current_frame;
+        }
+        assert((required & Property::WIDTH)== 0 && "no rule for WIDTH");
+        assert((required & Property::HEIGHT) == 0 && "no rule for HEIGHT");
+        layout.m_invalidated_props &= ~required; //validate
+    }
 
 #ifdef GUI_DEBUG_ENABLED
     stack.pop_back();
@@ -233,6 +325,33 @@ void Widget::calc_layout() {
     calc_properties(Property::LAYOUT);
 }
 
+void Widget::invalidate(Property::Type property) {
+    if ((layout.m_invalidated_props & property) == property)
+        return; //уже инвалидировано
+    layout.invalidate(property);
+    if (property & Property::X) {
+        for (auto& dependent : layout.x.dependents) {
+            //у зависимого нужно инвалидировать те свойства, которые вычисляются по this и которые мы хотим инвалидировать (т.е. property). 
+            dependent.widget->invalidate(dependent.output);
+        }
+    }
+    if (property & Property::Y) {
+        for (auto& dependent : layout.y.dependents) {
+            dependent.widget->invalidate(dependent.output);
+        }
+    }
+    if (property & Property::WIDTH) {
+        for (auto& dependent : layout.width.dependents) {
+            dependent.widget->invalidate(dependent.output);
+        }
+    }
+    if (property & Property::HEIGHT) {
+        for (auto& dependent : layout.height.dependents) {
+            dependent.widget->invalidate(dependent.output);
+        }
+    }
+}
+
 
 void Widget::vbox(const std::vector<Widget*>& elements) {
     for (size_t i = 1; i < elements.size(); ++i) {
@@ -242,8 +361,8 @@ void Widget::vbox(const std::vector<Widget*>& elements) {
         }, { { elements[i - 1], Property::POSITION | Property::HEIGHT } });   
     }
 
-    std::vector<Rule::Dependency> height_dependencies(elements.size());
-    std::vector<Rule::Dependency> width_dependencies(elements.size());
+    std::vector<Dependency> height_dependencies(elements.size());
+    std::vector<Dependency> width_dependencies(elements.size());
     for (size_t i = 0; i < elements.size(); ++i) {
         height_dependencies[i] = { elements[i], Property::HEIGHT };
         width_dependencies[i] = { elements[i], Property::WIDTH };
@@ -270,7 +389,7 @@ void Widget::size_fixed(float width, float height) {
     }, {});
 }
 
-/// Свойства properties у данного виджета будут получяться из аналогичных свойств widget, промущенных через modifier.
+/// Свойства properties у данного виджета будут получаться из аналогичных свойств content_rect widget, промущенных через modifier.
 void Widget::property_inherit(Widget* widget, Property::Type properties, const Modifier& modifier) {
     assert((properties & Property::POSITION) == 0 && "For size properties only");
     add_rule(properties, [widget, properties, modifier](Layout& layout) {
@@ -400,11 +519,19 @@ Widget* Widget::add(std::unique_ptr<Widget>&& child) {
 void Widget::delete_widget(Widget* widget) {
     for (auto it = m_children.begin(); it != m_children.end(); ++it) {
         if (it->get() == widget) {
+            it->reset();
             m_children.erase(it);
             GUI::Instance().invalidate_event_states();
             return;
         }
     }
+}
+
+Widget::~Widget() {
+    invalidate(Property::LAYOUT); //заинвалидируем layout у зависимых от нас
+    clear_rules(Property::LAYOUT); //удалим все правила вычисления. Это известит зависимых от нас, что мы от них больше не зависим
+    m_children.clear(); //удаляем детей
+    //уничтожаемся сами
 }
 
 Panel::Panel(sf::Color background_color, sf::Color border_color, float border) {

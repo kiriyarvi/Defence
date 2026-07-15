@@ -15,22 +15,26 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     Widget* root = GUI::Instance().get_root();
     m_game_process_ui = root->add(Widget::create());
     m_game_process_ui->size_inherited(root);
+    DEBUG_TAG(m_game_process_ui, "m_game_process_ui")
 
     //coin indicator (Hierarchy)
     m_player_coins_count_widget = (Label*)m_game_process_ui->add(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
+    DEBUG_TAG(m_player_coins_count_widget, "m_player_coins_count_widget")
     m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
     Icon* coin_icon = (Icon*)m_game_process_ui->add(Icon::create(TextureID::Coin));
+    DEBUG_TAG(coin_icon, "coin_icon")
     //coin indicator (Layout)
        coin_icon->add_rule(Property::SIZE, [coins_counter = m_player_coins_count_widget](Widget::Layout& layout) {
         layout.width = coins_counter->layout.height;
         layout.height = coins_counter->layout.height;
     }, { {m_player_coins_count_widget, Property::SIZE} });
     coin_icon->position_anchor(Anchor::LEFT, m_player_coins_count_widget, Anchor::RIGHT);
-
     //health indicator (Hierarchy)
     m_player_health_count_widget = (Label*)m_game_process_ui->add(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
+    DEBUG_TAG(m_player_health_count_widget, "m_player_health_count_widget")
     m_player_health_count_widget->add_text("X" + std::to_string(m_player_hp));
     Icon* heart_icon = (Icon*)m_game_process_ui->add(Icon::create(TextureID::Heart));
+    DEBUG_TAG(heart_icon, "heart_icon")
     //health indicator (Layout)
     m_player_health_count_widget->position_anchor(Anchor::RIGHT | Anchor::TOP, m_game_process_ui, Anchor::RIGHT | Anchor::TOP);
     heart_icon->add_rule(Property::SIZE, [hp_counter = m_player_health_count_widget](Widget::Layout& layout) {
@@ -41,11 +45,12 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 
     //wave info (Hierarchy)
     m_wave_info = (Label*)m_game_process_ui->add(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
+    DEBUG_TAG(m_wave_info, "m_wave_info")
     //wave info (Layout)
     m_wave_info->position_anchor(Anchor::TOP, m_game_process_ui, Anchor::TOP);
 
     m_building_panel = (BuildingPanel*)m_game_process_ui->add(std::make_unique<BuildingPanel>(m_game_process_ui));
-
+    DEBUG_TAG(m_building_panel, "m_building_panel")
 
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" }; //TODO
     PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };//TODO
@@ -162,22 +167,21 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     TileMap::Instance().generate_map();
     add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.", MessageType::None);
 
-    //Иерархия
-   /* Panel* panel = (Panel*)root->add(Panel::create());
-    Label* label = (Label*)panel->add(Label::create());
-    Panel* panel_2 = (Panel*)root->add(Panel::create());
-    label->add("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.", sf::Color::White, sf::Text::Style::Italic);
-    label->add("\n500\n\n\ng", Label::gold_color);*/
+    root->debug_name = "root";
 
+    //Иерархия
+    Panel* panel = (Panel*)root->add(Panel::create());
+    panel->debug_name = "panel";
+    Label* label = (Label*)panel->add(Label::create());
+    label->add_text("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.", sf::Color::White, sf::Text::Style::Italic);
+    label->debug_name = "label";
     //Layout
     //Ширина Label наследуется от panel
-    //label->property_inherit(panel, Property::WIDTH); //WIDTH
+    label->property_inherit(panel, Property::WIDTH); //WIDTH
     ////label.height зависит от width (зависимость проставлена в конструкторе label)
-    //panel->property_inherit(root, Property::WIDTH, [](float v) {return 0.5 * v; });
-    //panel->property_include(label, Property::HEIGHT);
-    //panel->position_centering(root); //POSITION
-    //panel_2->size_fixed(100, 100);
-    //panel_2->position_anchor(Anchor::LEFT | Anchor::BOTTOM, panel, Anchor::RIGHT | Anchor::TOP);
+    panel->property_inherit(root, Property::WIDTH, [](float v) {return 0.5 * v; });
+    panel->property_include(label, Property::HEIGHT);
+    panel->position_centering(root); //POSITION
 }
 
 GameState::~GameState() {

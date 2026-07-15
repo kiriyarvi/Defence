@@ -29,10 +29,7 @@ Label::Label(bool inline_text, size_t size, sf::Font* font) {
 
 void Label::add_paragraph_text_rule() {
     add_rule(Property::HEIGHT, [this](Layout& layout) {
-        if (std::abs(m_cached_width - layout.width) < 10e-6 && !m_invalidated)
-            return;
-        m_cached_width = layout.width;
-        float content_width = m_cached_width - layout.padding.left - layout.padding.right;
+        float content_width = layout.width - layout.padding.left - layout.padding.right;
         float line_width = 0;
         int lines = 1;
         std::list<Word>::iterator prev_it = m_text.end();
@@ -57,16 +54,12 @@ void Label::add_paragraph_text_rule() {
             }
             prev_it = word_it;
         }
-        m_invalidated = false;
-        m_cached_height = (lines - 1) * m_font_info.line_spacing + m_font_info.top_line + layout.padding.top + layout.padding.bottom;
-        layout.height = m_cached_height;
+        layout.height = (lines - 1) * m_font_info.line_spacing + m_font_info.top_line + layout.padding.top + layout.padding.bottom;
     }, { {this, Property::WIDTH} });
 }
 
 void Label::add_inline_text_rule() {
     add_rule(Property::SIZE, [this](Layout& layout) {
-        if (!m_invalidated)
-            return;
         float max_line_width = 0;
         float line_width = 0;
         int lines = 1;
@@ -87,7 +80,6 @@ void Label::add_inline_text_rule() {
             prev_it = word_it;
         }
         max_line_width = std::max(line_width, max_line_width);
-        m_invalidated = false;
         layout.width = max_line_width + layout.padding.left + layout.padding.right;
         layout.height = (lines - 1) * m_font_info.line_spacing + m_font_info.top_line + layout.padding.top + layout.padding.bottom;
     },{});
@@ -129,12 +121,18 @@ void Label::add_text(const std::string& text, sf::Color color, sf::Text::Style s
         }
     }
     flush(false);
-    m_invalidated = true;
+    if (m_inline_text)
+        invalidate(Property::SIZE);
+    else
+        invalidate(Property::HEIGHT);
 }
 
 void Label::clear() {
     m_text.clear();
-    m_invalidated = true;
+    if (m_inline_text)
+        invalidate(Property::SIZE);
+    else
+        invalidate(Property::HEIGHT);
 }
 
 

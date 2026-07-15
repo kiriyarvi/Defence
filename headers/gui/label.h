@@ -36,9 +36,6 @@ private:
     };
     std::list<Word> m_text;
 
-    float m_cached_width = 0;
-    float m_cached_height = 0;
-    bool m_invalidated = true;
     bool m_inline_text;
 };
 
