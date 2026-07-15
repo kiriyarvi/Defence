@@ -4,7 +4,8 @@
 
 void GUI::set_root(std::unique_ptr<Widget>&& root, const sf::RenderWindow& window) {
     m_root = std::move(root);
-    m_root->size_fixed(window.getSize().x, window.getSize().y);
+    window_size = { window.getSize().x ,  window.getSize().y };
+    m_root->size_fixed(window_size.x, window_size.y);
 }
 
 void GUI::draw(sf::RenderWindow& window) {
@@ -26,6 +27,7 @@ void GUI::event(const sf::Event& event) {
         return;
     if (event.type == sf::Event::Resized) {
         m_root->size_fixed(event.size.width, event.size.height);
+        window_size = { event.size.width , event.size.height };
         return;
     } else if (event.type == sf::Event::MouseMoved) {
         mouse_pos = { event.mouseMove.x, event.mouseMove.y };
@@ -308,26 +310,27 @@ void Widget::position_centering(Widget* parent) {
     }, { {parent, Property::SIZE}, {this, Property::SIZE} });
 }
 
-/// позиционирует данный виджет как tooltip внутри parent.
-/// parent задает границы, в которых должен быть расположен виджет.
-void Widget::position_tooltip(size_t ancher, Widget* parent) {
-    if (parent == nullptr)
-        parent = m_parent;
-    assert(parent != nullptr && "Invalid call");
-    add_rule(Property::POSITION, [parent, ancher](Layout& layout) {
+/// Вычисляет позицию виджета так, как будто это tooltip
+/// виджет цепляется к позиции мыши за ancher.
+/// Вычисление позиции становится абсолютным.
+/// Зависимости:
+///     SIZE корневого виджета.
+void Widget::position_tooltip(size_t ancher) {
+    layout.absolute = true;
+    add_rule(Property::POSITION, [ancher](Layout& layout) {
         auto position = GUI::Instance().mouse_pos - layout.get_anchor_relative_to_center(ancher) - glm::vec2{layout.width/2.f, layout.height/2.f};
-        auto content = parent->layout.get_content_rect();
-        if (position.x + layout.width > content.width)
-            position.x = content.width - layout.width;
+        auto window_size = GUI::Instance().window_size;
+        if (position.x + layout.width > window_size.x)
+            position.x = window_size.x - layout.width;
         if (position.x < 0)
             position.x = 0;
-        if (position.y + layout.height > content.height)
-            position.y = content.height - layout.height;
+        if (position.y + layout.height > window_size.y)
+            position.y = window_size.y - layout.height;
         if (position.y < 0)
             position.y = 0;
         layout.x = position.x;
         layout.y = position.y;
-    }, { {parent, Property::SIZE}, {this, Property::SIZE} });
+    }, { {GUI::Instance().get_root(), Property::SIZE} });
 }
 
 ///short-cut для property_inherit(parent, Property::SIZE)
@@ -370,7 +373,7 @@ void Widget::draw_hierarchy(int frame, const glm::vec2& position_transform, sf::
     draw(position_transform, window);
     glm::vec2 transform = position_transform + glm::vec2{layout.x + layout.padding.left, layout.y + layout.padding.top};
     for (auto& child : m_children) {
-        child->draw_hierarchy(frame, transform, window);
+        child->draw_hierarchy(frame, child->layout.absolute ? glm::vec2(0.f, 0.f) : transform, window);
     }
 }
 

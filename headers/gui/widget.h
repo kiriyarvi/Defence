@@ -38,6 +38,7 @@ public:
 
     void invalidate_event_states();
     glm::vec2 mouse_pos;
+    glm::vec2 window_size;
 private:
     GUI() = default;
     std::unique_ptr<Widget> m_root;
@@ -101,11 +102,15 @@ public:
     static std::unique_ptr<Widget> create(Widget* parent = nullptr);
     //LAYOUT
     struct Layout {
-        Property x = 0.f; // относительные координаты
+        /// Вычисляемые динамически свойства layout
+        Property x = 0.f;
         Property y = 0.f;
         Property width = 0.f;
         Property height = 0.f;
-        Spacing padding; //отступ для контента. Параметры отступов не являются Properties и не вычисляются динамически.
+        /// Невычисляемые динамически свойства (параметры)
+        Spacing padding; //отступ для контента.
+        bool absolute = false; //по умолчанию координаты x,y указываются относительно родительского виджета.
+
         Rect get_content_rect() const;
         Rect get_layout_rect() const;
         glm::vec2 layout_size(const glm::vec2& content_size) const;
@@ -139,7 +144,7 @@ public:
     void size_fraction(Widget* widget, float parent_width_fraction, float parent_height_fraction);
     //POSITION
     void position_centering(Widget* parent = nullptr);
-    void position_tooltip(size_t ancher, Widget* parent = nullptr);
+    void position_tooltip(size_t ancher);
     void position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor);
     //CONTAINERS
     void vbox(const std::vector<Widget*>& elements);
