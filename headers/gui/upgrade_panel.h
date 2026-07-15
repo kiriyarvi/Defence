@@ -40,7 +40,7 @@ public:
 	virtual void visit(TwinGun& twingun);
 	virtual void visit(Mine& mine);
     virtual void visit(Radar& radar);
-    virtual void visit(RadioTower& radio_tower);
+    virtual void visit(RadioMast& radio_tower);
 	tgui::Group::Ptr panel; //основная панель контента. Заполняется в visit
     tgui::Group::Ptr info;
     ~UpgradePanelCreator();

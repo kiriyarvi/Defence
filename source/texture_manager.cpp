@@ -100,7 +100,7 @@ TextureManager::TextureManager() {
     textures[TextureID::Noise].loadFromFile("sprites/noise.png");
     textures[TextureID::Noise].setRepeated(true);
 
-    textures[TextureID::RadioTower].loadFromFile("sprites/Radio Tower.png");
+    textures[TextureID::RadioMast].loadFromFile("sprites/Radio Mast.png");
 
     textures[TextureID::RadarUpgradeInterferrenceSuppression].loadFromFile("sprites/radar_upgrade_interferrence_suppression.png");
     textures[TextureID::RadarUpgradeLongDistanceCommunication].loadFromFile("sprites/radar_upgrade_long_distance_communication.png");

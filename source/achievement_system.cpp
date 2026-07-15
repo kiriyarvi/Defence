@@ -112,7 +112,7 @@ void AchievementSystem::unlock_all() {
     m_unlocked_buildings[BuildingType::Minigun] = true;
     m_unlocked_buildings[BuildingType::Spikes] = true;
     m_unlocked_buildings[BuildingType::TwinGun] = true;
-    m_unlocked_buildings[BuildingType::RadioTower] = true;
+    m_unlocked_buildings[BuildingType::RadioMast] = true;
     minigun_upgrades.cooling_upgrade = 3;
     minigun_upgrades.lubricant_update = 3;
     minigun_upgrades.penetration_upgrade = 3;

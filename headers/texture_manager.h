@@ -81,7 +81,7 @@ enum class TextureID {
     MREWRadar,
     MREWDestroyed,
     Noise,
-    RadioTower,
+    RadioMast,
     RadarUpgradeLongDistanceCommunication,
     RadarUpgradeRadius,
     RadarUpgradeInterferrenceSuppression,

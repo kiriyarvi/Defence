@@ -26,7 +26,7 @@ std::string to_string(BuildingType type) {
         {BuildingType::Spikes, "Шипы"},
         {BuildingType::TwinGun, "Сдвоенная пушка"},
         {BuildingType::Radar, "Радар"},
-        {BuildingType::RadioTower, "Радиовышка"}
+        {BuildingType::RadioMast, "Радиовышка"}
     };
     return m[type];
 }

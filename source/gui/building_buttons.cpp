@@ -8,7 +8,7 @@
 #include "guns/spikes.h"
 #include "guns/hedgehog.h"
 #include "guns/radar.h"
-#include "guns/radio_tower.h"
+#include "guns/radio_mast.h"
 #include "shader_manager.h"
 #include "achievement_system.h"
 #include "gui/info_panel.h"
@@ -339,13 +339,13 @@ RadarBuildingButton::RadarBuildingButton():
 RadioMastBuildingButton::RadioMastBuildingButton():
     BuildingButton(
         [](int x_id, int y_id) {
-            auto radio_tower = std::make_unique<RadioTower>(x_id, y_id);
+            auto radio_tower = std::make_unique<RadioMast>(x_id, y_id);
             NetManager::Instance().new_radio_tower(x_id, y_id);
             return radio_tower;
         },
-        BuildingType::RadioTower,
+        BuildingType::RadioMast,
         BuildingButton::TileRestrictions::NoRoads,
         ParamsManager::Instance().params.guns.radio_tower.cost,
         ParamsManager::Instance().params.guns.radio_tower.radius,
-        TextureID::RadioTower
+        TextureID::RadioMast
     ) {}
