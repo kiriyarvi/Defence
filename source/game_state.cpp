@@ -21,7 +21,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
     Icon* coin_icon = (Icon*)m_game_process_ui->add(Icon::create(TextureID::Coin));
     //coin indicator (Layout)
-       coin_icon->add_rule(Property::SIZE, [coins_counter = m_player_coins_count_widget](LayoutNode::Layout& layout) {
+       coin_icon->add_rule(Property::SIZE, [coins_counter = m_player_coins_count_widget](Widget::Layout& layout) {
         layout.width = coins_counter->layout.height;
         layout.height = coins_counter->layout.height;
     }, { {m_player_coins_count_widget, Property::SIZE} });
@@ -33,7 +33,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     Icon* heart_icon = (Icon*)m_game_process_ui->add(Icon::create(TextureID::Heart));
     //health indicator (Layout)
     m_player_health_count_widget->position_anchor(Anchor::RIGHT | Anchor::TOP, m_game_process_ui, Anchor::RIGHT | Anchor::TOP);
-    heart_icon->add_rule(Property::SIZE, [hp_counter = m_player_health_count_widget](LayoutNode::Layout& layout) {
+    heart_icon->add_rule(Property::SIZE, [hp_counter = m_player_health_count_widget](Widget::Layout& layout) {
         layout.width = hp_counter->layout.height;
         layout.height = hp_counter->layout.height;
     }, { {m_player_health_count_widget, Property::SIZE} });

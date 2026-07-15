@@ -106,7 +106,8 @@ size_t Anchor::BOTTOM = 0x0001;
 size_t Anchor::CENTER = 0;
 
 
-LayoutNode::Rect LayoutNode::Layout::get_content_rect() const {
+/// Возвращает прямоугольник контента
+Rect Widget::Layout::get_content_rect() const {
     Rect r;
     r.x = x + padding.left;
     r.y = y + padding.top;
@@ -115,7 +116,8 @@ LayoutNode::Rect LayoutNode::Layout::get_content_rect() const {
     return r;
 }
 
-LayoutNode::Rect LayoutNode::Layout::get_layout_rect() const {
+/// Возвращает прямоугольник виджета
+Rect Widget::Layout::get_layout_rect() const {
     Rect r;
     r.x = x;
     r.y = y;
@@ -124,16 +126,16 @@ LayoutNode::Rect LayoutNode::Layout::get_layout_rect() const {
     return r;
 }
 
-
-glm::vec2 LayoutNode::Layout::layout_size(const glm::vec2& content_size) const {
+/// Возвращает, какой размер должен быть у виджета, чтобы вместить контент с размером content_size
+glm::vec2 Widget::Layout::layout_size(const glm::vec2& content_size) const {
     return {
         content_size.x + padding.left + padding.right,
         content_size.y + padding.top + padding.bottom
     };
 }
 
-//gets anchor relative to center
-glm::vec2 LayoutNode::Layout::get_anchor_relative_to_center(Anchor::Type anchor) const {
+/// Возвращает координаты указанного якоря относительно центра виджета
+glm::vec2 Widget::Layout::get_anchor_relative_to_center(Anchor::Type anchor) const {
     glm::vec2 r = { width / 2.f , height / 2.f };
     glm::vec2 center = { 0,0 };
     if (anchor & Anchor::BOTTOM)
@@ -147,21 +149,24 @@ glm::vec2 LayoutNode::Layout::get_anchor_relative_to_center(Anchor::Type anchor)
     return center;
 }
 
-glm::vec2 LayoutNode::Layout::center() const {
+/// Возвращает координаты центра виджета
+glm::vec2 Widget::Layout::center() const {
     return { x + width / 2.f, y + height / 2.f };
 }
 
-bool LayoutNode::Layout::contains(const glm::vec2& transform, float px, float py) {
+/// Содержит ли виджет данную точку?
+bool Widget::Layout::contains(const glm::vec2& transform, float px, float py) {
     px -= transform.x;
     py -= transform.y;
     return px >= x && px <= x + width && py >= y && py <= y + height;
 }
 
-void LayoutNode::clear_rules(Property::Type properties) {
-    for (auto it = rules.begin(); it != rules.end();) {
+/// Удаляет правила вычисления layout.
+void Widget::clear_rules(Property::Type properties) {
+    for (auto it = m_rules.begin(); it != m_rules.end();) {
         //нельзя удалить правило частично.
         if ((it->properties & properties) == it->properties) { //it->properties всключает все флаги что и properties
-            it = rules.erase(it);
+            it = m_rules.erase(it);
             continue;
         }   
         assert((it->properties & properties) == 0 && "Invalid operation");
@@ -169,12 +174,14 @@ void LayoutNode::clear_rules(Property::Type properties) {
     }
 }
 
-void LayoutNode::add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Rule::Dependency>& dependencies) {
+/// Добавляет новое правило вычисления Layout
+void Widget::add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Rule::Dependency>& dependencies) {
     clear_rules(properties);
-    rules.push_back({ properties, calc, dependencies });
+    m_rules.push_back({ properties, calc, dependencies });
 }
 
-void LayoutNode::calc_properties(Property::Type property) {
+/// Вычисляет свойства виджета (свойства - это x,y,width, height), указанные в битовой маске property.
+void Widget::calc_properties(Property::Type property) {
 #ifdef GUI_DEBUG_ENABLED
     auto& stack = GUI::Instance().layout_stack;
     assert(std::find(stack.begin(), stack.end(), GUI::StackElement{ this, property }) == stack.end());
@@ -192,10 +199,10 @@ void LayoutNode::calc_properties(Property::Type property) {
     if (layout.width.last_calculation_frame_id == current_frame)
         property &= ~Property::HEIGHT;
     //выполним все правила, которые вычисляют properties пересекающиеся с property.
-    for (auto& r : rules) {
+    for (auto& r : m_rules) {
         if ((r.properties & property) != 0) {
             for (auto& d : r.dependencies) {
-                d.layout_node->calc_properties(d.properties);
+                d.widget->calc_properties(d.properties);
             }
             //не дадим calc_function менять то, на что она не претендует.
             layout.x.locked = !(r.properties & Property::X);
@@ -219,13 +226,13 @@ void LayoutNode::calc_properties(Property::Type property) {
 #endif
 }
 
-
-void LayoutNode::calc_layout() {
+/// Вычисляет весь Layout виджета. 
+void Widget::calc_layout() {
     calc_properties(Property::LAYOUT);
 }
 
 
-void LayoutNode::vbox(const std::vector<LayoutNode*>& elements) {
+void Widget::vbox(const std::vector<Widget*>& elements) {
     for (size_t i = 1; i < elements.size(); ++i) {
         elements[i]->add_rule(Property::POSITION, [prev = elements[i - 1]](Layout& layout) {
             layout.x = prev->layout.x;
@@ -253,44 +260,60 @@ void LayoutNode::vbox(const std::vector<LayoutNode*>& elements) {
     }, width_dependencies);
 }
 
-void LayoutNode::size_fixed(float width, float height) {
+/// Устанавливает фиксированный размер
+void Widget::size_fixed(float width, float height) {
     add_rule(Property::SIZE, [width, height](Layout& properties) {
         properties.height = height;
         properties.width = width;
     }, {});
 }
 
-void LayoutNode::property_inherit(LayoutNode* parent, Property::Type properties, const Modifier& modifier) {
+/// Свойства properties у данного виджета будут получяться из аналогичных свойств widget, промущенных через modifier.
+void Widget::property_inherit(Widget* widget, Property::Type properties, const Modifier& modifier) {
     assert((properties & Property::POSITION) == 0 && "For size properties only");
-    add_rule(properties, [parent, properties, modifier](Layout& layout) {
-        Rect content = parent->layout.get_content_rect(); 
+    add_rule(properties, [widget, properties, modifier](Layout& layout) {
+        Rect content = widget->layout.get_content_rect();
         if (properties & Property::WIDTH)
             layout.width = modifier ? modifier(content.width) : content.width;
         if (properties & Property::HEIGHT)
             layout.height = modifier ? modifier(content.height) : content.height;
-    }, { {parent, properties} });
+    }, { {widget, properties} });
 }
 
-void LayoutNode::property_include(LayoutNode* child, Property::Type properties, const Modifier& modifier) {
+/// Данная функция применяется только к свойствам, относящимся к свойствам размера виджета.
+/// У widget берутся свойства properties и пропускаются через modifier.
+/// на выходе получается некоторые свойства размера S. У данного виджета устанавливаются свойства размера
+/// так, чтобы аналогичные свойства контента были как S.
+void Widget::property_include(Widget* widget, Property::Type properties, const Modifier& modifier) {
     assert((properties & Property::POSITION) == 0 && "For size properties only");
-    add_rule(properties, [child, properties, modifier](Layout& layout) {
-        glm::vec2 size = layout.layout_size({ child->layout.width, child->layout.height });
+    add_rule(properties, [widget, properties, modifier](Layout& layout) {
+        glm::vec2 size = layout.layout_size({ widget->layout.width, widget->layout.height });
         if (properties & Property::WIDTH)
             layout.width = modifier ? modifier(size.x) : size.x;
         if (properties & Property::HEIGHT)
             layout.height = modifier ? modifier(size.y) : size.y;
-    }, { {child, properties} });
+    }, { {widget, properties} });
 }
 
-
-void LayoutNode::position_centering(LayoutNode* parent) {
+///центрирует виджет внутри parent. parent может быть любым виджетом (по умолчанию всегда родитель), но
+/// в случае, когда виджет не родитель, результат может быть не предсказумым, поскольку смещение при отрисовке
+/// берется все равно относительно настоящего родителя.
+void Widget::position_centering(Widget* parent) {
+    if (parent == nullptr)
+        parent = m_parent;
+    assert(parent != nullptr && "Invalid call");
     add_rule(Property::POSITION, [parent](Layout& layout) {
         layout.x = (parent->layout.width - layout.width) / 2.f;
         layout.y = (parent->layout.height - layout.height) / 2.f;
     }, { {parent, Property::SIZE}, {this, Property::SIZE} });
 }
 
-void LayoutNode::position_tooltip(LayoutNode* parent, size_t ancher) {
+/// позиционирует данный виджет как tooltip внутри parent.
+/// parent задает границы, в которых должен быть расположен виджет.
+void Widget::position_tooltip(size_t ancher, Widget* parent) {
+    if (parent == nullptr)
+        parent = m_parent;
+    assert(parent != nullptr && "Invalid call");
     add_rule(Property::POSITION, [parent, ancher](Layout& layout) {
         auto position = GUI::Instance().mouse_pos - layout.get_anchor_relative_to_center(ancher) - glm::vec2{layout.width/2.f, layout.height/2.f};
         auto content = parent->layout.get_content_rect();
@@ -307,21 +330,23 @@ void LayoutNode::position_tooltip(LayoutNode* parent, size_t ancher) {
     }, { {parent, Property::SIZE}, {this, Property::SIZE} });
 }
 
-
-void LayoutNode::size_inherited(LayoutNode* parent) {
-    property_inherit(parent, Property::SIZE);
+///short-cut для property_inherit(parent, Property::SIZE)
+void Widget::size_inherited(Widget* widget) {
+    property_inherit(widget, Property::SIZE);
 }
 
-void LayoutNode::size_include(LayoutNode* child) {
-    property_include(child, Property::SIZE);
+///short-cut для property_inherit(parent, Property::SIZE)
+void Widget::size_include(Widget* widget) {
+    property_include(widget, Property::SIZE);
 }
 
-void LayoutNode::size_fraction(LayoutNode* parent, float parent_width_fraction, float parent_height_fraction) {
-    add_rule(Property::SIZE, [parent, parent_width_fraction, parent_height_fraction](Layout& properties) {
-        auto content = parent->layout.get_content_rect();
+///width и height данного виджета составляют parent_width_fraction, parent_height_fraction от размеров widget.
+void Widget::size_fraction(Widget* widget, float parent_width_fraction, float parent_height_fraction) {
+    add_rule(Property::SIZE, [widget, parent_width_fraction, parent_height_fraction](Layout& properties) {
+        auto content = widget->layout.get_content_rect();
         properties.width = content.width * parent_width_fraction;
         properties.height = content.height * parent_height_fraction;
-    }, { {parent, Property::SIZE} });
+    }, { {widget, Property::SIZE} });
 }
 
 void Widget::position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor) {

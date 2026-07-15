@@ -8,7 +8,6 @@
 #include <stack>
 
 class Widget;
-class LayoutNode;
 
 class GUI {
 public:
@@ -31,7 +30,7 @@ public:
     void draw(sf::RenderWindow& window);
     void event(const sf::Event& event);
     struct StackElement {
-        LayoutNode* node;
+        Widget* node;
         size_t properties;
         bool operator==(const StackElement& element) { return node == element.node && properties == element.properties; }
     };
@@ -48,10 +47,10 @@ private:
 };
 
 
-class LayoutNode;
+class Widget;
 
 class Property {
-    friend class LayoutNode;
+    friend class Widget;
 public:
     Property(float initial) : m_value{ initial } {}
     Property& operator=(float value) { assert(!locked && "attempt to change locked variable");  m_value = value; return *this; }
@@ -81,21 +80,26 @@ struct Anchor {
     static Type CENTER;
 };
 
-class LayoutNode {
-public:
-    struct Spacing {
-        float left = 0;
-        float right = 0;
-        float top = 0;
-        float bottom = 0;
-    };
-    struct Rect {
-        float x = 0.f;
-        float y = 0.f;
-        float width = 0.f;
-        float height = 0.f;
-    };
+struct Spacing {
+    float left = 0;
+    float right = 0;
+    float top = 0;
+    float bottom = 0;
+};
 
+struct Rect {
+    float x = 0.f;
+    float y = 0.f;
+    float width = 0.f;
+    float height = 0.f;
+};
+
+
+class Widget {
+public:
+    Widget(Widget* parent = nullptr) : m_parent{ parent } {}
+    static std::unique_ptr<Widget> create(Widget* parent = nullptr);
+    //LAYOUT
     struct Layout {
         Property x = 0.f; // относительные координаты
         Property y = 0.f;
@@ -110,56 +114,41 @@ public:
         glm::vec2 get_anchor_relative_to_center(Anchor::Type anchor) const;
     } layout;
 
-
     struct Rule {
         Property::Type properties; //OR-d by |
         std::function<void(Layout&)> calc_function;
         struct Dependency {
-            LayoutNode* layout_node;
+            Widget* widget;
             Property::Type properties;
         };
         std::vector<Dependency> dependencies;
     };
-    std::list<Rule> rules;
+
     void clear_rules(Property::Type properties);
     void add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Rule::Dependency>& dependencies);
     void calc_properties(Property::Type property);
     void calc_layout();
-
-    //Layout functions
+    //LAYOUT FUNCTIONS
     //SIZE
     using Modifier = std::function<float(float)>;
-    void property_inherit(LayoutNode* parent, Property::Type properties, const Modifier& modifier = {}); //наследует свойства parent->layout.content
-    void property_include(LayoutNode* child, Property::Type properties, const Modifier& modifier = {}); //делает так, чтобы child->layout помещался в content
+    void property_inherit(Widget* widget, Property::Type properties, const Modifier& modifier = {}); 
+    void property_include(Widget* widget, Property::Type properties, const Modifier& modifier = {});
     void size_fixed(float width, float height);
-    void size_inherited(LayoutNode* parent);
-    void size_include(LayoutNode* child);
-    void size_fraction(LayoutNode* parent, float parent_width_fraction, float parent_height_fraction);
+    void size_inherited(Widget* widget);
+    void size_include(Widget* widget);
+    void size_fraction(Widget* widget, float parent_width_fraction, float parent_height_fraction);
     //POSITION
-    void position_centering(LayoutNode* parent);
-    void position_tooltip(LayoutNode* parent, size_t ancher);
-    void position_anchor(Anchor::Type pivot, LayoutNode* to, Anchor::Type anchor);
+    void position_centering(Widget* parent = nullptr);
+    void position_tooltip(size_t ancher, Widget* parent = nullptr);
+    void position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor);
     //CONTAINERS
-    void vbox(const std::vector<LayoutNode*>& elements);
-private:
-    uint32_t m_last_size_update = 0;
-    uint32_t m_last_position_update = 0; private:
-};
-
-class Widget: public LayoutNode {
-public:
-    Widget(Widget* parent = nullptr) : m_parent{ parent } {}
-    static std::unique_ptr<Widget> create(Widget* parent = nullptr);
-    void draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderWindow& window);
-    virtual void draw(const glm::vec2& position_transform, sf::RenderWindow& window) {}
-
+    void vbox(const std::vector<Widget*>& elements);
+    //WIDGET HIERARCHY
     Widget* add(std::unique_ptr<Widget>&& child);
     void delete_widget(Widget* widget); // NOTE: не удаляет автоматически layout rules виджетов, которые сслыаются на widget.
-    Widget* m_parent;
-    std::list<std::unique_ptr<Widget>> m_children;
-    //Layout functions
-    void position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor);
-
+    void draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderWindow& window);
+    virtual void draw(const glm::vec2& position_transform, sf::RenderWindow& window) {}
+    //EVENT SYSTEM
     std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos)> on_hovered;
     std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos)> on_mouse_moved;
     std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos)> on_unhovered;
@@ -167,8 +156,11 @@ public:
     std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos, const sf::Event::MouseButtonEvent& event)> on_released;
 
     std::pair<Widget*, glm::vec2> get_widget_under_cursor(const glm::vec2& parent_transform, glm::uvec2 mouse_pos);
-
     bool receive_mouse_events = true;
+protected:
+    Widget* m_parent;
+    std::list<std::unique_ptr<Widget>> m_children;
+    std::list<Rule> m_rules;
 };
 
 

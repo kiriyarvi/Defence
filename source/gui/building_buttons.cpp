@@ -15,9 +15,7 @@
 #include "net_manager.h"
 
 
-BuildingPanel::BuildingPanel(Widget* ui) : ui{ui} {
-    m_parent = ui;
-
+BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
     Widget* b1 = add(std::make_unique<MinigunBuildingButton>());
     Widget* b2 = add(std::make_unique<MineBuildingButton>());
     Widget* b3 = add(std::make_unique<SpikesBuildingButton>());
@@ -30,7 +28,7 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui} {
     auto prev_it = m_children.end();
     for (auto button_it = m_children.begin(); button_it != m_children.end(); ++button_it) {
         Widget* button = button_it->get();
-        button->add_rule(Property::SIZE, [ui](LayoutNode::Layout& layout) {
+        button->add_rule(Property::SIZE, [ui](Widget::Layout& layout) {
             layout.height = ui->layout.height * 0.1;
             layout.width = layout.height;
         }, { { ui, Property::HEIGHT } });
@@ -38,7 +36,7 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui} {
         if (prev_it != m_children.end())
             prev = prev_it->get();
         Widget* button_panel = this;
-        button->add_rule(Property::POSITION, [button_panel, prev](LayoutNode::Layout& layout) {
+        button->add_rule(Property::POSITION, [button_panel, prev](Widget::Layout& layout) {
             if (!prev)
                 return;
             float line_width = prev->layout.x + prev->layout.width + layout.width;
@@ -55,11 +53,11 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui} {
     }
 
     position_anchor(Anchor::LEFT | Anchor::BOTTOM, ui, Anchor::LEFT | Anchor::BOTTOM);
-    add_rule(Property::WIDTH, [ui](LayoutNode::Layout& layout) {
+    add_rule(Property::WIDTH, [ui](Widget::Layout& layout) {
         layout.width = ui->layout.width * 0.7;
     }, { {ui, Property::WIDTH} });
     Widget* last_button = m_children.back().get();
-    add_rule(Property::HEIGHT, [last_button](LayoutNode::Layout& layout) {
+    add_rule(Property::HEIGHT, [last_button](Widget::Layout& layout) {
         layout.height = last_button->layout.y + last_button->layout.height;
     }, { {last_button, Property::Y | Property::HEIGHT} });
 
@@ -142,7 +140,7 @@ BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type
         label->add_text("Откройте справку, для получения подробностей", sf::Color::White, sf::Text::Style::Italic);
         
         panel->size_include(label);
-        panel->position_tooltip(building_panel->ui, Anchor::BOTTOM | Anchor::LEFT);
+        panel->position_tooltip(Anchor::BOTTOM | Anchor::LEFT, building_panel->ui);
         panel->receive_mouse_events = false;
         m_tooltip = panel;
     };
