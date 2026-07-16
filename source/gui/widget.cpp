@@ -28,75 +28,181 @@ void GUI::draw(sf::RenderWindow& window) {
 #endif
 }
 
-void GUI::event(const sf::Event& event) {
+class WidgetIterator {
+public:
+    void init(const std::list<Widget::HitListNode>* hit_test_list, const std::list<GUI::Subscriber>* subscribers, Event::Type event_type) {
+        m_hit_test_list = hit_test_list;
+        m_subscribers = subscribers;
+        m_event_type = event_type;
+        m_subscriber = true;
+        next();
+    }
+    Widget* get_current() const { return m_current; }
+    void next() {
+        if (m_subscriber) {
+            m_subs_iterator = std::find_if(m_subscribers->begin(), m_subscribers->end(), [et = m_event_type](const GUI::Subscriber& subscriber) {
+                return subscriber.event_type & et;
+            });
+            if (m_subs_iterator != m_subscribers->end()) {
+                m_current = m_subs_iterator->subscriber;
+            }
+            else if (!m_hit_test_list->empty()) {
+                m_current = m_hit_test_list->back().widget;
+                m_hit_test_iterator = m_hit_test_list->rbegin().base();
+                m_subscriber = false;
+            }
+            else {
+                m_subscriber = false;
+                m_current = nullptr;
+            }
+        }
+        else {
+            m_subscriber = false;
+            m_current = nullptr;
+        }
+    }
+    void to_parent() {
+        assert(!m_subscriber && "Invalid operation!");
+        assert(m_current && "Invalid operation!");
+        if (m_hit_test_iterator == m_hit_test_list->begin()) {
+            m_current = nullptr;
+        }
+        else {
+            m_hit_test_iterator = std::prev(m_hit_test_iterator);
+            m_current = m_hit_test_iterator->widget;
+        }
+    }
+    bool is_subscriber() { return m_subscriber; }
+private:
+    const std::list<Widget::HitListNode>* m_hit_test_list;
+    const std::list<GUI::Subscriber>* m_subscribers;
+    std::list<GUI::Subscriber>::const_iterator m_subs_iterator;
+    std::list<Widget::HitListNode>::const_iterator m_hit_test_iterator;
+    Widget* m_current = nullptr;
+    bool m_subscriber = true;
+    Event::Type m_event_type;
+};
+
+/// true - событие обработано
+bool GUI::event(const sf::Event& event) {
+    m_event_processing = true;
+
     if (!m_root)
-        return;
+        return false;
+
     if (event.type == sf::Event::Resized) {
         window_size = { event.size.width , event.size.height };
         m_root->invalidate(Property::SIZE);
-        return;
-    } else if (event.type == sf::Event::MouseMoved) {
+        return false; //дать возможность обработать событие камере
+    }
+
+    //0. Мы обрабадываем только определенные типы событий
+    bool valid_event =
+        (event.type == sf::Event::MouseMoved ||
+            event.type == sf::Event::MouseButtonPressed ||
+            event.type == sf::Event::MouseButtonReleased);
+    if (!valid_event)
+        return false;
+    //1. Заполним переменные контекста
+    if (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::MouseButtonReleased) {
+        mouse_pos = { event.mouseButton.x, event.mouseButton.y };
+        mouse_button = event.mouseButton.button;
+        event_type = event.type == sf::Event::MouseButtonPressed ? Event::BUTTON_PRESSED : Event::BUTTON_RELEASED;
+    }
+    else if (event.type == sf::Event::MouseMoved) {
         mouse_pos = { event.mouseMove.x, event.mouseMove.y };
-        //функции on_unhovered/on_hovered могут менять дерево виджетов, поэтому после выдова таких функций
-        //данные полученные из get_widget_under_cursor становятся неактуальными.
-        //последствия этого мы обработаем при следующем событии.
-        //то, что было совершено удаление, можно узнать по флагу m_invalidated.
-        do {
-            auto [widget_under_cursor, transform] = m_root->get_widget_under_cursor({ 0,0 }, mouse_pos);
-            auto [old_hovered, old_hovered_transform] = m_hovered;
-            if (widget_under_cursor != old_hovered) {
-                if (old_hovered) {
-                    m_invalidated = false;
-                    m_hovered = { nullptr, glm::vec2{} };
-                    if (old_hovered->on_unhovered) {
-                        old_hovered->on_unhovered(old_hovered_transform, mouse_pos);
-                        if (m_invalidated)
-                            continue; //layout изменился, придется сделать новый запрос.
-                    }
-                    if (widget_under_cursor) { //layout не менялся, можем привязывать новый виджет, если он есть
-                        m_hovered = { widget_under_cursor, transform };
-                        if (widget_under_cursor->on_hovered) {
-                            widget_under_cursor->on_hovered(transform, mouse_pos);
-                            if (m_invalidated)
-                                continue; //делаем новый заброс get_widget_under_cursor
-                        }
-                    }
-                } else if (widget_under_cursor) {
-                    m_invalidated = false;
-                    m_hovered = { widget_under_cursor, transform };
-                    if (widget_under_cursor->on_hovered) {
-                        widget_under_cursor->on_hovered(transform, mouse_pos);
-                        if (m_invalidated)
-                            continue; //делаем новый заброс get_widget_under_cursor
-                    }
-                }
-                else {
-                    m_invalidated = false;
-                    m_hovered = { nullptr, glm::vec2{} };
-                }
-            }
-            else if (widget_under_cursor && widget_under_cursor->on_mouse_moved) {
-                m_invalidated = false;
-                widget_under_cursor->on_mouse_moved(transform, mouse_pos);
-            }
-            else
-                m_invalidated = false;
-        } while (m_invalidated);
+        event_type = Event::MOUSE_MOVED;
     }
-    else if (event.type == sf::Event::MouseButtonPressed) {
-        auto [widget_under_cursor, transform] = m_root->get_widget_under_cursor({ 0,0 }, mouse_pos);
-        if (widget_under_cursor && widget_under_cursor->on_pressed)
-            widget_under_cursor->on_pressed(transform, mouse_pos, event.mouseButton);
-    }
-    else if (event.type == sf::Event::MouseButtonReleased) {
-        auto [widget_under_cursor, transform] = m_root->get_widget_under_cursor({ 0,0 }, mouse_pos);
-        if (widget_under_cursor && widget_under_cursor->on_released)
-            widget_under_cursor->on_released(transform, mouse_pos, event.mouseButton);
+    //2. Обработаем событие
+    bool processed = event_impl();
+    perform_deffered();
+    m_event_processing = false;
+    return processed;
+}
+
+bool GUI::event_impl() {
+    while (true) { //REPEAT-while
+        //1. hit-test
+        std::list<Widget::HitListNode> hit_test;
+        m_root->hit_test(hit_test, mouse_pos);
+#ifdef GUI_DEBUG_ENABLED
+        for (auto& w : hit_test) {
+            std::cout << w.widget->debug_name << " -> ";
+        }
+        if (!hit_test.empty())
+            std::cout << std::endl;
+#endif
+        //2. получаем виджет для обработки события
+        WidgetIterator widget_iterator;
+        widget_iterator.init(&hit_test, &m_subscribers, event_type);
+        while (true) { //WidgetIterator-while
+            Widget* target = widget_iterator.get_current();
+            if (target == nullptr)
+                return false; //некому обработать событие
+            bool subscriber = widget_iterator.is_subscriber();
+            Widget::EventContext context{ hit_test, event_type, widget_iterator.is_subscriber() };
+            //3. отправляем виджету событие
+            auto query = target->on_event(context);
+            //4. валидация возвращаемого значения
+            if (subscriber) {
+                assert(query.workflow != Query::Workflow::PASS_TO_PARENT);
+                if (query.query & Query::PERFORM_DEFFERED)
+                    assert(query.workflow == Query::Workflow::REPEAT && "Invalid workflow");
+            }
+            //5. Выполнение запросов
+            if (query.query & Query::PERFORM_DEFFERED) {
+                assert(query.workflow == Query::Workflow::REPEAT && "Invalid workflow");
+                perform_deffered();
+            }
+            if (query.query & Query::CALC_LAYOUT) {
+                m_root->calc_layout();
+            }
+            //6. Workflow
+            if (query.workflow == Query::Workflow::PASS) {
+                widget_iterator.next();
+            }
+            else if (query.workflow == Query::Workflow::PROCESSED)
+                return true; //событие обработано
+            else if (query.workflow == Query::Workflow::REPEAT) { //повторить обработку событий
+                hit_test.clear();
+                break; // нужно вернуться к внешнему while
+            }
+            else if (query.workflow == Query::Workflow::PASS_TO_PARENT) {
+                widget_iterator.to_parent();
+            }
+        }
     }
 }
 
-void GUI::invalidate_event_states() {
-    m_invalidated = true;
+void GUI::subscribe_deffered(Widget* widget, Event::Type type) {
+    m_deffered_commands.push_back([this, widget, type]() {
+        auto sub = std::find_if(m_subscribers.begin(), m_subscribers.end(), [widget](Subscriber& subscriber) {
+            return subscriber.subscriber == widget;
+        });
+        if (sub != m_subscribers.end())
+            sub->event_type |= type;
+        else
+            m_subscribers.push_back({ type, widget });
+    });
+}
+
+void GUI::unsubscribe_deffered(Widget* widget, Event::Type type) {
+    m_deffered_commands.push_back([this, widget, type]() {
+        auto sub = std::find_if(m_subscribers.begin(), m_subscribers.end(), [widget](Subscriber& subscriber) {
+            return subscriber.subscriber == widget;
+        });
+        if (sub == m_subscribers.end())
+            return;
+        sub->event_type &= ~type;
+        if (sub->event_type == 0)
+            m_subscribers.erase(sub);
+    });
+}
+
+void GUI::perform_deffered() {
+    for (auto it = m_deffered_commands.begin(); it != m_deffered_commands.end(); ++it)
+        (*it)();
+    m_deffered_commands.clear();
 }
 
 Property::Type Property::X =       0b0001;
@@ -464,35 +570,60 @@ void Widget::draw_hierarchy(int frame, const glm::vec2& position_transform, sf::
     }
 }
 
-std::pair<Widget*, glm::vec2> Widget::get_widget_under_cursor(const glm::vec2& parent_transform, glm::uvec2 mouse_pos) {
-    if (!receive_mouse_events)
-        return std::make_pair<Widget*, glm::vec2>(nullptr, glm::vec2{});
-    glm::vec2 transform = parent_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
+bool Widget::hit_test(std::list<Widget::HitListNode>& hit_list, glm::uvec2 mouse_pos) {
+    if (!ignore_hit_test)
+        return false;
+    glm::vec2 parent_transform = hit_list.empty() ? glm::vec2(0, 0) : hit_list.back().parent_transform;
+    glm::vec2 content_transform = parent_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
+    hit_list.push_back(Widget::HitListNode{ this, content_transform });
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-        auto info = (*it)->get_widget_under_cursor(transform, mouse_pos);
-        if (info.first) return info;
+        if (it->get()->hit_test(hit_list, mouse_pos))
+            return true;
     }
     if (layout.contains(parent_transform, mouse_pos.x, mouse_pos.y))
-        return std::make_pair<Widget*, glm::vec2>(this, glm::vec2(parent_transform));
-    return std::make_pair<Widget*, glm::vec2>(nullptr, glm::vec2{});
+        return true;
+    hit_list.pop_back();
+    return false;
 }
 
-Widget* Widget::add(std::unique_ptr<Widget>&& child) {
-    GUI::Instance().invalidate_event_states();
+Widget* Widget::add_widget(std::unique_ptr<Widget>&& child) {
+    assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
     child->m_parent = this;
     m_children.push_back(std::move(child));
     return m_children.back().get();
 }
 
 void Widget::delete_widget(Widget* widget) {
+    assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
     for (auto it = m_children.begin(); it != m_children.end(); ++it) {
         if (it->get() == widget) {
-            it->reset();
             m_children.erase(it);
-            GUI::Instance().invalidate_event_states();
             return;
         }
     }
+}
+
+void Widget::add_widget_deffered(std::unique_ptr<Widget>&& child) {
+    Widget* child_ptr = child.release();
+    GUI::Instance().add_deffered_command([this, child = child_ptr]() {
+        child->m_parent = this;
+        m_children.push_back(std::unique_ptr<Widget>(child));
+    });
+}
+
+void Widget::delete_widget_deffered(Widget* widget) {
+    GUI::Instance().add_deffered_command([this, widget]() {
+        for (auto it = m_children.begin(); it != m_children.end(); ++it) {
+            if (it->get() == widget) {
+                m_children.erase(it);
+                return;
+            }
+        }
+    });
+}
+
+Widget* Widget::get_root() {
+    return m_parent == nullptr ? this : m_parent->get_root();
 }
 
 Widget::~Widget() {

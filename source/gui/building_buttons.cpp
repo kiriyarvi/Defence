@@ -16,14 +16,14 @@
 
 
 BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
-    Widget* b1 = add(std::make_unique<MinigunBuildingButton>());
-    Widget* b2 = add(std::make_unique<MineBuildingButton>());
-    Widget* b3 = add(std::make_unique<SpikesBuildingButton>());
-    Widget* b4 = add(std::make_unique<HedgehogBuildingButton>());
-    Widget* b5 = add(std::make_unique<AntitankBuildingButton>());
-    Widget* b6 = add(std::make_unique<TwinGunBuildingButton>());
-    Widget* b7 = add(std::make_unique<RadarBuildingButton>());
-    Widget* b8 = add(std::make_unique<RadioMastBuildingButton>());
+    BuildingButton* b1 = (BuildingButton*)add_widget(std::make_unique<MinigunBuildingButton>());
+    BuildingButton* b2 = (BuildingButton*)add_widget(std::make_unique<MineBuildingButton>());
+    BuildingButton* b3 = (BuildingButton*)add_widget(std::make_unique<SpikesBuildingButton>());
+    BuildingButton* b4 = (BuildingButton*)add_widget(std::make_unique<HedgehogBuildingButton>());
+    BuildingButton* b5 = (BuildingButton*)add_widget(std::make_unique<AntitankBuildingButton>());
+    BuildingButton* b6 = (BuildingButton*)add_widget(std::make_unique<TwinGunBuildingButton>());
+    BuildingButton* b7 = (BuildingButton*)add_widget(std::make_unique<RadarBuildingButton>());
+    BuildingButton* b8 = (BuildingButton*)add_widget(std::make_unique<RadioMastBuildingButton>());
     DEBUG_TAG(b1, "MinigunBuildingButton")
     DEBUG_TAG(b2, "MineBuildingButton")
     DEBUG_TAG(b3, "SpikesBuildingButton")
@@ -32,7 +32,7 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
     DEBUG_TAG(b6, "TwinGunBuildingButton")
     DEBUG_TAG(b7, "RadarBuildingButton")
     DEBUG_TAG(b8, "RadioMastBuildingButton")
-
+    m_buttons = {b1,b2,b3,b4,b5,b6, b7, b8};
 
     auto prev_it = m_children.end();
     for (auto button_it = m_children.begin(); button_it != m_children.end(); ++button_it) {
@@ -76,8 +76,8 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
 }
 
 void BuildingPanel::update(int player_coins) {
-    for (auto& button : m_children)
-        dynamic_cast<BuildingButton*>(button.get())->update(player_coins);
+    for (auto& button : m_buttons)
+        button->update(player_coins);
     if (m_selected_button && m_selected_button->m_state != BuildingButton::State::SELECTED)
         m_selected_button = nullptr;
 }
@@ -95,8 +95,7 @@ void BuildingPanel::build_if_allowed(const sf::Vector2f& mouse_pos) {
 }
 
 void BuildingPanel::select(BuildingButton* button_to_select) {
-    for (auto& button_ptr : m_children) {
-        BuildingButton* button = dynamic_cast<BuildingButton*>(button_ptr.get());
+    for (auto& button : m_buttons) {
         if (button == button_to_select) {
             button->set_state(BuildingButton::State::SELECTED);
             m_selected_button = button_to_select;
@@ -127,47 +126,87 @@ void BuildingPanel::draw_building_plan(sf::RenderWindow& window, int x_id, int y
     m_selected_button->draw_building_plan(window, x_id, y_id);
 }
 
+Query BuildingPanel::on_event(Widget::EventContext context) {
+    // если все BuildingButton вернули пустой Query (т.е. pass to parent),
+    // то попали сюда. Поглощаем все события.
+    Query q;
+    q.workflow = Query::Workflow::PROCESSED;
+    return q;
+}
+
 BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type, TileRestrictions restrictions, int cost, float radius, TextureID icon):
     m_creator{ creator }, m_restrictions{ restrictions }, m_radius{ radius }, m_type{ type }, m_icon{ icon }, m_cost{ cost }
 {
     set_state(State::UNDISCOVERED);
-    on_pressed = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos, const sf::Event::MouseButtonEvent& event) {
+}
+
+Query BuildingButton::on_event(Widget::EventContext context) {
+    if (context.event_type == Event::MOUSE_MOVED) {
+        if (!context.from_subscribe) {
+            //создаем tooltip
+            auto panel_ptr = Panel::create(sf::Color(50, 50, 50, 255), sf::Color::Black, 0);
+            Panel* panel = panel_ptr.get();
+            DEBUG_TAG(panel, "tooltip_panel")
+                Label* label = (Label*)panel->add_widget(Label::create(true)); //можем вызвать add_widget, поскольку panel пока не вмонтирован в общую иерархию
+            DEBUG_TAG(label, "tooltip_label")
+                label->add_text(to_string(m_type) + "\n", sf::Color::White, sf::Text::Style::Bold);
+            label->add_text("Стоимость: " + std::to_string(m_cost) + "\n", Label::gold_color);
+            if (m_state == State::UNDISCOVERED)
+                label->add_text("Закрыто: " + AchievementSystem::Instance().get_building_unlock_condition_description(m_type) + "\n", sf::Color::Red);
+            label->add_text("Откройте справку, для получения подробностей", sf::Color::White, sf::Text::Style::Italic);
+
+            panel->size_include(label);
+            panel->position_tooltip(Anchor::BOTTOM | Anchor::LEFT);
+            panel->ignore_hit_test = false;
+
+            m_tooltip = panel;
+            //создаем запрос на его добавление
+            m_parent->add_widget_deffered(std::move(panel_ptr));
+            //подписываемся на получение событий перемещения мыши
+            GUI::Instance().subscribe_deffered(this, Event::MOUSE_MOVED);
+            //событие обработано, никаких действий не требуется
+            Query query;
+            query.workflow = Query::Workflow::PROCESSED;
+            return query;
+        }
+        else {
+            //получили MOUSE_MOVED по подписке проверим, что мы все еще в конце hit_list
+            if (!context.hit_list.empty() && context.hit_list.back().widget == this) {
+                m_tooltip->invalidate(Property::POSITION); //инвалидируем позицию у tooltip, чтобы он пересчитал её.
+                //событие обработано, никаких действий не требуется
+                Query query;
+                query.workflow = Query::Workflow::PROCESSED;
+                return query;
+            }
+            else {
+                //удаляем tooltip
+                m_parent->delete_widget_deffered(m_tooltip);
+                //отписываемся
+                GUI::Instance().unsubscribe_deffered(this, Event::MOUSE_MOVED);
+                //пересчитываем обработку события. Запрос на выполнение отложенных действий, чтобы действительно удалить tooltip
+                //событие уйдет тому виджету, над который сейчас действительно находится мышь.
+                Query query;
+                query.workflow = Query::Workflow::REPEAT;
+                query.query = Query::PERFORM_DEFFERED;
+                return query;
+            }
+        }
+    }
+    else if (context.event_type == Event::BUTTON_PRESSED) {
         if (m_state == State::UNDISCOVERED || m_state == State::NOT_ENOUGTH_MONEY)
-            return;
-        if (event.button == sf::Mouse::Button::Left) {
+            return Query{}; //не принимаем событие
+        if (GUI::Instance().mouse_button == sf::Mouse::Left) {
             BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
             building_panel->select(this);
-            return;
+            Query query;
+            query.workflow = Query::Workflow::PROCESSED;
+            return query; //событие обработано
         }
-    };
-    on_hovered = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos) {
-        //TODO здесь есть проблема. Допустим показывается tooltip и вдруг кнопка разблокировалась, а описание не поменялось
-        Panel* panel = (Panel*)m_parent->add(Panel::create(sf::Color(50, 50, 50, 255), sf::Color::Black, 0));
-        DEBUG_TAG(panel, "tooltip_panel")
-        Label* label = (Label*)panel->add(Label::create(true));
-        DEBUG_TAG(label, "tooltip_label")
-        label->add_text(to_string(m_type) + "\n", sf::Color::White, sf::Text::Style::Bold);
-        label->add_text("Стоимость: " + std::to_string(m_cost) + "\n", Label::gold_color);
-        if (m_state == State::UNDISCOVERED)
-            label->add_text("Закрыто: " + AchievementSystem::Instance().get_building_unlock_condition_description(m_type) + "\n", sf::Color::Red);
-        label->add_text("Откройте справку, для получения подробностей", sf::Color::White, sf::Text::Style::Italic);
-        
-        panel->size_include(label);
-        panel->position_tooltip(Anchor::BOTTOM | Anchor::LEFT);
-        panel->receive_mouse_events = false;
-
-        m_tooltip = panel;
-    };
-
-    on_unhovered = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos) {
-        m_parent->delete_widget(m_tooltip);
-    };
-
-    on_mouse_moved = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos) {
-        if (m_tooltip)
-            m_tooltip->invalidate(Property::POSITION);
-    };
+    }
+    else
+        return Query{}; //иначе не обрабатываем
 }
+
 
 void BuildingButton::update(int current_coins_count) {
     bool unlocked = AchievementSystem::Instance().is_unlocked(m_type);

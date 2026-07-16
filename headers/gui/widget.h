@@ -16,7 +16,30 @@
 
 class Widget;
 
+namespace Event {
+    using Type = size_t;
+    inline Type MOUSE_MOVED = 0b001;
+    inline Type BUTTON_PRESSED = 0b010;
+    inline Type BUTTON_RELEASED = 0b100;
+}
+
+
+struct Query {
+    enum Workflow {
+        PROCESSED, //< событие обработано, завершить обработку события
+        PASS, //< передать событие следующему виджету
+        REPEAT, //< запустить обработку события заново
+        PASS_TO_PARENT //< отправить родителю
+    } workflow = Workflow::PASS_TO_PARENT; //< флаг управления потоком обработки события
+    size_t query = 0; //< запросы, битовая маска, состоящая из:
+    static const size_t PERFORM_DEFFERED = 0b01; //< выполнить все отложенные запросы (удаление/добавление виджетов/подписок), при этом workflow обязательно должен быть =REPEAT.
+    static const size_t CALC_LAYOUT = 0b10; //< пересчитать layout
+};
+
+class WidgetIterator;
+
 class GUI {
+    friend class WidgetIterator;
 public:
     static GUI& Instance() {
         static GUI instance;
@@ -30,28 +53,44 @@ public:
 
     void set_root(std::unique_ptr<Widget>&& root, const sf::RenderWindow& window);
     Widget* get_root() { return m_root.get(); }
-
-
     using FrameID = size_t;
     FrameID get_current_frame_id() { return m_frame;  }
+
     void draw(sf::RenderWindow& window);
-    void event(const sf::Event& event);
+    //EVENT_SYSTEM
+    bool event(const sf::Event& event);
+    void subscribe_deffered(Widget* widget, Event::Type type);
+    void unsubscribe_deffered(Widget* widget, Event::Type type);
+    bool is_event_processing() const { return m_event_processing; }
+    void add_deffered_command(std::function<void()>&& command) { m_deffered_commands.push_back(std::move(command)); }
+    /// переменные контекста. Сюда заносится информация о событии
+    glm::vec2 mouse_pos;
+    glm::vec2 window_size;
+    sf::Mouse::Button mouse_button;
+    Event::Type event_type;
+#ifdef GUI_DEBUG_ENABLED
     struct StackElement {
         Widget* node;
         size_t properties;
         bool operator==(const StackElement& element) { return node == element.node && properties == element.properties; }
     };
     std::list<StackElement> layout_stack;
-
-    void invalidate_event_states();
-    glm::vec2 mouse_pos;
-    glm::vec2 window_size;
+#endif
 private:
     GUI() = default;
+    bool event_impl();
+    void perform_deffered();
     std::unique_ptr<Widget> m_root;
     FrameID m_frame = 0;
-    std::pair<Widget*, glm::vec2> m_hovered = { nullptr, glm::vec2{} };
-    bool m_invalidated = false;
+
+    struct Subscriber {
+        Event::Type event_type;
+        Widget* subscriber;
+    };
+    std::list<Subscriber> m_subscribers;
+
+    std::list<std::function<void()>> m_deffered_commands;
+    bool m_event_processing = false;
 };
 
 
@@ -179,19 +218,27 @@ public:
     //CONTAINERS
     void vbox(const std::vector<Widget*>& elements);
     //WIDGET HIERARCHY
-    Widget* add(std::unique_ptr<Widget>&& child);
-    void delete_widget(Widget* widget); // NOTE: не удаляет автоматически layout rules виджетов, которые сслыаются на widget.
+    Widget* add_widget(std::unique_ptr<Widget>&& child);
+    void delete_widget(Widget* widget); // NOTE: не удаляет автоматически layout rules виджетов, которые ссылаются на widget.
+    void add_widget_deffered(std::unique_ptr<Widget>&& child);
+    void delete_widget_deffered(Widget* widget);
+    Widget* get_root();
     void draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderWindow& window);
     virtual void draw(const glm::vec2& position_transform, sf::RenderWindow& window) {}
     //EVENT SYSTEM
-    std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos)> on_hovered;
-    std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos)> on_mouse_moved;
-    std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos)> on_unhovered;
-    std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos, const sf::Event::MouseButtonEvent& event)> on_pressed;
-    std::function<void(const glm::vec2& position_transform, const glm::vec2& mouse_pos, const sf::Event::MouseButtonEvent& event)> on_released;
+    struct HitListNode {
+        Widget* widget;
+        glm::vec2 parent_transform;
+    };
+    bool hit_test(std::list<HitListNode>& hit_list, glm::uvec2 mouse_pos);
+    bool ignore_hit_test = true;
 
-    std::pair<Widget*, glm::vec2> get_widget_under_cursor(const glm::vec2& parent_transform, glm::uvec2 mouse_pos);
-    bool receive_mouse_events = true;
+    struct EventContext {
+        const std::list<HitListNode>& hit_list;
+        Event::Type event_type;
+        bool from_subscribe;
+    };
+    virtual Query on_event(EventContext event_context) { return Query{}; }
 
     virtual ~Widget();
 #ifdef GUI_DEBUG_ENABLED

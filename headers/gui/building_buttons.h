@@ -19,9 +19,11 @@ public:
     void select(BuildingButton* button);
     void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id);
     bool is_seleted() { return m_selected_button != nullptr; }
+    Query on_event(Widget::EventContext context) override;
     Widget* ui;
 private:
     BuildingButton* m_selected_button = nullptr;
+    std::array<BuildingButton*, 8> m_buttons;
 };
 
 class BuildingButton : public LayeredIcon {
@@ -40,7 +42,7 @@ public:
             return std::make_unique<T>(x_id, y_id);
         };
     }
-
+    Query on_event(Widget::EventContext context) override;
     void update(int current_coins_count);
     void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id);
     virtual void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed);

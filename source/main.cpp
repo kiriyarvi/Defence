@@ -36,9 +36,6 @@ int main() {
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				window.close();
-            if (!gui.handleEvent(event)) {
-				camera.process(event);
-            }
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) {
                 TileMap::Instance().enlarge_map();
             }
@@ -53,10 +50,14 @@ int main() {
                 sf::Vector2i mouse_screen_pos = sf::Mouse().getPosition();
                 auto mouse_pos = window.mapPixelToCoords(mouse_screen_pos);
                 EnemyManager::Instance().add_smoke(Smoke({ mouse_pos.x, mouse_pos.y }, 4., 20.));
-            }  
-            GUI::Instance().event(event);
-            game_state.event(event, window);
-			
+            }
+            if (!GUI::Instance().event(event) && !gui.handleEvent(event)) {
+                camera.process(event);
+                game_state.event(event, window);
+            }
+            else {
+                std::cout << "PREOCESSED" << std::endl;
+            }
 		}
 		// логика
 		double dtime = clock.getElapsedTime().asMicroseconds();
