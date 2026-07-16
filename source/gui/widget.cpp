@@ -287,7 +287,7 @@ void Widget::calc_properties(Property::Type property) {
             layout.height.locked = !(r.properties & Property::HEIGHT);
 
             r.calc_function(layout);
-            layout.m_invalidated_props &= ~(r.properties & property); //validation.
+            layout.m_invalidated_props &= ~r.properties; //validation.
 
             //обновляем информацию и frame для вычисленных полей
             if (!layout.x.locked) layout.x.last_calculation_frame_id = current_frame;

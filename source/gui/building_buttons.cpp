@@ -60,7 +60,7 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
                 layout.x = prev->layout.x + prev->layout.width;
                 layout.y = prev->layout.y;
             }
-        }, { {button_panel, Property::WIDTH}, { prev, Property::LAYOUT } });
+        }, { {button_panel, Property::WIDTH}, { prev, Property::LAYOUT }, { this, Property::WIDTH } });
         prev_it = button_it;
     }
 
