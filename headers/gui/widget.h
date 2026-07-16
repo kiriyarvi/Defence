@@ -6,6 +6,7 @@
 #include <glm/vec2.hpp>
 #include <memory>
 #include <stack>
+#include <unordered_map>
 
 #ifdef GUI_DEBUG_ENABLED
     #define DEBUG_TAG(widget, tag) widget->debug_name = tag;
@@ -56,16 +57,16 @@ private:
 
 class Widget;
 
-
 class Property {
     friend class Widget;
 public:
     Property(float initial) : m_value{ initial } {}
-    Property& operator=(float value) { assert(!locked && "attempt to change locked variable");  m_value = value; return *this; }
+    Property& operator=(float value) { m_value = value; return *this; }
     operator float() const { return m_value; }
-
     float get_value() const { return m_value; }
+
     GUI::FrameID last_calculation_frame_id = 0;
+
     using Type = size_t;
     static Type X;
     static Type Y;
@@ -74,10 +75,8 @@ public:
     static Type SIZE;
     static Type POSITION;
     static Type LAYOUT;
-
 private:
     float m_value;
-    bool locked = false;
 
     struct Dependent {
         Widget* widget; //зависимый виджет
@@ -148,6 +147,7 @@ public:
         glm::vec2 get_anchor_relative_to_center(Anchor::Type anchor) const;
         Property::Type invalidated_props() const { return m_invalidated_props; }
     private:
+        const static std::unordered_map<Property::Type, Property Layout::*> s_property_map;
         void invalidate(Property::Type props) { m_invalidated_props |= props; }
         Property::Type m_invalidated_props = Property::LAYOUT; //< в начале инвалидированы все свойства.
     } layout;

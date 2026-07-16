@@ -113,6 +113,13 @@ size_t Anchor::TOP = 0b0010;
 size_t Anchor::BOTTOM = 0b0001;
 size_t Anchor::CENTER = 0;
 
+const std::unordered_map<Property::Type, Property Widget::Layout::*> Widget::Layout::s_property_map {
+    {Property::X, &Widget::Layout::x},
+    {Property::Y, &Widget::Layout::y},
+    {Property::WIDTH, &Widget::Layout::width},
+    {Property::HEIGHT, &Widget::Layout::height}
+};
+
 
 /// Возвращает прямоугольник контента
 Rect Widget::Layout::get_content_rect() const {
@@ -169,7 +176,7 @@ bool Widget::Layout::contains(const glm::vec2& transform, float px, float py) {
     return px >= x && px <= x + width && py >= y && py <= y + height;
 }
 
-//Dependent = {виджет, какие поля виджета зависят от каких полей }
+
 void Property::add_depentent(Dependent dependent) {
     auto it = std::find_if(dependents.begin(), dependents.end(), [widget = dependent.widget](const Dependent& d) { return widget == d.widget; });
     if (it == dependents.end())
@@ -191,25 +198,21 @@ void Property::clear_dependent(Dependent dependent) {
 
 /// Удаляет правила вычисления свойств properties.
 void Widget::clear_rules(Property::Type properties) {
-    for (auto it = m_rules.begin(); it != m_rules.end();) {
-        if ((it->properties & properties) == it->properties) { //it->properties всключает все флаги что и properties
-            for (auto& dependency : it->dependencies) {
-                //должны сказать зависимостям, что мы больше не завсим от их свойств dependency.properties.
-                if (dependency.properties & Property::X) //зависили от свойства X
-                    dependency.widget->layout.x.clear_dependent({ this, it->properties }); //говорим свойству X виджета dependency.widget, что мы от него больше не зависим.
-                if (dependency.properties & Property::Y)
-                    dependency.widget->layout.y.clear_dependent({ this, it->properties });
-                if (dependency.properties & Property::WIDTH)
-                    dependency.widget->layout.width.clear_dependent({ this, it->properties });
-                if (dependency.properties & Property::HEIGHT)
-                    dependency.widget->layout.height.clear_dependent({ this, it->properties });
+    for (auto rule = m_rules.begin(); rule != m_rules.end();) {
+        if ((rule->properties & properties) == rule->properties) { //rule->properties всключает все флаги что и properties
+            for (auto& dependency : rule->dependencies) {
+                //должны сказать зависимостям, что мы больше вычисление свойств rule->properties данного виджета не зависит от них.
+                for (auto& [prop, member] : Layout::s_property_map) {
+                    if (dependency.properties & prop)
+                        (dependency.widget->layout.*member).clear_dependent({ this, rule->properties });
+                }
             }
-            it = m_rules.erase(it);            
+            rule = m_rules.erase(rule);
             continue;
         }
-        assert((it->properties & properties) == 0 && "Invalid operation"); //правило должно быть перпендикулярно properties.
+        assert((rule->properties & properties) == 0 && "Invalid operation"); //правило должно быть перпендикулярно properties.
         //если правило вычисляет X,Y, то мы не можем попросить удалить только X.
-        ++it;
+        ++rule;
     }
 }
 
@@ -228,14 +231,10 @@ void Widget::add_rule(Property::Type properties, const std::function<void(Layout
     clear_rules(properties);
     m_rules.push_back({ properties, calc, dependencies });
     for (auto& dependency : dependencies) {
-        if (dependency.properties & Property::X) //зависили от свойства X
-            dependency.widget->layout.x.add_depentent({ this, properties }); //говорим свойству X виджета dependency.widget, что мы от него больше не зависим.
-        if (dependency.properties & Property::Y)
-            dependency.widget->layout.y.add_depentent({ this, properties });
-        if (dependency.properties & Property::WIDTH)
-            dependency.widget->layout.width.add_depentent({ this, properties });
-        if (dependency.properties & Property::HEIGHT)
-            dependency.widget->layout.height.add_depentent({ this, properties });
+        for (auto& [prop, member] : Layout::s_property_map) {
+            if (dependency.properties & prop)
+                (dependency.widget->layout.*member).add_depentent({ this, properties });
+        }
     }
 }
 
@@ -246,19 +245,13 @@ void Widget::calc_properties(Property::Type property) {
     assert(std::find(stack.begin(), stack.end(), GUI::StackElement{ this, property }) == stack.end());
     stack.push_back(GUI::StackElement{ this, property });
 #endif
-
     auto current_frame = GUI::Instance().get_current_frame_id();
     //не будем вычислять то, что не было инвалидировано и что уже было вычислено на этом этапе.
     Property::Type invalidated_props = layout.invalidated_props();
-    
-    if (!(invalidated_props & Property::X) || layout.x.last_calculation_frame_id == current_frame)
-        property &= ~Property::X;
-    if (!(invalidated_props & Property::Y) || layout.y.last_calculation_frame_id == current_frame)
-        property &= ~Property::Y;
-    if (!(invalidated_props & Property::WIDTH) || layout.width.last_calculation_frame_id == current_frame)
-        property &= ~Property::WIDTH;
-    if (!(invalidated_props & Property::HEIGHT) || layout.height.last_calculation_frame_id == current_frame)
-        property &= ~Property::HEIGHT;
+    for (auto& [prop, member] : Layout::s_property_map) {
+        if (!(invalidated_props & prop) || (layout.*member).last_calculation_frame_id == current_frame)
+            property &= ~prop;
+    }
     if (property == 0) {
 #ifdef GUI_DEBUG_ENABLED
         //std::cout << "properties have been calculated." << std::endl;
@@ -275,38 +268,28 @@ void Widget::calc_properties(Property::Type property) {
         ((property & Property::HEIGHT) ? "HEIGHT," : "") << "] for " << debug_name << std::endl;
 #endif
     //выполним все правила, которые вычисляют properties пересекающиеся с property.
-    for (auto& r : m_rules) {
-        if ((r.properties & property) != 0) {
-            for (auto& d : r.dependencies) {
-                d.widget->calc_properties(d.properties);
+    for (auto& rule : m_rules) {
+        if ((rule.properties & property) != 0) { //выполняем все правила, которые вычисляют набор свойств, пересекающийся с property.
+            for (auto& dependency : rule.dependencies) { //вычисляем зависимости
+                dependency.widget->calc_properties(dependency.properties);
+            }  
+            rule.calc_function(layout); //теперь вычислим правило
+            layout.m_invalidated_props &= ~rule.properties; //и пометим вычисленные свойства валидными.
+            //обновляем frame для вычисленных полей
+            for (auto& [prop, member] : Layout::s_property_map) {
+                if (prop & rule.properties)
+                    (layout.*member).last_calculation_frame_id = current_frame;
             }
-            //не дадим calc_function менять то, на что она не претендует.
-            layout.x.locked = !(r.properties & Property::X);
-            layout.y.locked = !(r.properties & Property::Y);
-            layout.width.locked = !(r.properties & Property::WIDTH);
-            layout.height.locked = !(r.properties & Property::HEIGHT);
-
-            r.calc_function(layout);
-            layout.m_invalidated_props &= ~r.properties; //validation.
-
-            //обновляем информацию и frame для вычисленных полей
-            if (!layout.x.locked) layout.x.last_calculation_frame_id = current_frame;
-            if (!layout.y.locked) layout.y.last_calculation_frame_id = current_frame;
-            if (!layout.width.locked) layout.width.last_calculation_frame_id = current_frame;
-            if (!layout.height.locked) layout.height.last_calculation_frame_id = current_frame;
-
         }
     }
     //для некоторых свойств не нашлось правил для их вычисления => применяем правила по умолчанию
     Property::Type required = layout.m_invalidated_props & property;
     if (required != 0) {
         if (required & Property::X) {
-            layout.x.locked = false;
             layout.x = 0;
             layout.x = current_frame;
         }
         if (required & Property::Y) {
-            layout.y.locked = false;
             layout.y = 0;
             layout.y = current_frame;
         }
@@ -329,24 +312,9 @@ void Widget::invalidate(Property::Type property) {
     if ((layout.m_invalidated_props & property) == property)
         return; //уже инвалидировано
     layout.invalidate(property);
-    if (property & Property::X) {
-        for (auto& dependent : layout.x.dependents) {
-            //у зависимого нужно инвалидировать те свойства, которые вычисляются по this и которые мы хотим инвалидировать (т.е. property). 
-            dependent.widget->invalidate(dependent.output);
-        }
-    }
-    if (property & Property::Y) {
-        for (auto& dependent : layout.y.dependents) {
-            dependent.widget->invalidate(dependent.output);
-        }
-    }
-    if (property & Property::WIDTH) {
-        for (auto& dependent : layout.width.dependents) {
-            dependent.widget->invalidate(dependent.output);
-        }
-    }
-    if (property & Property::HEIGHT) {
-        for (auto& dependent : layout.height.dependents) {
+    for (auto& [prop, member] : Layout::s_property_map) {
+        for (auto& dependent : (layout.*member).dependents) {
+            //у зависимого нужно инвалидировать те свойства, которые вычисляются по member. Они как раз указаны в dependent.output.
             dependent.widget->invalidate(dependent.output);
         }
     }
