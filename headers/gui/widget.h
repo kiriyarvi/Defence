@@ -118,7 +118,7 @@ public:
 
     struct Dependency {
         Widget* widget;
-        Property::Type properties;
+        Property::Type source; //свойства widget, которые подаются на вход правилу
     };
 
     //LAYOUT SYSTEM
@@ -153,12 +153,12 @@ public:
     } layout;
 
     struct Rule {
-        Property::Type properties; //OR-d by |
+        Property::Type output; //OR-d by |
         std::function<void(Layout&)> calc_function;
         std::vector<Dependency> dependencies;
     };
 
-    void add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Dependency>& dependencies);
+    void add_rule(Property::Type output, const std::function<void(Layout&)>& calc, const std::vector<Dependency>& dependencies);
     void calc_properties(Property::Type property);
     void calc_layout();
     void invalidate(Property::Type property);

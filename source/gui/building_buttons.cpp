@@ -142,7 +142,6 @@ BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type
     };
     on_hovered = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos) {
         //TODO здесь есть проблема. Допустим показывается tooltip и вдруг кнопка разблокировалась, а описание не поменялось
-        BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
         Panel* panel = (Panel*)m_parent->add(Panel::create(sf::Color(50, 50, 50, 255), sf::Color::Black, 0));
         DEBUG_TAG(panel, "tooltip_panel")
         Label* label = (Label*)panel->add(Label::create(true));
@@ -156,11 +155,17 @@ BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type
         panel->size_include(label);
         panel->position_tooltip(Anchor::BOTTOM | Anchor::LEFT);
         panel->receive_mouse_events = false;
+
         m_tooltip = panel;
     };
 
     on_unhovered = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos) {
         m_parent->delete_widget(m_tooltip);
+    };
+
+    on_mouse_moved = [this](const glm::vec2& position_transform, const glm::vec2& mouse_pos) {
+        if (m_tooltip)
+            m_tooltip->invalidate(Property::POSITION);
     };
 }
 

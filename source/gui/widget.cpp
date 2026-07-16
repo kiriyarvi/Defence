@@ -199,18 +199,18 @@ void Property::clear_dependent(Dependent dependent) {
 /// Удаляет правила вычисления свойств properties.
 void Widget::clear_rules(Property::Type properties) {
     for (auto rule = m_rules.begin(); rule != m_rules.end();) {
-        if ((rule->properties & properties) == rule->properties) { //rule->properties всключает все флаги что и properties
+        if ((rule->output & properties) == rule->output) { //rule->properties всключает все флаги что и properties
             for (auto& dependency : rule->dependencies) {
                 //должны сказать зависимостям, что мы больше вычисление свойств rule->properties данного виджета не зависит от них.
                 for (auto& [prop, member] : Layout::s_property_map) {
-                    if (dependency.properties & prop)
-                        (dependency.widget->layout.*member).clear_dependent({ this, rule->properties });
+                    if (dependency.source & prop)
+                        (dependency.widget->layout.*member).clear_dependent({ this, rule->output });
                 }
             }
             rule = m_rules.erase(rule);
             continue;
         }
-        assert((rule->properties & properties) == 0 && "Invalid operation"); //правило должно быть перпендикулярно properties.
+        assert((rule->output & properties) == 0 && "Invalid operation"); //правило должно быть перпендикулярно properties.
         //если правило вычисляет X,Y, то мы не можем попросить удалить только X.
         ++rule;
     }
@@ -227,13 +227,13 @@ void Widget::clear_rules(Property::Type properties) {
  * соотвествующие свойства не инвализируются. Это сделано для избежания множества
  * холостых вызовов invalidate.
  */
-void Widget::add_rule(Property::Type properties, const std::function<void(Layout&)>& calc, const std::vector<Dependency>& dependencies) {
-    clear_rules(properties);
-    m_rules.push_back({ properties, calc, dependencies });
+void Widget::add_rule(Property::Type output, const std::function<void(Layout&)>& calc, const std::vector<Dependency>& dependencies) {
+    clear_rules(output);
+    m_rules.push_back({ output, calc, dependencies });
     for (auto& dependency : dependencies) {
         for (auto& [prop, member] : Layout::s_property_map) {
-            if (dependency.properties & prop)
-                (dependency.widget->layout.*member).add_depentent({ this, properties });
+            if (dependency.source & prop)
+                (dependency.widget->layout.*member).add_depentent({ this, output });
         }
     }
 }
@@ -269,15 +269,15 @@ void Widget::calc_properties(Property::Type property) {
 #endif
     //выполним все правила, которые вычисляют properties пересекающиеся с property.
     for (auto& rule : m_rules) {
-        if ((rule.properties & property) != 0) { //выполняем все правила, которые вычисляют набор свойств, пересекающийся с property.
+        if ((rule.output & property) != 0) { //выполняем все правила, которые вычисляют набор свойств, пересекающийся с property.
             for (auto& dependency : rule.dependencies) { //вычисляем зависимости
-                dependency.widget->calc_properties(dependency.properties);
+                dependency.widget->calc_properties(dependency.source);
             }  
             rule.calc_function(layout); //теперь вычислим правило
-            layout.m_invalidated_props &= ~rule.properties; //и пометим вычисленные свойства валидными.
+            layout.m_invalidated_props &= ~rule.output; //и пометим вычисленные свойства валидными.
             //обновляем frame для вычисленных полей
             for (auto& [prop, member] : Layout::s_property_map) {
-                if (prop & rule.properties)
+                if (prop & rule.output)
                     (layout.*member).last_calculation_frame_id = current_frame;
             }
         }
@@ -287,11 +287,11 @@ void Widget::calc_properties(Property::Type property) {
     if (required != 0) {
         if (required & Property::X) {
             layout.x = 0;
-            layout.x = current_frame;
+            layout.x.last_calculation_frame_id = current_frame;
         }
         if (required & Property::Y) {
             layout.y = 0;
-            layout.y = current_frame;
+            layout.y.last_calculation_frame_id = current_frame;
         }
         assert((required & Property::WIDTH)== 0 && "no rule for WIDTH");
         assert((required & Property::HEIGHT) == 0 && "no rule for HEIGHT");
