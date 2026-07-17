@@ -10,6 +10,7 @@
 #include "gui/upgrade_panel.h"
 #include "gui/widget.h"
 #include "gui/label.h"
+#include "gui/next_wave_button.h"
 
 #include <list>
 
@@ -64,6 +65,8 @@ public:
         None
     };
     void add_message(const std::string& message, MessageType type);
+    void wave_preparing();
+    void wave_started();
 private:
 	friend class BuildingButton;	
 private:
@@ -79,6 +82,7 @@ private:
     Label* m_player_health_count_widget;
     Label* m_wave_info;
     BuildingPanel* m_building_panel;
+    NextWaveButton* m_next_wave_button;
 
 	tgui::Gui m_gui;
     tgui::Group::Ptr m_ui;

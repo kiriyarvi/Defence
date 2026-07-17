@@ -50,8 +50,19 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     //wave info (Layout)
     m_wave_info->position_anchor(Anchor::TOP, m_game_process_ui, Anchor::TOP);
 
+    //building panel
     m_building_panel = (BuildingPanel*)m_game_process_ui->add_widget(std::make_unique<BuildingPanel>(m_game_process_ui));
-    DEBUG_TAG(m_building_panel, "m_building_panel")
+    DEBUG_TAG(m_building_panel, "m_building_panel");
+
+    //next wave button(Hierarchy)
+    m_next_wave_button = (NextWaveButton*)m_game_process_ui->add_widget(std::make_unique<NextWaveButton>());
+    DEBUG_TAG(m_next_wave_button, "m_next_wave_button");
+    //next wave button(Layout)
+    m_next_wave_button->position_anchor(Anchor::BOTTOM | Anchor::RIGHT, m_game_process_ui, Anchor::BOTTOM | Anchor::RIGHT);
+    m_next_wave_button->add_rule(Property::SIZE, [ui = m_game_process_ui](Widget::Layout& layout) {
+        layout.height = ui->layout.height * 0.1;
+        layout.width = layout.height;
+    }, { { m_game_process_ui, Property::HEIGHT } });
 
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" }; //TODO
     PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };//TODO
@@ -72,7 +83,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 	// Нижняя панель
 
 	auto bottom_panel_group = tgui::Group::create(tgui::Layout2d("100%", "10%"));
-	bottom_panel_group->setPosition("0%", "100%");
+	bottom_panel_group->setPosition("0%", "90%");
 	bottom_panel_group->setOrigin(0, 1.);
 
     auto help_button = tgui::BitmapButton::create("?");
@@ -85,41 +96,13 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     });
     help_button->setOrigin(1., 0.);
     help_button->setPosition("100%", 0);
+    help_button->setVisible(true);
     bottom_panel_group->add(help_button, "HelpButton");
-
-    auto next_wave_button = tgui::BitmapButton::create();
-    next_wave_button->setImage(TextureManager::Instance().textures[TextureID::NextWaveIcon]);
-    next_wave_button->getRenderer()->setTexture(TextureManager::Instance().textures[TextureID::UpgradeButtonBackground]);
-    next_wave_button->setOrigin(1., 0);
-    next_wave_button->setPosition("HelpButton.left", 0);
-    next_wave_button->setImageScaling(1.);
-    next_wave_button->getRenderer()->setBorders(0);
-    next_wave_button->onMousePress.connect([=]() {
-        EnemyManager::Instance().start_wave();
-        next_wave_button->getRenderer()->setTexture(TextureManager::Instance().textures[TextureID::UpgradeButtonBackgroundCompleted]);
-    });
-    next_wave_button->onMouseRelease.connect([=]() {
-        next_wave_button->getRenderer()->setTexture(TextureManager::Instance().textures[TextureID::UpgradeButtonBackground]);
-    });
-    next_wave_button->onMouseEnter.connect([=]() {
-        set_tooltip_content("Начать волну", { 1,0 });
-    });
-    next_wave_button->onMouseLeave.connect([=]() {
-        set_tooltip_content("");
-    });
-    next_wave_button->setOrigin(1., 0.);
-
-    bottom_panel_group->add(next_wave_button);
-
 	bottom_panel_group->onSizeChange([=]() {
 		const float spacing = 4.f;
 		float size = bottom_panel_group->getSize().y;
         help_button->setSize({ size, size });
-        next_wave_button->setSize({ size, size });
 	});
-
- 
-
     m_ui->add(bottom_panel_group, "BottomPanelGroup");
 
 
@@ -167,7 +150,6 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 
     TileMap::Instance().generate_map();
     add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.", MessageType::None);
-
 }
 
 GameState::~GameState() {
@@ -442,5 +424,14 @@ void GameState::player_coins_add(int coins) {
     m_player_coins_count_widget->clear();
     m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
     m_building_panel->update(m_player_coins);
+}
+
+
+void GameState::wave_preparing() {
+    m_next_wave_button->set_active(true);
+}
+
+void GameState::wave_started() {
+    m_next_wave_button->set_active(false);
 }
 

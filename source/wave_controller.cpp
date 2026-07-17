@@ -172,7 +172,7 @@ WaveController::WaveController() {
         r1->id = one_random_route();
         r1->add_spawner(EnemyType::Solder, 3);
         Wave w;
-        w.prepairing_time = 3;
+        w.prepairing_time = 10;
         w.routes.push_back(std::move(r1));
         w.reward = 1000;
         m_waves.push_back(std::move(w));
@@ -522,6 +522,7 @@ void WaveController::logic(double dtime_microseconds) {
         GameState::Instance().set_wave_info(std::to_string(m_current_wave + 1) + "/" + std::to_string(m_waves.size()) + " " + std::to_string(static_cast<int>(wave.prepairing_time - m_timer / (1000 * 1000.f))) + "s.");
         if (m_timer >= wave.prepairing_time * 1000 * 1000) {
             m_state = State::Spawn;
+            GameState::Instance().wave_started();
             m_timer = 0;
         }
         break;
@@ -546,6 +547,7 @@ void WaveController::start_wave() {
         m_state = State::Spawn;
         m_timer = 0;
         GameState::Instance().set_wave_info(std::to_string(m_current_wave + 1) + "/" + std::to_string(m_waves.size()) + " 0s.");
+        GameState::Instance().wave_started();
     }
 }
 
@@ -575,6 +577,7 @@ bool WaveController::next_wave() {
     if (m_state != State::Completed)
         return true;
     GameState::Instance().player_coins_add(m_waves[m_current_wave].reward);
+    GameState::Instance().wave_preparing();
     return set_active_wave(++m_current_wave);
 }
 
@@ -592,6 +595,7 @@ bool WaveController::set_active_wave(int wave) {
     for (auto& route : w.routes) {
         game_state.add_enter(route->id, route->description());
     }
+    game_state.wave_preparing();
     for (auto& r : w.routes)
         m_routes_states.push_back(RouteState(*r.get()));
 

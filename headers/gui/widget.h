@@ -34,6 +34,7 @@ struct Query {
     size_t query = 0; //< запросы, битовая маска, состоящая из:
     static const size_t PERFORM_DEFFERED = 0b01; //< выполнить все отложенные запросы (удаление/добавление виджетов/подписок), при этом workflow обязательно должен быть =REPEAT.
     static const size_t CALC_LAYOUT = 0b10; //< пересчитать layout
+    bool pure_pass() { return workflow == Workflow::PASS && query == 0; }
 };
 
 class WidgetIterator;
@@ -230,7 +231,7 @@ public:
         /// Тоже что Min, но дополнительно удаляет правила других виджетов
         /// которые зависят от свойств данного виджета. Если обнаружено правило, которое зависит от данного
         /// виджета только частично, оно всё равно удаляется.
-        DeleteDepententRulesHard = 0b0101, //< удалит правила других виджетов, зависимые от свойств удаляемого виджетаю. Удаляет даже смешанные правила.
+        DeleteDepententRulesHard = 0b0101, //< удалит правила других виджетов, зависимые от свойств удаляемого виджета. Удаляет даже смешанные правила.
     };
 
     Widget* add_widget(std::unique_ptr<Widget>&& child);
@@ -281,4 +282,26 @@ public:
     void draw(const glm::vec2& position_transform, sf::RenderWindow& window) override;
 private:
     sf::RectangleShape m_rect;
+};
+
+class Hoverable {
+public:
+    Hoverable(Widget* widget) : m_widget{ widget } {}
+    Query hover_event(Widget::EventContext event_context);
+    std::function<Query(Widget::EventContext)> on_hovered;
+    std::function<size_t(Widget::EventContext)> on_unhovered;
+    std::function<Query(Widget::EventContext)> on_mouse_moved;
+private:
+    Widget* m_widget;
+};
+
+class Clickable {
+public:
+    Clickable(Widget* widget, sf::Mouse::Button button) : m_widget{ widget }, m_button{ button } {}
+    Query click_event(Widget::EventContext event_context);
+    std::function<Query(Widget::EventContext)> on_pressed;
+    std::function<Query(Widget::EventContext)> on_released;
+private:
+    Widget* m_widget;
+    sf::Mouse::Button m_button;
 };

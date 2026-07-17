@@ -135,76 +135,53 @@ Query BuildingPanel::on_event(Widget::EventContext context) {
 }
 
 BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type, TileRestrictions restrictions, int cost, float radius, TextureID icon):
-    m_creator{ creator }, m_restrictions{ restrictions }, m_radius{ radius }, m_type{ type }, m_icon{ icon }, m_cost{ cost }
+    m_creator{ creator }, m_restrictions{ restrictions }, m_radius{ radius }, m_type{ type }, m_icon{ icon }, m_cost{ cost },
+    Hoverable{ this }, Clickable{this, sf::Mouse::Left}
 {
     set_state(State::UNDISCOVERED);
+
+    on_hovered = [this](EventContext context) -> Query {
+        //создадим tooltip
+        auto [panel_ptr, label] = create_tooltip();       
+        label->add_text(to_string(m_type) + "\n", sf::Color::White, sf::Text::Style::Bold);
+        label->add_text("Стоимость: " + std::to_string(m_cost) + "\n", Label::gold_color);
+        if (m_state == State::UNDISCOVERED)
+            label->add_text("Закрыто: " + AchievementSystem::Instance().get_building_unlock_condition_description(m_type) + "\n", sf::Color::Red);
+        label->add_text("Откройте справку, для получения подробностей", sf::Color::White, sf::Text::Style::Italic);
+        m_tooltip = panel_ptr.get();
+        //создаем запрос на его добавление
+        Widget* ui = static_cast<BuildingPanel*>(m_parent)->ui;
+        ui->add_widget_deffered(std::move(panel_ptr));
+        //событие обработано, никаких действий не требуется
+        return Query{ Query::Workflow::PROCESSED };
+    };
+    on_mouse_moved = [this](EventContext context) ->Query {
+        m_tooltip->invalidate(Property::POSITION); //инвалидируем позицию у tooltip, чтобы он пересчитал её.
+        return Query{ Query::Workflow::PROCESSED };
+    };
+
+    on_unhovered = [this](EventContext context) ->size_t {
+        //удаляем tooltip
+        Widget* ui = static_cast<BuildingPanel*>(m_parent)->ui;
+        ui->delete_widget_deffered(m_tooltip, RemovePolicy::Min);
+        return 0;
+    };
+
+    on_pressed = [this](EventContext context) -> Query {
+        if (m_state == State::UNDISCOVERED || m_state == State::NOT_ENOUGTH_MONEY)
+            return Query{}; //не принимаем событие
+        BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
+        building_panel->select(this);
+        return Query{ Query::Workflow::PROCESSED };
+    };
 }
 
 Query BuildingButton::on_event(Widget::EventContext context) {
-    if (context.event_type == Event::MOUSE_MOVED) {
-        if (!context.from_subscribe) {
-            //создаем tooltip
-            auto panel_ptr = Panel::create(sf::Color(50, 50, 50, 255), sf::Color::Black, 0);
-            Panel* panel = panel_ptr.get();
-            DEBUG_TAG(panel, "tooltip_panel")
-                Label* label = (Label*)panel->add_widget(Label::create(true)); //можем вызвать add_widget, поскольку panel пока не вмонтирован в общую иерархию
-            DEBUG_TAG(label, "tooltip_label")
-                label->add_text(to_string(m_type) + "\n", sf::Color::White, sf::Text::Style::Bold);
-            label->add_text("Стоимость: " + std::to_string(m_cost) + "\n", Label::gold_color);
-            if (m_state == State::UNDISCOVERED)
-                label->add_text("Закрыто: " + AchievementSystem::Instance().get_building_unlock_condition_description(m_type) + "\n", sf::Color::Red);
-            label->add_text("Откройте справку, для получения подробностей", sf::Color::White, sf::Text::Style::Italic);
-
-            panel->size_include(label);
-            panel->position_tooltip(Anchor::BOTTOM | Anchor::LEFT);
-            panel->ignore_hit_test = false;
-
-            m_tooltip = panel;
-            //создаем запрос на его добавление
-            m_parent->add_widget_deffered(std::move(panel_ptr));
-            //подписываемся на получение событий перемещения мыши
-            GUI::Instance().subscribe_deffered(this, Event::MOUSE_MOVED);
-            //событие обработано, никаких действий не требуется
-            Query query;
-            query.workflow = Query::Workflow::PROCESSED;
-            return query;
-        }
-        else {
-            //получили MOUSE_MOVED по подписке проверим, что мы все еще в конце hit_list
-            if (!context.hit_list.empty() && context.hit_list.back().widget == this) {
-                m_tooltip->invalidate(Property::POSITION); //инвалидируем позицию у tooltip, чтобы он пересчитал её.
-                //событие обработано, никаких действий не требуется
-                Query query;
-                query.workflow = Query::Workflow::PROCESSED;
-                return query;
-            }
-            else {
-                //удаляем tooltip
-                m_parent->delete_widget_deffered(m_tooltip, RemovePolicy::Min);
-                //отписываемся
-                GUI::Instance().unsubscribe_deffered(this, Event::MOUSE_MOVED);
-                //пересчитываем обработку события. Запрос на выполнение отложенных действий, чтобы действительно удалить tooltip
-                //событие уйдет тому виджету, над который сейчас действительно находится мышь.
-                Query query;
-                query.workflow = Query::Workflow::REPEAT;
-                query.query = Query::PERFORM_DEFFERED;
-                return query;
-            }
-        }
-    }
-    else if (context.event_type == Event::BUTTON_PRESSED) {
-        if (m_state == State::UNDISCOVERED || m_state == State::NOT_ENOUGTH_MONEY)
-            return Query{}; //не принимаем событие
-        if (GUI::Instance().mouse_button == sf::Mouse::Left) {
-            BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
-            building_panel->select(this);
-            Query query;
-            query.workflow = Query::Workflow::PROCESSED;
-            return query; //событие обработано
-        }
-    }
-    else
-        return Query{}; //иначе не обрабатываем
+    Query q;
+    q = hover_event(context);
+    if (!q.pure_pass()) return q;
+    q = click_event(context);
+    return q;
 }
 
 

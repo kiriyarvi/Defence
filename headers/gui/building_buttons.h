@@ -26,7 +26,7 @@ private:
     std::array<BuildingButton*, 8> m_buttons;
 };
 
-class BuildingButton : public LayeredIcon {
+class BuildingButton : public LayeredIcon, private Hoverable, private Clickable {
     friend class BuildingPanel;
 public:
     using BuildingCreator = std::function<std::unique_ptr<IBuilding>(int x_id, int y_id)>;
@@ -47,7 +47,6 @@ public:
     void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id);
     virtual void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed);
 private:
-
     enum class State {
         ACTIVE,
         SELECTED,

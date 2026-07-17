@@ -38,13 +38,24 @@ public:
         m_hit_test_list = hit_test_list;
         m_subscribers = subscribers;
         m_event_type = event_type;
-        m_subscriber = true;
-        next();
+
+        m_subs_iterator = m_subs_iterator = std::find_if(m_subscribers->begin(), m_subscribers->end(), [et = m_event_type](const GUI::Subscriber& subscriber) {
+            return subscriber.event_type & et;
+        });;
+        m_hit_test_iterator = m_hit_test_list->empty() ? m_hit_test_list->end() : std::prev(m_hit_test_list->end());
+
+        m_subscriber = (m_subs_iterator != m_subscribers->end());
+        if (m_subscriber)
+            m_current = m_subs_iterator->subscriber;
+        else if (m_hit_test_iterator != m_hit_test_list->end())
+            m_current = m_hit_test_iterator->widget;
+        else
+            m_current = nullptr;
     }
     Widget* get_current() const { return m_current; }
     void next() {
         if (m_subscriber) {
-            m_subs_iterator = std::find_if(m_subscribers->begin(), m_subscribers->end(), [et = m_event_type](const GUI::Subscriber& subscriber) {
+            m_subs_iterator = std::find_if(std::next(m_subs_iterator), m_subscribers->end(), [et = m_event_type](const GUI::Subscriber& subscriber) {
                 return subscriber.event_type & et;
             });
             if (m_subs_iterator != m_subscribers->end()) {
@@ -52,7 +63,7 @@ public:
             }
             else if (!m_hit_test_list->empty()) {
                 m_current = m_hit_test_list->back().widget;
-                m_hit_test_iterator = m_hit_test_list->rbegin().base();
+                m_hit_test_iterator = m_hit_test_list->empty() ? m_hit_test_list->end() : std::prev(m_hit_test_list->end());
                 m_subscriber = false;
             }
             else {
@@ -60,7 +71,7 @@ public:
                 m_current = nullptr;
             }
         }
-        else {
+        else { 
             m_subscriber = false;
             m_current = nullptr;
         }
@@ -582,7 +593,7 @@ void Widget::draw_hierarchy(int frame, const glm::vec2& position_transform, sf::
 bool Widget::hit_test(std::list<Widget::HitListNode>& hit_list, glm::uvec2 mouse_pos) {
     if (!ignore_hit_test)
         return false;
-    glm::vec2 parent_transform = hit_list.empty() ? glm::vec2(0, 0) : hit_list.back().parent_transform;
+    glm::vec2 parent_transform = (hit_list.empty() || layout.absolute) ? glm::vec2(0, 0) : hit_list.back().parent_transform;
     glm::vec2 content_transform = parent_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
     hit_list.push_back(Widget::HitListNode{ this, content_transform });
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
@@ -697,3 +708,43 @@ void Panel::draw(const glm::vec2& position_transform, sf::RenderWindow& window) 
     m_rect.setPosition({ position_transform.x + layout_rect.x, position_transform.y + layout_rect.y });
     window.draw(m_rect);
 }
+
+
+Query Hoverable::hover_event(Widget::EventContext event_context) {
+    if (event_context.event_type == Event::MOUSE_MOVED) {
+        if (!event_context.from_subscribe) {
+            GUI::Instance().subscribe_deffered(m_widget, Event::MOUSE_MOVED);
+            return on_hovered ? on_hovered(event_context) : Query{ Query::PROCESSED }; 
+        }
+        else {
+            if (!event_context.hit_list.empty() && event_context.hit_list.back().widget == m_widget)
+                return on_mouse_moved ? on_mouse_moved(event_context) : Query{ Query::PASS };
+            else {
+                GUI::Instance().unsubscribe_deffered(m_widget, Event::MOUSE_MOVED);
+                if (on_unhovered) {
+                    size_t query = on_unhovered(event_context);
+                    return Query{ Query::REPEAT, query | Query::PERFORM_DEFFERED };
+                }
+                else
+                    return Query{ Query::REPEAT, Query::PERFORM_DEFFERED };
+            }
+        }
+    }
+    return Query{Query::PASS};
+}
+
+
+Query Clickable::click_event(Widget::EventContext event_context) {
+    if (event_context.event_type == Event::BUTTON_PRESSED && GUI::Instance().mouse_button == m_button) {
+        GUI::Instance().subscribe_deffered(m_widget, Event::BUTTON_RELEASED);
+        return on_pressed ? on_pressed(event_context) : Query{ Query::PROCESSED };
+    }
+    else if (event_context.event_type == Event::BUTTON_RELEASED && GUI::Instance().mouse_button == m_button) {
+        if (event_context.from_subscribe)
+            GUI::Instance().unsubscribe_deffered(m_widget, Event::BUTTON_RELEASED);
+        return on_released ? on_released(event_context) : Query{ Query::PROCESSED };
+    }
+    return Query{ Query::PASS };
+}
+
+
