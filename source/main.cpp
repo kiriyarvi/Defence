@@ -57,9 +57,6 @@ int main() {
                 camera.process(event);
                 game_state.event(event, window);
             }
-            else {
-                std::cout << "PREOCESSED" << std::endl;
-            }
 		}
 		// логика
 		double dtime = clock.getElapsedTime().asMicroseconds();
@@ -69,11 +66,12 @@ int main() {
 			accumulator = 0;
 			game_state.logic(dtime);
 			if (!game_state.is_game_over() && !game_state.is_help_displayed()) {
-				EnemyManager::Instance().logic(dtime);
-				TileMap::Instance().logic(dtime);
-                NetManager::Instance().logic(dtime);
+                float time_multiplier = GameState::Instance().get_time_multiplier();
+				EnemyManager::Instance().logic(time_multiplier * dtime);
+				TileMap::Instance().logic(time_multiplier * dtime);
+                NetManager::Instance().logic(time_multiplier * dtime);
 				SoundManager::Instance().logic();
-                AnimationHolder::Instance().logic(dtime);
+                AnimationHolder::Instance().logic(time_multiplier * dtime);
 			}
 		}
 		//отрисовка

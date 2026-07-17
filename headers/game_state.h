@@ -67,6 +67,7 @@ public:
     void add_message(const std::string& message, MessageType type);
     void wave_preparing();
     void wave_started();
+    float get_time_multiplier() const { return m_time_multiplier; }
 private:
 	friend class BuildingButton;	
 private:
@@ -83,6 +84,7 @@ private:
     Label* m_wave_info;
     BuildingPanel* m_building_panel;
     NextWaveButton* m_next_wave_button;
+    float m_time_multiplier = 1.f;
 
 	tgui::Gui m_gui;
     tgui::Group::Ptr m_ui;

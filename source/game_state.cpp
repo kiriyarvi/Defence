@@ -10,6 +10,7 @@
 
 #include "gui/label.h"
 #include "gui/icon.h"
+#include "gui/slider.h"
 
 GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     Widget* root = GUI::Instance().get_root();
@@ -63,6 +64,16 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
         layout.height = ui->layout.height * 0.1;
         layout.width = layout.height;
     }, { { m_game_process_ui, Property::HEIGHT } });
+
+    //scale for speed control (Hierarchy)
+    Scale* speed_controller = (Scale*)m_game_process_ui->add_widget(std::make_unique<Scale>());
+    speed_controller->set_on_pos_update_callback([this](size_t pos) {
+        m_time_multiplier = 1 + pos;
+    });
+    DEBUG_TAG(speed_controller, "speed_controller");
+    //scale for speed control (Layout)
+    speed_controller->position_centering();
+    speed_controller->property_inherit(m_game_process_ui, Property::HEIGHT, [](float h) {return  0.1 * h; });
 
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" }; //TODO
     PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };//TODO

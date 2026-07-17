@@ -203,6 +203,8 @@ public:
     void calc_layout();
     void invalidate(Property::Type property);
     void clear_rules(Property::Type properties);
+    glm::vec2 get_position_transform() const;
+    glm::vec2 get_content_transform() const;
     //LAYOUT FUNCTIONS
     //SIZE
     using Modifier = std::function<float(float)>;
@@ -301,7 +303,9 @@ public:
     Query click_event(Widget::EventContext event_context);
     std::function<Query(Widget::EventContext)> on_pressed;
     std::function<Query(Widget::EventContext)> on_released;
+    bool clicked() const { return m_clicked; }
 private:
+    bool m_clicked = false;
     Widget* m_widget;
     sf::Mouse::Button m_button;
 };

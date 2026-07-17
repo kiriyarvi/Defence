@@ -87,7 +87,8 @@ enum class TextureID {
     RadarUpgradeInterferrenceSuppression,
     RadarUpgradeUncoverSpeed,
     Coin,
-    Heart
+    Heart,
+    Slider
 };
 
 class TextureManager {

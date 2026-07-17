@@ -446,6 +446,19 @@ void Widget::invalidate(Property::Type property) {
     }
 }
 
+glm::vec2 Widget::get_position_transform() const {
+    if (m_parent == nullptr)
+        return glm::vec2{ 0,0 };
+    auto parent_content_transform = m_parent->get_content_transform();
+    return parent_content_transform + glm::vec2{ layout.x,  layout.y };
+}
+
+glm::vec2 Widget::get_content_transform() const {
+    if (m_parent == nullptr)
+        return glm::vec2{ layout.padding.left, layout.padding.top };
+    auto parent_content_transform = m_parent->get_content_transform();
+    return parent_content_transform + glm::vec2{ layout.x + layout.padding.left,  layout.y + layout.padding.top };
+}
 
 void Widget::vbox(const std::vector<Widget*>& elements) {
     for (size_t i = 1; i < elements.size(); ++i) {
@@ -737,11 +750,13 @@ Query Hoverable::hover_event(Widget::EventContext event_context) {
 Query Clickable::click_event(Widget::EventContext event_context) {
     if (event_context.event_type == Event::BUTTON_PRESSED && GUI::Instance().mouse_button == m_button) {
         GUI::Instance().subscribe_deffered(m_widget, Event::BUTTON_RELEASED);
+        m_clicked = true;
         return on_pressed ? on_pressed(event_context) : Query{ Query::PROCESSED };
     }
     else if (event_context.event_type == Event::BUTTON_RELEASED && GUI::Instance().mouse_button == m_button) {
         if (event_context.from_subscribe)
             GUI::Instance().unsubscribe_deffered(m_widget, Event::BUTTON_RELEASED);
+        m_clicked = false;
         return on_released ? on_released(event_context) : Query{ Query::PROCESSED };
     }
     return Query{ Query::PASS };

@@ -110,4 +110,6 @@ TextureManager::TextureManager() {
 
     textures[TextureID::Coin].loadFromFile("sprites/coin.png");
     textures[TextureID::Heart].loadFromFile("sprites/heart.png");
+
+    textures[TextureID::Slider].loadFromFile("sprites/slider.png");
 }
