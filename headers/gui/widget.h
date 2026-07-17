@@ -68,7 +68,7 @@ public:
     glm::vec2 window_size;
     sf::Mouse::Button mouse_button;
     Event::Type event_type;
-#ifdef GUI_DEBUG_ENABLED
+#ifdef GUI_USER_CONTRACT_CHECKS_ENABLED
     struct StackElement {
         Widget* node;
         size_t properties;
@@ -218,10 +218,25 @@ public:
     //CONTAINERS
     void vbox(const std::vector<Widget*>& elements);
     //WIDGET HIERARCHY
+    enum class RemovePolicy {
+        /// Минимальное удаление, сохраняющее работоспособность системы
+        /// Инвалидирует Layout, указывает зависимостям, что данный виджет больше не зависит от них
+        /// Не удаляем правила других виджетов, ссылающиеся на данный виджет.
+        Min = 0b0001,
+        /// Тоже что Min, но дополнительно удаляет правила других виджетов
+        /// которые зависят от свойств данного виджета. Если обнаружено правило, которое зависит от данного
+        /// виджета только частично, то выдает исключение.
+        DeleteDepententRules = 0b0011, //< удалит правила других виджетов, зависимые только от свойств удаляемого виджета, если есть "смешанные правила" - исключение
+        /// Тоже что Min, но дополнительно удаляет правила других виджетов
+        /// которые зависят от свойств данного виджета. Если обнаружено правило, которое зависит от данного
+        /// виджета только частично, оно всё равно удаляется.
+        DeleteDepententRulesHard = 0b0101, //< удалит правила других виджетов, зависимые от свойств удаляемого виджетаю. Удаляет даже смешанные правила.
+    };
+
     Widget* add_widget(std::unique_ptr<Widget>&& child);
-    void delete_widget(Widget* widget); // NOTE: не удаляет автоматически layout rules виджетов, которые ссылаются на widget.
+    void delete_widget(Widget* widget, RemovePolicy policy);
     void add_widget_deffered(std::unique_ptr<Widget>&& child);
-    void delete_widget_deffered(Widget* widget);
+    void delete_widget_deffered(Widget* widget, RemovePolicy policy);
     Widget* get_root();
     void draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderWindow& window);
     virtual void draw(const glm::vec2& position_transform, sf::RenderWindow& window) {}
@@ -240,7 +255,7 @@ public:
     };
     virtual Query on_event(EventContext event_context) { return Query{}; }
 
-    virtual ~Widget();
+    virtual ~Widget() = default;
 #ifdef GUI_DEBUG_ENABLED
     std::string debug_name;
 #endif
@@ -248,6 +263,10 @@ protected:
     Widget* m_parent;
     std::list<std::unique_ptr<Widget>> m_children;
     std::list<Rule> m_rules;
+
+
+    void remove(RemovePolicy policy); //< только перестаивает дерево соотвествующим образом, не совершает реального удаления, не удаляет детей
+    void delete_dependent_rules(Property::Type props, bool hard);
 };
 
 

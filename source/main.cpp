@@ -9,6 +9,8 @@
 #include "debugger.h"
 #include "net_manager.h"
 
+#if 0
+
 int main() {
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
@@ -92,3 +94,56 @@ int main() {
 
 	return 0;
 }
+
+#else
+int main() {
+    sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
+    GUI::Instance().set_root(Widget::create(), window);
+    Widget* root = GUI::Instance().get_root();
+
+    Widget* panel_A = root->add_widget(Panel::create(sf::Color::Red));
+    Widget* panel_B = root->add_widget(Panel::create(sf::Color::Blue));
+    DEBUG_TAG(panel_A, "A");
+    DEBUG_TAG(panel_B, "B");
+
+    panel_A->size_fixed(50, 50);
+    panel_B->size_fixed(50, 50);
+
+    panel_B->add_rule(Property::X, [panel_A](Widget::Layout& layout) {
+        layout.x = panel_A->layout.x + 50;
+    }, { {panel_A, Property::X} });
+    panel_A->add_rule(Property::Y, [panel_B](Widget::Layout& layout) {
+        layout.y = panel_B->layout.x;
+    }, { {panel_B, Property::X} });
+    root->delete_widget(panel_B, Widget::RemovePolicy::DeleteDepententRulesHard);
+
+    sf::Clock clock;
+
+    const float dt = 1.f / 60.f; // логика обновляется 60 раз в секунду
+    float accumulator = 0.f;
+
+    size_t frame = 0;
+
+    while (window.isOpen()) {
+        if (frame > 10000000) {
+            frame = 0;
+        }
+        ++frame;
+
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            GUI::Instance().event(event);
+        }
+        // логика
+        //отрисовка
+        clock.restart(); 
+        window.clear(sf::Color::Black);
+        GUI::Instance().draw(window);
+        window.display();
+    }
+    return 0;
+}
+
+#endif

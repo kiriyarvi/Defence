@@ -2,6 +2,10 @@
 #include <numeric>
 #include <iostream>
 
+#ifdef GUI_USER_CONTRACT_CHECKS_ENABLED
+    #include <unordered_set>
+#endif
+
 void GUI::set_root(std::unique_ptr<Widget>&& root, const sf::RenderWindow& window) {
     m_root = std::move(root);
     window_size = { window.getSize().x ,  window.getSize().y };
@@ -302,7 +306,7 @@ void Property::clear_dependent(Dependent dependent) {
         dependents.erase(it);
 }
 
-/// Удаляет правила вычисления свойств properties.
+/// Удаляет правила вычисления свойств properties. Инвалидирует properties
 void Widget::clear_rules(Property::Type properties) {
     for (auto rule = m_rules.begin(); rule != m_rules.end();) {
         if ((rule->output & properties) == rule->output) { //rule->properties всключает все флаги что и properties
@@ -320,20 +324,25 @@ void Widget::clear_rules(Property::Type properties) {
         //если правило вычисляет X,Y, то мы не можем попросить удалить только X.
         ++rule;
     }
+    invalidate(properties);
 }
 
 
 /**
  * @brief Добавляет новое правило вычисления.
- * @param properties Свойства, для которых будет применяться аднное правило
+ * @param properties Свойства, для которых будет применяться данное правило
  * @param calc функция, вычисляющая данные свойства
  * @param dependencies зависимости, т.е. виджеты и их свойства, которые должны быть вычислены на момент выполнения calc.
  * @details удаляет правила, которые ранее вычисляли свойства properties.
- * @note поскольку эта функция используется в основном при инициализации,
- * соотвествующие свойства не инвализируются. Это сделано для избежания множества
- * холостых вызовов invalidate.
+ * инвалидирует свойства output.
+ * @note массив dependencies не должет содержать повторяющихся виджетов.
  */
 void Widget::add_rule(Property::Type output, const std::function<void(Layout&)>& calc, const std::vector<Dependency>& dependencies) {
+#ifdef GUI_USER_CONTRACT_CHECKS_ENABLED
+    std::unordered_set<Widget*> set;
+    for (const auto& item : dependencies)
+        assert(set.insert(item.widget).second && "Duplicates in dependencies list");
+#endif
     clear_rules(output);
     m_rules.push_back({ output, calc, dependencies });
     for (auto& dependency : dependencies) {
@@ -346,7 +355,7 @@ void Widget::add_rule(Property::Type output, const std::function<void(Layout&)>&
 
 /// Вычисляет свойства виджета (свойства - это x,y,width, height), указанные в битовой маске property.
 void Widget::calc_properties(Property::Type property) {
-#ifdef GUI_DEBUG_ENABLED
+#ifdef GUI_USER_CONTRACT_CHECKS_ENABLED
     auto& stack = GUI::Instance().layout_stack;
     assert(std::find(stack.begin(), stack.end(), GUI::StackElement{ this, property }) == stack.end());
     stack.push_back(GUI::StackElement{ this, property });
@@ -359,7 +368,7 @@ void Widget::calc_properties(Property::Type property) {
             property &= ~prop;
     }
     if (property == 0) {
-#ifdef GUI_DEBUG_ENABLED
+#ifdef GUI_USER_CONTRACT_CHECKS_ENABLED
         //std::cout << "properties have been calculated." << std::endl;
         stack.pop_back();
 #endif
@@ -404,7 +413,7 @@ void Widget::calc_properties(Property::Type property) {
         layout.m_invalidated_props &= ~required; //validate
     }
 
-#ifdef GUI_DEBUG_ENABLED
+#ifdef GUI_USER_CONTRACT_CHECKS_ENABLED
     stack.pop_back();
 #endif
 }
@@ -593,10 +602,11 @@ Widget* Widget::add_widget(std::unique_ptr<Widget>&& child) {
     return m_children.back().get();
 }
 
-void Widget::delete_widget(Widget* widget) {
+void Widget::delete_widget(Widget* widget, RemovePolicy policy) {
     assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
     for (auto it = m_children.begin(); it != m_children.end(); ++it) {
         if (it->get() == widget) {
+            (*it)->remove(policy);
             m_children.erase(it);
             return;
         }
@@ -611,10 +621,11 @@ void Widget::add_widget_deffered(std::unique_ptr<Widget>&& child) {
     });
 }
 
-void Widget::delete_widget_deffered(Widget* widget) {
-    GUI::Instance().add_deffered_command([this, widget]() {
+void Widget::delete_widget_deffered(Widget* widget, RemovePolicy policy) {
+    GUI::Instance().add_deffered_command([this, widget, policy]() {
         for (auto it = m_children.begin(); it != m_children.end(); ++it) {
             if (it->get() == widget) {
+                (*it)->remove(policy);
                 m_children.erase(it);
                 return;
             }
@@ -622,16 +633,47 @@ void Widget::delete_widget_deffered(Widget* widget) {
     });
 }
 
+void Widget::delete_dependent_rules(Property::Type props, bool hard) {
+    //удаляем правила других виджетов, зависимые от нас.
+    for (auto& [prop, member] : Layout::s_property_map) { //идем по всем свойствам
+        if (!(prop & props))
+            continue;
+        for (auto& dependency : (layout.*member).dependents) { //каждое свойство знает, кто от него зависит
+            for (auto rule = dependency.widget->m_rules.begin(); rule != dependency.widget->m_rules.end();) { //идем по правилам зависимого
+                auto this_it = std::find_if(rule->dependencies.begin(), rule->dependencies.end(), [this](const Dependency& dependency) {
+                    return dependency.widget == this;
+                }); //ищем правила, зависимые от this.
+                if (this_it == rule->dependencies.end()) {
+                    ++rule;
+                    continue;
+                }
+                if (!hard && rule->dependencies.size() == 1) //в случае не жесткого удаления, не можем удалить правила, зависящие от нас частично
+                    throw "Cannot delete partial rule";
+                dependency.widget->invalidate(rule->output); //инвализация
+                dependency.widget->delete_dependent_rules(rule->output, hard); //удаляем правила, зависящие от output правила, которое мы хотим удалить
+                rule = dependency.widget->m_rules.erase(rule); //удаляем
+            }
+        }
+        (layout.*member).dependents.clear(); //больше никто от нас не зависит.
+    }
+}
+
+void Widget::remove(RemovePolicy policy) {
+    if (static_cast<int>(policy) & static_cast<int>(Widget::RemovePolicy::Min)) {
+        invalidate(Property::LAYOUT); //заинвалидируем layout у зависимых от нас
+        clear_rules(Property::LAYOUT); //удалим все правила вычисления. Это известит зависимых от нас, что мы от них больше не зависим
+    }
+    if (policy != Widget::RemovePolicy::Min)
+        delete_dependent_rules(Property::LAYOUT, policy == Widget::RemovePolicy::DeleteDepententRulesHard);
+    for (auto& child : m_children)
+        child->remove(policy);
+}
+
+
 Widget* Widget::get_root() {
     return m_parent == nullptr ? this : m_parent->get_root();
 }
 
-Widget::~Widget() {
-    invalidate(Property::LAYOUT); //заинвалидируем layout у зависимых от нас
-    clear_rules(Property::LAYOUT); //удалим все правила вычисления. Это известит зависимых от нас, что мы от них больше не зависим
-    m_children.clear(); //удаляем детей
-    //уничтожаемся сами
-}
 
 Panel::Panel(sf::Color background_color, sf::Color border_color, float border) {
     m_rect.setFillColor(background_color);

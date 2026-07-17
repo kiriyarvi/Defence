@@ -60,7 +60,7 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
                 layout.x = prev->layout.x + prev->layout.width;
                 layout.y = prev->layout.y;
             }
-        }, { {button_panel, Property::WIDTH}, { prev, Property::LAYOUT }, { this, Property::WIDTH } });
+        }, { {button_panel, Property::WIDTH}, { prev, Property::LAYOUT } });
         prev_it = button_it;
     }
 
@@ -180,7 +180,7 @@ Query BuildingButton::on_event(Widget::EventContext context) {
             }
             else {
                 //удаляем tooltip
-                m_parent->delete_widget_deffered(m_tooltip);
+                m_parent->delete_widget_deffered(m_tooltip, RemovePolicy::Min);
                 //отписываемся
                 GUI::Instance().unsubscribe_deffered(this, Event::MOUSE_MOVED);
                 //пересчитываем обработку события. Запрос на выполнение отложенных действий, чтобы действительно удалить tooltip
