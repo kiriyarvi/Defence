@@ -9,7 +9,7 @@
 #include "debugger.h"
 #include "net_manager.h"
 
-#if 1
+#if 0
 
 int main() {
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
@@ -94,26 +94,34 @@ int main() {
 }
 
 #else
+
+#include "gui/scroller.h"
+
 int main() {
     sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
     GUI::Instance().set_root(Widget::create(), window);
     Widget* root = GUI::Instance().get_root();
+    DEBUG_TAG(root, "root");
 
-    Widget* panel_A = root->add_widget(Panel::create(sf::Color::Red));
-    Widget* panel_B = root->add_widget(Panel::create(sf::Color::Blue));
-    DEBUG_TAG(panel_A, "A");
-    DEBUG_TAG(panel_B, "B");
+    OneDirectionalScroller* on_directional_scroller = (OneDirectionalScroller*)root->add_widget(std::make_unique<OneDirectionalScroller>(Direction::HORISONTAL));
+    DEBUG_TAG(on_directional_scroller, "on_directional_scroller");
 
-    panel_A->size_fixed(50, 50);
-    panel_B->size_fixed(50, 50);
+    on_directional_scroller->position_centering();
+    Widget* _frame = on_directional_scroller->get_frame_widget();
+    _frame->size_fixed(200, 200);
+    on_directional_scroller->get_scroller_grove_widget()->add_rule(Property::WIDTH, [_frame](Widget::Layout& layout) {
+        layout.width = _frame->layout.width * 0.1;
+    }, { { _frame , Property::WIDTH} });
+    Widget* content = on_directional_scroller->get_content_widget();
 
-    panel_B->add_rule(Property::X, [panel_A](Widget::Layout& layout) {
-        layout.x = panel_A->layout.x + 50;
-    }, { {panel_A, Property::X} });
-    panel_A->add_rule(Property::Y, [panel_B](Widget::Layout& layout) {
-        layout.y = panel_B->layout.x;
-    }, { {panel_B, Property::X} });
-    root->delete_widget(panel_B, Widget::RemovePolicy::DeleteDepententRulesHard);
+    Panel* panel = (Panel*)content->add_widget(Panel::create(sf::Color(176, 149, 87),sf::Color(116, 94, 41)));
+    DEBUG_TAG(panel, "panel");
+    Label* label = (Label*)panel->add_widget(Label::create(true));
+    label->add_text("This is the WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW\n long\n long\n long\n long\n long\n long\n long\n long\n text\n another\n long\n long\n long\n long\n long\n long\n long\n long");
+    DEBUG_TAG(label, "label");
+    panel->size_include(label);
+    content->size_include(panel);
+
 
     sf::Clock clock;
 

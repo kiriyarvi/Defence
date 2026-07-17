@@ -34,7 +34,7 @@ public:
     LayeredIcon() = default;
     std::vector<TextureID> layers;
     bool grayscale = false;
-    void draw(const glm::vec2& position_transform, sf::RenderWindow& window) override;
+    void draw(const glm::vec2& position_transform, sf::RenderTarget& window) override;
 protected:
     sf::Sprite m_sprite;
 };

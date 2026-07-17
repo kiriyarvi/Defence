@@ -7,7 +7,7 @@ class Label: public Widget {
 public:
     Label(bool inline_text, size_t size, sf::Font* font);
     static std::unique_ptr<Label> create(bool inline_text = false, size_t size = 30, sf::Font* font = nullptr) { return std::make_unique<Label>(inline_text, size, font); }
-    void draw(const glm::vec2& position_transform, sf::RenderWindow& window) override;
+    void draw(const glm::vec2& position_transform, sf::RenderTarget& window) override;
     void add_text(const std::string& text, sf::Color color = sf::Color::White, sf::Text::Style style = sf::Text::Style::Regular);
     void clear();
     static sf::Color gold_color;

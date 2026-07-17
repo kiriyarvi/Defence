@@ -18,9 +18,10 @@ class Widget;
 
 namespace Event {
     using Type = size_t;
-    inline Type MOUSE_MOVED = 0b001;
-    inline Type BUTTON_PRESSED = 0b010;
-    inline Type BUTTON_RELEASED = 0b100;
+    inline Type MOUSE_MOVED = 0b0001;
+    inline Type BUTTON_PRESSED = 0b0010;
+    inline Type BUTTON_RELEASED = 0b0100;
+    inline Type WHEEL_SCROLLED = 0b1000;
 }
 
 
@@ -69,6 +70,7 @@ public:
     glm::vec2 window_size;
     sf::Mouse::Button mouse_button;
     Event::Type event_type;
+    float wheel_delta;
 #ifdef GUI_USER_CONTRACT_CHECKS_ENABLED
     struct StackElement {
         Widget* node;
@@ -241,16 +243,28 @@ public:
     void add_widget_deffered(std::unique_ptr<Widget>&& child);
     void delete_widget_deffered(Widget* widget, RemovePolicy policy);
     Widget* get_root();
-    void draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderWindow& window);
-    virtual void draw(const glm::vec2& position_transform, sf::RenderWindow& window) {}
+    //DRAW CALLS
+    virtual void draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderTarget& window);
+    virtual void draw(const glm::vec2& position_transform, sf::RenderTarget& window) {}
     //EVENT SYSTEM
     struct HitListNode {
         Widget* widget;
         glm::vec2 parent_transform;
     };
-    bool hit_test(std::list<HitListNode>& hit_list, glm::uvec2 mouse_pos);
-    bool ignore_hit_test = true;
+    enum class HitTestPolicy {
+        /// сначала проверяет hit_test детей, выполнение завершается как только для ребенка
+        /// hit_test вернет true. В этом случае в hit_list добавляется путь до этого ребенка.
+        /// в противном проверяет hit_test текущего виджета, если true, то в hit_list добавится текущий виджет.
+        /// в противном случае hit_list не меняется и возвращается false
+        Normal,
+        // Сначала проверит hit_test текущего виджета. Если вернется false, то сразу завершает hit_test и возвращает false.
+        // В противном случае реализуется та же логика, что при Normal
+        Block,
+        //Сразу вернет false
+        Terminate
+    } hit_test_policy;
 
+    bool hit_test(std::list<HitListNode>& hit_list, glm::uvec2 mouse_pos);
     struct EventContext {
         const std::list<HitListNode>& hit_list;
         Event::Type event_type;
@@ -266,8 +280,6 @@ protected:
     Widget* m_parent;
     std::list<std::unique_ptr<Widget>> m_children;
     std::list<Rule> m_rules;
-
-
     void remove(RemovePolicy policy); //< только перестаивает дерево соотвествующим образом, не совершает реального удаления, не удаляет детей
     void delete_dependent_rules(Property::Type props, bool hard);
 };
@@ -281,7 +293,7 @@ public:
         sf::Color border_color = sf::Color::Black,
         float border = 3);
     void set_border(float border);
-    void draw(const glm::vec2& position_transform, sf::RenderWindow& window) override;
+    void draw(const glm::vec2& position_transform, sf::RenderTarget& window) override;
 private:
     sf::RectangleShape m_rect;
 };

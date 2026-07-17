@@ -66,7 +66,7 @@ void IconButton::set_grayscale() {
 
 
 
-void LayeredIcon::draw(const glm::vec2& position_transform, sf::RenderWindow& window) {
+void LayeredIcon::draw(const glm::vec2& position_transform, sf::RenderTarget& window) {
     m_sprite.setPosition(position_transform.x + layout.x, position_transform.y + layout.y);
     sf::RenderStates states;
     if (grayscale)

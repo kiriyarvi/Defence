@@ -66,7 +66,7 @@ Query Scale::on_event(Widget::EventContext event_context) {
         return Query{ Query::PASS_TO_PARENT };
 }
 
-void Scale::draw(const glm::vec2& position_transform, sf::RenderWindow& window) {
+void Scale::draw(const glm::vec2& position_transform, sf::RenderTarget& window) {
     m_tile_sprite.setScale({ layout.height / 16.f, layout.height / 16.f });
     m_tile_sprite.setPosition(position_transform.x + layout.x, position_transform.y + layout.y);
     for (size_t i = 1; i < num_of_values; ++i) {
@@ -89,7 +89,7 @@ void Scale::set_on_pos_update_callback(const  std::function<void(size_t)>& callb
 
 Slider::Slider(Scale* scale): m_scale{scale} {
     m_slider.setTexture(TextureManager::Instance().textures[TextureID::Slider]);
-    m_slider.setTextureRect(sf::IntRect(54, 1, 5, 14));
+    m_slider.setTextureRect(sf::IntRect(48, 1, 5, 14));
 
     add_rule(Property::SIZE, [this](Layout& layout) {
         layout.height = m_scale->layout.height * (14.f/16.f);
@@ -139,7 +139,7 @@ Query Slider::on_event(Widget::EventContext event_context) {
     return Query{};
 }
 
-void Slider::draw(const glm::vec2& position_transform, sf::RenderWindow& window) {
+void Slider::draw(const glm::vec2& position_transform, sf::RenderTarget& window) {
     m_slider.setScale({ layout.width / 5.f, layout.height / 14.f });
     m_slider.setPosition(position_transform.x + layout.x, position_transform.y + layout.y);
     window.draw(m_slider);

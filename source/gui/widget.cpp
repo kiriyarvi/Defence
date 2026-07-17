@@ -1,6 +1,7 @@
 #include "gui/widget.h"
 #include <numeric>
 #include <iostream>
+#include <optional>
 
 #ifdef GUI_USER_CONTRACT_CHECKS_ENABLED
     #include <unordered_set>
@@ -101,7 +102,6 @@ private:
 /// true - событие обработано
 bool GUI::event(const sf::Event& event) {
     m_event_processing = true;
-
     if (!m_root)
         return false;
 
@@ -127,6 +127,11 @@ bool GUI::event(const sf::Event& event) {
     else if (event.type == sf::Event::MouseMoved) {
         mouse_pos = { event.mouseMove.x, event.mouseMove.y };
         event_type = Event::MOUSE_MOVED;
+    }
+    else if (event.type == sf::Event::MouseWheelScrolled) {
+        mouse_pos = { event.mouseWheelScroll.x, event.mouseWheelScroll.y };
+        wheel_delta = event.mouseWheelScroll.delta;
+        event_type = Event::WHEEL_SCROLLED;
     }
     //2. Обработаем событие
     bool processed = event_impl();
@@ -594,7 +599,7 @@ std::unique_ptr<Widget> Widget::create(Widget* parent) {
     return std::make_unique<Widget>(parent);
 }
 
-void Widget::draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderWindow& window) {
+void Widget::draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderTarget& window) {
     calc_layout();
     draw(position_transform, window);
     glm::vec2 transform = position_transform + glm::vec2{layout.x + layout.padding.left, layout.y + layout.padding.top};
@@ -604,16 +609,25 @@ void Widget::draw_hierarchy(int frame, const glm::vec2& position_transform, sf::
 }
 
 bool Widget::hit_test(std::list<Widget::HitListNode>& hit_list, glm::uvec2 mouse_pos) {
-    if (!ignore_hit_test)
+    if (hit_test_policy == HitTestPolicy::Terminate)
         return false;
     glm::vec2 parent_transform = (hit_list.empty() || layout.absolute) ? glm::vec2(0, 0) : hit_list.back().parent_transform;
     glm::vec2 content_transform = parent_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
+    std::optional<bool> hit_test_passed; //прошел ли this hit-test
+    if (hit_test_policy == HitTestPolicy::Block) { //прерываем hit-test, если this не проходит hit-test
+        hit_test_passed = layout.contains(parent_transform, mouse_pos.x, mouse_pos.y);
+        if (!hit_test_passed.value())
+            return false;
+    }
+    //если hit-test пройден или block_hit_test = false, проверяем hit-test детей.
     hit_list.push_back(Widget::HitListNode{ this, content_transform });
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
         if (it->get()->hit_test(hit_list, mouse_pos))
             return true;
     }
-    if (layout.contains(parent_transform, mouse_pos.x, mouse_pos.y))
+    if (!hit_test_passed) //нет значения => вычислим
+        hit_test_passed = layout.contains(parent_transform, mouse_pos.x, mouse_pos.y);
+    if (hit_test_passed.value())
         return true;
     hit_list.pop_back();
     return false;
@@ -715,7 +729,7 @@ void Panel::set_border(float border) {
     m_rect.setOutlineThickness(-border);
 }
 
-void Panel::draw(const glm::vec2& position_transform, sf::RenderWindow& window) {
+void Panel::draw(const glm::vec2& position_transform, sf::RenderTarget& window) {
     auto layout_rect = layout.get_layout_rect();
     m_rect.setSize({ layout_rect.width, layout_rect.height });
     m_rect.setPosition({ position_transform.x + layout_rect.x, position_transform.y + layout_rect.y });

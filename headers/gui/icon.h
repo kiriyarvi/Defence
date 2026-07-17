@@ -7,7 +7,7 @@ class Icon : public Widget {
 public:
     Icon(TextureID texture);
     static std::unique_ptr<Icon> create(TextureID texture);
-    void draw(const glm::vec2& position_transform, sf::RenderWindow& window) override;
+    void draw(const glm::vec2& position_transform, sf::RenderTarget& window) override;
 private:
     sf::Sprite m_sprite;
 };

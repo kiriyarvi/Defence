@@ -136,7 +136,7 @@ void Label::clear() {
 }
 
 
-void Label::draw(const glm::vec2& position_transform, sf::RenderWindow& window) {
+void Label::draw(const glm::vec2& position_transform, sf::RenderTarget& window) {
     sf::Text widget("", *m_font_info.font, m_font_info.size);
 
     sf::Vector2f text_start{ position_transform.x + layout.x + layout.padding.left, position_transform.y + layout.y + layout.padding.top };
@@ -171,6 +171,6 @@ std::pair<std::unique_ptr<Panel>, Label*> create_tooltip(Anchor::Type tooltip_an
     DEBUG_TAG(label, "tooltip_label")
     panel->size_include(label);
     panel->position_tooltip(tooltip_anchor);
-    panel->ignore_hit_test = false;
+    panel->hit_test_policy = Widget::HitTestPolicy::Terminate;
     return std::make_pair(std::move(panel_ptr), label);
 }
