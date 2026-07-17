@@ -26,7 +26,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     Icon* coin_icon = (Icon*)m_game_process_ui->add_widget(Icon::create(TextureID::Coin));
     DEBUG_TAG(coin_icon, "coin_icon")
     //coin indicator (Layout)
-       coin_icon->add_rule(Property::SIZE, [coins_counter = m_player_coins_count_widget](Widget::Layout& layout) {
+    coin_icon->add_rule(Property::SIZE, [coins_counter = m_player_coins_count_widget](Widget::Layout& layout) {
         layout.width = coins_counter->layout.height;
         layout.height = coins_counter->layout.height;
     }, { {m_player_coins_count_widget, Property::SIZE} });
@@ -72,8 +72,13 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     });
     DEBUG_TAG(speed_controller, "speed_controller");
     //scale for speed control (Layout)
-    speed_controller->position_centering();
+    speed_controller->position_anchor(Anchor::RIGHT | Anchor::BOTTOM, m_next_wave_button, Anchor::LEFT | Anchor::BOTTOM);
     speed_controller->property_inherit(m_game_process_ui, Property::HEIGHT, [](float h) {return  0.1 * h; });
+
+    m_building_panel->add_rule(Property::WIDTH, [speed_controller](Widget::Layout& layout) {
+        layout.width = speed_controller->layout.x;
+    }, { {speed_controller, Property::X} });
+
 
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" }; //TODO
     PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };//TODO

@@ -65,9 +65,6 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
     }
 
     position_anchor(Anchor::LEFT | Anchor::BOTTOM, ui, Anchor::LEFT | Anchor::BOTTOM);
-    add_rule(Property::WIDTH, [ui](Widget::Layout& layout) {
-        layout.width = ui->layout.width * 0.7;
-    }, { {ui, Property::WIDTH} });
     Widget* last_button = m_children.back().get();
     add_rule(Property::HEIGHT, [last_button](Widget::Layout& layout) {
         layout.height = last_button->layout.y + last_button->layout.height;

@@ -15,6 +15,7 @@ private:
     Slider* m_slider;
     sf::Sprite m_tile_sprite;
     bool m_clicked = false;
+    Widget* m_tooltip = nullptr;
 };
 
 class Slider : public Widget {
@@ -24,6 +25,7 @@ public:
     void draw(const glm::vec2& position_transform, sf::RenderWindow& window) override;
     void request_to_compute_pos() { m_query_to_compute_pos = true; }
     std::function<void(size_t)> on_pos_update;
+    size_t get_pos() { return m_pos + 1; }
 private:
     sf::Sprite m_slider;
     Scale* m_scale;

@@ -12,11 +12,11 @@ NextWaveButton::NextWaveButton() : Hoverable(this), Clickable(this, sf::Mouse::L
         auto [panel_ptr, label] = create_tooltip(Anchor::BOTTOM | Anchor::RIGHT);
         label->add_text("начать следующую волну");
         m_tooltip = panel_ptr.get();
-        add_widget_deffered(std::move(panel_ptr));
+        m_parent->add_widget_deffered(std::move(panel_ptr));
         return Query{ Query::Workflow::PROCESSED };
     };
     on_unhovered = [this](EventContext context) ->size_t {
-        delete_widget_deffered(m_tooltip, Widget::RemovePolicy::Min);
+        m_parent->delete_widget_deffered(m_tooltip, Widget::RemovePolicy::Min);
         return 0;
     };
     on_mouse_moved = [this](EventContext context) ->Query {

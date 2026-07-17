@@ -1,6 +1,6 @@
 #include "gui/slider.h"
 #include "texture_manager.h"
-
+#include "gui/label.h"
 
 Scale::Scale() {
     m_tile_sprite.setTexture(TextureManager::Instance().textures[TextureID::Slider]);
@@ -14,15 +14,43 @@ Scale::Scale() {
 
 Query Scale::on_event(Widget::EventContext event_context) {
     if (event_context.event_type == Event::BUTTON_PRESSED && GUI::Instance().mouse_button == sf::Mouse::Left) {
+        if (m_tooltip) { //если есть tooltip => удалим чтоб не мешал
+            m_parent->delete_widget_deffered(m_tooltip, RemovePolicy::Min);
+            m_tooltip = nullptr;
+        }
         m_clicked = true;
         m_slider->invalidate(Property::POSITION); //заставим пересчитать позицию.
         GUI::Instance().subscribe_deffered(this, Event::MOUSE_MOVED | Event::BUTTON_RELEASED); //подписываемся на получаение событий
         return Query{ Query::PROCESSED };
     }
-    else if (event_context.event_type == Event::MOUSE_MOVED && clicked()) {
-        //перемещение мыши во время зажатой правой книпки мыши
-        m_slider->invalidate(Property::POSITION); //заставим пересчитать позицию.
-        return Query{ Query::PROCESSED };
+    else if (event_context.event_type == Event::MOUSE_MOVED) {
+        if (!event_context.from_subscribe) { //не по подписке, то есть просто навели мышь на шкалу.
+            //создаем tooltip
+            if (m_tooltip)
+                return Query{ Query::PROCESSED };
+            auto [panel_ptr, label] = create_tooltip(Anchor::BOTTOM | Anchor::RIGHT);
+            label->add_text("Ускорение: x" + std::to_string(m_slider->get_pos()));
+            m_tooltip = panel_ptr.get();
+            m_parent->add_widget_deffered(std::move(panel_ptr));
+            GUI::Instance().subscribe_deffered(this, Event::MOUSE_MOVED); //подписка на перемещение мыши
+            return Query{ Query::PROCESSED };
+        }
+        else {
+            if (clicked()) { //перемещение мыши во время зажатой правой кнопки мыши
+                m_slider->invalidate(Property::POSITION); //заставим пересчитать позицию.
+                return Query{ Query::PROCESSED };
+            }
+            else { //кнопка не зажата, но получили по подписке => unhover
+                if (event_context.hit_list.empty() || event_context.hit_list.back().widget != this) {
+                    m_parent->delete_widget_deffered(m_tooltip, RemovePolicy::Min);
+                    m_tooltip = nullptr;
+                    GUI::Instance().unsubscribe_deffered(this, Event::MOUSE_MOVED); //отменим подписку
+                    return Query{ Query::REPEAT, Query::PERFORM_DEFFERED };
+                }
+                m_tooltip->invalidate(Property::POSITION);
+                return Query{ Query::PROCESSED };
+            }
+        }
     }
     else if (event_context.event_type == Event::BUTTON_RELEASED && clicked()) {
         //отпишемся
