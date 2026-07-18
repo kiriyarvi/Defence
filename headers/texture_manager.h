@@ -88,7 +88,8 @@ enum class TextureID {
     RadarUpgradeUncoverSpeed,
     Coin,
     Heart,
-    Slider
+    Slider,
+    PanelsTileset
 };
 
 class TextureManager {

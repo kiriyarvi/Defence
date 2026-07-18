@@ -112,4 +112,6 @@ TextureManager::TextureManager() {
     textures[TextureID::Heart].loadFromFile("sprites/heart.png");
 
     textures[TextureID::Slider].loadFromFile("sprites/slider.png");
+
+    textures[TextureID::PanelsTileset].loadFromFile("tiles/paper.png");
 }

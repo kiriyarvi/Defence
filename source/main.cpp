@@ -96,6 +96,7 @@ int main() {
 #else
 
 #include "gui/scroller.h"
+#include "gui/tiled_panel.h"
 
 int main() {
     sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
@@ -111,15 +112,33 @@ int main() {
     groove_horisontal->property_equal(Property::HEIGHT, false, root, Property::HEIGHT, true, modifiers::Multiply(0.05));
     groove_horisontal->position_anchor(Anchor::BOTTOM | Anchor::RIGHT, root, Anchor::BOTTOM | Anchor::RIGHT);
 
-    ScrollIndicatorGroove* groove_vertical = (ScrollIndicatorGroove*)root->add_widget(std::make_unique<ScrollIndicatorGroove>(Direction::VERTICAL, ScrollIndicatorType::Paper));
+    ScrollIndicatorGroove* groove_vertical = (ScrollIndicatorGroove*)root->add_widget(std::make_unique<ScrollIndicatorGroove>(Direction::VERTICAL, ScrollIndicatorType::BluePrint));
     DEBUG_TAG(groove_vertical, "groove_vertical");
     groove_vertical->add_rule(Property::HEIGHT, [root](Widget::Layout& layout) {
         layout.height = root->layout.height - layout.width;
     }, { { root, Property::HEIGHT }, { groove_vertical , Property::WIDTH } });
     groove_vertical->property_equal(Property::WIDTH, false, root, Property::HEIGHT, true, modifiers::Multiply(0.05));
 
+    Widget* tile_size = root->add_widget(Widget::create());
+    tile_size->property_equal(Property::HEIGHT, false, root, Property::HEIGHT, false, modifiers::Multiply(0.05));
+    tile_size->property_equal(Property::WIDTH, false, root, Property::HEIGHT, false, modifiers::Multiply(0.05));
 
+    TiledPanel* tiled_panel = (TiledPanel*)root->add_widget(std::make_unique<TiledPanel>(TiledPanel::Type::Blueprint, tile_size));
+    DEBUG_TAG(tiled_panel, "tiled_panel")
+    Panel* panel = (Panel*)tiled_panel->content_widget->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Transparent));
+    DEBUG_TAG(panel, "panel")
+    Label* label = (Label*)panel->add_widget(Label::create());
+    DEBUG_TAG(label, "label")
+    label->add_text("This is the example of TiledPanel with paper stile, you can check that all sizes are computed correctly and ensure this just seing the source code.", sf::Color::Black);
+    label->add_text("This is the example of TiledPanel with paper stile, you can check that all sizes are computed correctly and ensure this just seing the source code.", sf::Color::Black);
+    label->add_text("This is the example of TiledPanel with paper stile, you can check that all sizes are computed correctly and ensure this just seing the source code.", sf::Color::White);
 
+    label->property_from_content(panel, Property::WIDTH);
+    panel->property_from_content(tiled_panel->content_widget, Property::WIDTH);
+    panel->property_content_from(label, Property::HEIGHT);
+    tiled_panel->content_widget->property_content_from(panel, Property::HEIGHT);
+    tiled_panel->content_widget->property_equal(Property::WIDTH, false, root, Property::WIDTH, false, modifiers::Multiply(0.5));
+    tiled_panel->position_centering();
 
     sf::Clock clock;
 
