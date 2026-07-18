@@ -1,4 +1,4 @@
-#include "gui/slider.h"
+#include "gui/scale.h"
 #include "texture_manager.h"
 #include "gui/label.h"
 
@@ -9,7 +9,7 @@ Scale::Scale() {
         layout.width = layout.height * (num_of_values - 1);
     }, { {this, Property::HEIGHT} });
 
-    m_slider = (Slider*)add_widget(std::make_unique<Slider>(this));
+    m_slider = (ScaleSlider*)add_widget(std::make_unique<ScaleSlider>(this));
 }
 
 Query Scale::on_event(Widget::EventContext event_context) {
@@ -87,7 +87,7 @@ void Scale::set_on_pos_update_callback(const  std::function<void(size_t)>& callb
 }
 
 
-Slider::Slider(Scale* scale): m_scale{scale} {
+ScaleSlider::ScaleSlider(Scale* scale): m_scale{scale} {
     m_slider.setTexture(TextureManager::Instance().textures[TextureID::Slider]);
     m_slider.setTextureRect(sf::IntRect(48, 1, 5, 14));
 
@@ -135,11 +135,11 @@ Slider::Slider(Scale* scale): m_scale{scale} {
     }, { { m_scale, Property::LAYOUT }, { this, Property::SIZE } });
 }
 
-Query Slider::on_event(Widget::EventContext event_context) {
+Query ScaleSlider::on_event(Widget::EventContext event_context) {
     return Query{};
 }
 
-void Slider::draw(const glm::vec2& position_transform, sf::RenderTarget& window) {
+void ScaleSlider::draw(const glm::vec2& position_transform, sf::RenderTarget& window) {
     m_slider.setScale({ layout.width / 5.f, layout.height / 14.f });
     m_slider.setPosition(position_transform.x + layout.x, position_transform.y + layout.y);
     window.draw(m_slider);

@@ -1,7 +1,7 @@
 #pragma once
 #include "gui/widget.h"
 
-class Slider;
+class ScaleSlider;
 
 class Scale : public Widget {
 public:
@@ -12,15 +12,15 @@ public:
     bool clicked() { return m_clicked; }
     void set_on_pos_update_callback(const  std::function<void(size_t)>& callback);
 private:
-    Slider* m_slider;
+    ScaleSlider* m_slider;
     sf::Sprite m_tile_sprite;
     bool m_clicked = false;
     Widget* m_tooltip = nullptr;
 };
 
-class Slider : public Widget {
+class ScaleSlider : public Widget {
 public:
-    Slider(Scale* scale);
+    ScaleSlider(Scale* scale);
     Query on_event(Widget::EventContext event_context) override;
     void draw(const glm::vec2& position_transform, sf::RenderTarget& window) override;
     void request_to_compute_pos() { m_query_to_compute_pos = true; }

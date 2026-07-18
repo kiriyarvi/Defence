@@ -103,24 +103,22 @@ int main() {
     Widget* root = GUI::Instance().get_root();
     DEBUG_TAG(root, "root");
 
-    OneDirectionalScroller* on_directional_scroller = (OneDirectionalScroller*)root->add_widget(std::make_unique<OneDirectionalScroller>(Direction::HORISONTAL));
-    DEBUG_TAG(on_directional_scroller, "on_directional_scroller");
+    ScrollIndicatorGroove* groove_horisontal = (ScrollIndicatorGroove*)root->add_widget(std::make_unique<ScrollIndicatorGroove>(Direction::HORISONTAL, ScrollIndicatorType::Paper));
+    DEBUG_TAG(groove_horisontal, "groove_horisontal");
+    groove_horisontal->add_rule(Property::WIDTH, [root](Widget::Layout& layout) {
+        layout.width = root->layout.width - layout.height;
+    }, { { root, Property::WIDTH }, { groove_horisontal , Property::HEIGHT } });
+    groove_horisontal->property_equal(Property::HEIGHT, false, root, Property::HEIGHT, true, modifiers::Multiply(0.05));
+    groove_horisontal->position_anchor(Anchor::BOTTOM | Anchor::RIGHT, root, Anchor::BOTTOM | Anchor::RIGHT);
 
-    on_directional_scroller->position_centering();
-    Widget* _frame = on_directional_scroller->get_frame_widget();
-    _frame->size_fixed(200, 200);
-    on_directional_scroller->get_scroller_grove_widget()->add_rule(Property::WIDTH, [_frame](Widget::Layout& layout) {
-        layout.width = _frame->layout.width * 0.1;
-    }, { { _frame , Property::WIDTH} });
-    Widget* content = on_directional_scroller->get_content_widget();
+    ScrollIndicatorGroove* groove_vertical = (ScrollIndicatorGroove*)root->add_widget(std::make_unique<ScrollIndicatorGroove>(Direction::VERTICAL, ScrollIndicatorType::Paper));
+    DEBUG_TAG(groove_vertical, "groove_vertical");
+    groove_vertical->add_rule(Property::HEIGHT, [root](Widget::Layout& layout) {
+        layout.height = root->layout.height - layout.width;
+    }, { { root, Property::HEIGHT }, { groove_vertical , Property::WIDTH } });
+    groove_vertical->property_equal(Property::WIDTH, false, root, Property::HEIGHT, true, modifiers::Multiply(0.05));
 
-    Panel* panel = (Panel*)content->add_widget(Panel::create(sf::Color(176, 149, 87),sf::Color(116, 94, 41)));
-    DEBUG_TAG(panel, "panel");
-    Label* label = (Label*)panel->add_widget(Label::create(true));
-    label->add_text("This is the WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW\n long\n long\n long\n long\n long\n long\n long\n long\n text\n another\n long\n long\n long\n long\n long\n long\n long\n long");
-    DEBUG_TAG(label, "label");
-    panel->size_include(label);
-    content->size_include(panel);
+
 
 
     sf::Clock clock;

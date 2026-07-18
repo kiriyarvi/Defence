@@ -36,6 +36,7 @@ struct Query {
     static const size_t PERFORM_DEFFERED = 0b01; //< выполнить все отложенные запросы (удаление/добавление виджетов/подписок), при этом workflow обязательно должен быть =REPEAT.
     static const size_t CALC_LAYOUT = 0b10; //< пересчитать layout
     bool pure_pass() { return workflow == Workflow::PASS && query == 0; }
+    static Query ignore(bool from_subscribe);
 };
 
 class WidgetIterator;
@@ -152,6 +153,22 @@ struct Rect {
     float height = 0.f;
 };
 
+using Modifier = std::function<float(float)>;
+
+namespace modifiers {
+    struct Multiply {
+        Multiply(float m) : m{ m } {}
+        float operator()(float v) { return v * m; }
+        float m;
+    };
+
+    struct Add {
+        Add(float a) : a{ a } {}
+        float operator()(float v) { return v + a; }
+        float a;
+    };
+}
+
 
 class Widget {
 public:
@@ -190,6 +207,7 @@ public:
         Property::Type invalidated_props() const { return m_invalidated_props; }
     private:
         const static std::unordered_map<Property::Type, Property Layout::*> s_property_map;
+        const static std::unordered_map<Property::Type, float Rect::*> s_property_map_rect;
         void invalidate(Property::Type props) { m_invalidated_props |= props; }
         Property::Type m_invalidated_props = Property::LAYOUT; //< в начале инвалидированы все свойства.
     } layout;
@@ -208,14 +226,15 @@ public:
     glm::vec2 get_position_transform() const;
     glm::vec2 get_content_transform() const;
     //LAYOUT FUNCTIONS
+    //GENERAL
+    void property_equal(Property::Type output, bool content_output, Widget* source, Property::Type input, bool content_input, const Modifier& modifier);   
+    void property_from_content(Widget* source, Property::Type properties, const Modifier& modifier = {}); 
+    void property_content_from(Widget* source, Property::Type properties, const Modifier& modifier = {});
     //SIZE
-    using Modifier = std::function<float(float)>;
-    void property_inherit(Widget* widget, Property::Type properties, const Modifier& modifier = {}); 
-    void property_include(Widget* widget, Property::Type properties, const Modifier& modifier = {});
     void size_fixed(float width, float height);
-    void size_inherited(Widget* widget);
-    void size_include(Widget* widget);
-    void size_fraction(Widget* widget, float parent_width_fraction, float parent_height_fraction);
+    void size_inherited(Widget* source);
+    void size_include(Widget* source);
+    void size_fraction(Widget* source, float parent_width_fraction, float parent_height_fraction);
     //POSITION
     void position_centering(Widget* parent = nullptr);
     void position_tooltip(size_t ancher);

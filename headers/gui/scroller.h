@@ -24,35 +24,43 @@ class ScrollIndicator : public Widget {
 public:
     ScrollIndicator(Direction direction, ScrollIndicatorGroove* scroll_groove);
     void draw(const glm::vec2& position_transform, sf::RenderTarget& window) override;
+    Query on_event(EventContext context) override;
+    glm::u8vec2 texture_size() { return glm::u8vec2{ 3, 6 }; }
+    float get_scroll() const { return m_scroll; }
+    void set_scroll(float scroll);
+    void request_to_calc_my_mouse_pos();
 private:
+    void compute_scroll_by_mouse_pos();
+    bool m_scroll_invalidated = false;
+    float m_scroll = 1.0;//величина прокрутки. Максимальное значение равно 1.f
     ScrollIndicatorGroove* m_scroll_groove;
     Direction m_direction;
     sf::Sprite m_scroll_indicator;
+    float m_capture_offset = 0.f;
+};
+
+enum class ScrollIndicatorType {
+    Paper,
+    BluePrint
 };
 
 class ScrollIndicatorGroove : public Widget {
 public:
-    ScrollIndicatorGroove(Direction direction);
-    float get_scroll() const { return m_scroll; }
+    ScrollIndicatorGroove(Direction direction, ScrollIndicatorType type);
     void draw(const glm::vec2& position_transform, sf::RenderTarget& window) override;
+    sf::Rect<uint8_t> texture_content_rect() const { return sf::Rect<uint8_t>{1, 1, 3, 14}; };
+    glm::u8vec2 texture_size() { return glm::u8vec2{ 5,16 }; }
+    Query on_event(EventContext context) override;
+    sf::FloatRect groove_local_rect();
+    sf::FloatRect groove_global_rect();
+    Property Layout::* get_width_property();
+    Property Layout::* get_height_property();
+    float get_k(); //коэффициент масшьабирования текстуры
 private:
+    ScrollIndicator* m_indicator;
     Direction m_direction;
+    ScrollIndicatorType m_type;
     sf::Sprite m_scroll_indicator_groove;
-    float m_scroll = 0.f; //величина прокрутки. Максимальное значение равно 1.f
 };
 
-class OneDirectionalScroller : public Widget {
-public:
-    OneDirectionalScroller(Direction direction);
-    /// возвращает виджет контента, именно в него нужно помещать потомков! POSITION данного виджета полностью контролруется OneDirectionalScroller. Необходимо указать только SIZE
-    Widget* get_content_widget() { return m_content_widget; }
-    /// Окно, ограничивающее контент, укажите функцию вычисления его размеров.
-    Widget* get_frame_widget() { return m_blocker; }
-    ///Возвращает виджет канавки индикатора прокрути. POSITION контролируется OneDirectionalScroller. Укажите только WIDTH или HEIGHT в зависимости от Direction
-    Widget* get_scroller_grove_widget() { return m_scroller_grove_widget; }
-private:
-    Widget* m_blocker;
-    Widget* m_content_widget;
-    ScrollIndicatorGroove* m_scroller_grove_widget;
-    Direction m_direction;
-};
+

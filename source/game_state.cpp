@@ -10,7 +10,7 @@
 
 #include "gui/label.h"
 #include "gui/icon.h"
-#include "gui/slider.h"
+#include "gui/scale.h"
 
 GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     Widget* root = GUI::Instance().get_root();
@@ -73,7 +73,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     DEBUG_TAG(speed_controller, "speed_controller");
     //scale for speed control (Layout)
     speed_controller->position_anchor(Anchor::RIGHT | Anchor::BOTTOM, m_next_wave_button, Anchor::LEFT | Anchor::BOTTOM);
-    speed_controller->property_inherit(m_game_process_ui, Property::HEIGHT, [](float h) {return  0.1 * h; });
+    speed_controller->property_from_content(m_game_process_ui, Property::HEIGHT, [](float h) {return  0.1 * h; });
 
     m_building_panel->add_rule(Property::WIDTH, [speed_controller](Widget::Layout& layout) {
         layout.width = speed_controller->layout.x;
