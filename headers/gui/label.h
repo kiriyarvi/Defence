@@ -39,4 +39,3 @@ private:
     bool m_inline_text;
 };
 
-std::pair<std::unique_ptr<Panel>, Label*> create_tooltip(Anchor::Type tooltip_anchor = Anchor::BOTTOM | Anchor::LEFT);

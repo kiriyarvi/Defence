@@ -1,6 +1,7 @@
 #include "gui/scale.h"
 #include "texture_manager.h"
 #include "gui/label.h"
+#include "gui/tooltip.h"
 
 Scale::Scale() {
     m_tile_sprite.setTexture(TextureManager::Instance().textures[TextureID::Slider]);

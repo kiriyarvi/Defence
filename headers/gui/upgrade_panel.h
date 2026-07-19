@@ -56,6 +56,7 @@ public:
     void visit(Radar& radar) override;
     void visit(RadioMast& radio_tower) override;
     void capture(UpgradeButton* button);
+    void update(int player_coins);
 private:
    Widget* create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons);
     Widget* m_tile_size_reference;

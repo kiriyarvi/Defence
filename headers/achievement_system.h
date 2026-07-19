@@ -29,6 +29,7 @@ struct Upgrade {
     int available_level = 0;
     std::unordered_map<EnemyType, int> upgrade_conditions; //< TODO это можно читать из json.
     virtual void upgrade(IBuilding* building, int goal) = 0;
+    virtual int get_current_upgrate(IBuilding* building) = 0;
     virtual std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) = 0;
     std::string get_unlock_condition_description(int goal);
     virtual int cost(int level) = 0;
@@ -51,6 +52,11 @@ struct MinigunPenetrationUpgrade : public Upgrade {
     void upgrade(IBuilding* building, int goal) override {
         MiniGun* minigun = static_cast<MiniGun*>(building);
         minigun->upgrade_penetration(goal);
+    }
+
+    int get_current_upgrate(IBuilding* building) override {
+        MiniGun* minigun = static_cast<MiniGun*>(building);
+        return minigun->m_penetration_upgrade;
     }
 
     std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) override {
@@ -103,6 +109,11 @@ struct MinigunCoolingUpgrade : public Upgrade {
         minigun->upgrade_cooling(goal);
     }
 
+    int get_current_upgrate(IBuilding* building) override {
+        MiniGun* minigun = static_cast<MiniGun*>(building);
+        return minigun->m_cooling_upgrade;
+    }
+
     std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) override {
         auto& params = ParamsManager::Instance().params.guns.minigun;
         MiniGun* minigun = static_cast<MiniGun*>(building);
@@ -145,6 +156,11 @@ struct MinigunLubricantUpgrade : public Upgrade {
     void upgrade(IBuilding* building, int goal) override {
         MiniGun* minigun = static_cast<MiniGun*>(building);
         minigun->upgrade_lubricant(goal);
+    }
+
+    int get_current_upgrate(IBuilding* building) override {
+        MiniGun* minigun = static_cast<MiniGun*>(building);
+        return minigun->m_lubricant_upgrade;
     }
 
     std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) override {

@@ -2,6 +2,7 @@
 #include "resource_manager.h"
 #include <SFML/System/Utf.hpp>
 
+
 sf::Color Label::gold_color = sf::Color(255, 211, 3);
 
 sf::FloatRect Label::FontInfo::get_text_bounds(const std::basic_string<sf::Uint32>& text, sf::Text::Style style) {
@@ -159,18 +160,4 @@ void Label::draw(const glm::vec2& position_transform, sf::RenderTarget& window) 
             x_offset += m_font_info.space_width;
         }
     }
-}
-
-
-std::pair<std::unique_ptr<Panel>, Label*> create_tooltip(Anchor::Type tooltip_anchor) {
-    //создаем tooltip
-    auto panel_ptr = Panel::create(sf::Color(50, 50, 50, 255), sf::Color::Black, 0);
-    Panel* panel = panel_ptr.get();
-    DEBUG_TAG(panel, "tooltip_panel")
-    Label* label = (Label*)panel->add_widget(Label::create(true)); //можем вызвать add_widget, поскольку panel пока не вмонтирован в общую иерархию
-    DEBUG_TAG(label, "tooltip_label")
-    panel->size_include(label);
-    panel->position_tooltip(tooltip_anchor);
-    panel->hit_test_policy = Widget::HitTestPolicy::Terminate;
-    return std::make_pair(std::move(panel_ptr), label);
 }

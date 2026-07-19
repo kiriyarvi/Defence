@@ -237,6 +237,8 @@ public:
     void size_fraction(Widget* source, float parent_width_fraction, float parent_height_fraction);
     //POSITION
     void position_centering(Widget* parent = nullptr);
+    void x_centering(Widget* parent = nullptr);
+    void y_centering(Widget* parent = nullptr);
     void position_tooltip(size_t ancher);
     void position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor);
     //CONTAINERS

@@ -385,6 +385,8 @@ void GameState::enemy_defeated(EnemyType type) {
     if (!achievement)
         return;
     m_building_panel->update(m_player_coins);
+    if (m_upgrade_panel)
+        m_upgrade_panel->update(m_player_coins);
 }
 
 void GameState::win() {
@@ -428,6 +430,8 @@ void GameState::player_coins_add(int coins) {
     m_player_coins_count_widget->clear();
     m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
     m_building_panel->update(m_player_coins);
+    if (m_upgrade_panel)
+        m_upgrade_panel->update(m_player_coins);
 }
 
 

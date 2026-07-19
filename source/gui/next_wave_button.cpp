@@ -1,10 +1,11 @@
 #include "gui/next_wave_button.h"
 #include "gui/label.h"
+#include "gui/tooltip.h"
 #include "enemy_manager.h"
 
 NextWaveButton::NextWaveButton() : Hoverable(this), Clickable(this, sf::Mouse::Left) {
     //inactive state
-    layers = { TextureID::UpgradeButtonBackground, TextureID::NextWaveIcon };
+    layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
     grayscale = true;
 
     on_hovered = [this](EventContext context) -> Query {
@@ -25,7 +26,7 @@ NextWaveButton::NextWaveButton() : Hoverable(this), Clickable(this, sf::Mouse::L
     };
     on_pressed = [this](EventContext context) ->Query {
         if (m_active) {
-            layers = { TextureID::UpgradeButtonBackgroundCompleted, TextureID::NextWaveIcon };
+            layers = { TextureID::ButtonClickedBackground, TextureID::NextWaveIcon };
             return Query{ Query::Workflow::PROCESSED };
         }
         else
@@ -34,7 +35,7 @@ NextWaveButton::NextWaveButton() : Hoverable(this), Clickable(this, sf::Mouse::L
     on_released = [this](EventContext context) ->Query {
         if (m_active) {
             EnemyManager::Instance().start_wave();
-            layers = { TextureID::UpgradeButtonBackground, TextureID::NextWaveIcon };
+            layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
             return Query{ Query::Workflow::PROCESSED };
         }
         else
@@ -45,11 +46,11 @@ NextWaveButton::NextWaveButton() : Hoverable(this), Clickable(this, sf::Mouse::L
 void NextWaveButton::set_active(bool active) {
     if (m_active != active) {
         if (active) {
-            layers = { TextureID::UpgradeButtonBackground, TextureID::NextWaveIcon };
+            layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
             grayscale = false;
         }
         else {
-            layers = { TextureID::UpgradeButtonBackground, TextureID::NextWaveIcon };
+            layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
             grayscale = true;
         }
     }

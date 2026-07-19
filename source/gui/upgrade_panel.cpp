@@ -17,6 +17,7 @@ UpgradeButton::UpgradeButton(
     m_level{level},
     m_upgrade_icon{upgrade_icon}
 {
+    m_state = m_upgrade->get_current_upgrate(m_building) >= m_level ? State::BOUGTH : State::UNDISCOVERED;
     set_state(m_state);
 }
 
@@ -24,7 +25,7 @@ void UpgradeButton::update(int player_coins) {
     if (m_state == State::BOUGTH)
         return;
     if (m_state == State::UNDISCOVERED) {
-        if ((m_prev_upgrade_button && m_prev_upgrade_button->get_state() == State::UNDISCOVERED) || m_upgrade->available_level < m_level)
+        if ((m_prev_upgrade_button && m_prev_upgrade_button->get_state() != State::BOUGTH) || m_upgrade->available_level < m_level)
             return; //остается UNDISCOVERED
     }
     State state = player_coins >= m_upgrade->cost(m_level) ? State::ACTIVE : State::NOT_ENOGTH_MONEY;
@@ -44,6 +45,7 @@ Query UpgradeButton::on_event(EventContext event_context) {
             if (m_state == State::ACTIVE) { //нужно проверить, пока мышь была зажата, деньги могли уменьшиться (автовостановление шипов)
                 m_upgrade->upgrade(m_building, m_level); //апгрейдим до нужного уровня.
                 set_state(State::BOUGTH);
+                GameState::Instance().player_coins_add(-m_upgrade->cost(m_level));
             }
         }
         else { //правая кнопка => выделим
@@ -74,7 +76,7 @@ void UpgradeButton::set_state(State state) {
         grayscale = true;
         break;
     case UpgradeButton::State::UNDISCOVERED:
-        layers = { TextureID::UpgradeButtonBackground, m_upgrade_icon, TextureID::Locked };
+        layers = { TextureID::UpgradeButtonBackground, m_upgrade_icon, TextureID::UPgradeLock };
         grayscale = true;
         break;
     default:
@@ -86,7 +88,7 @@ void UpgradeButton::set_capture(bool capture) {
     if (m_captured != capture) {
         m_captured = capture;
         if (m_captured) {
-            auto capture_icon = Icon::create(TextureID::ButtonCapture);
+            auto capture_icon = Icon::create(TextureID::UpgradeButtonCapture);
             m_capture_icon = capture_icon.get();
             add_widget_deffered(std::move(capture_icon));
             m_capture_icon->size_inherited(this);
@@ -130,6 +132,11 @@ void UpgradePanel::capture(UpgradeButton* button) {
     }
 }
 
+void UpgradePanel::update(int player_coins) {
+    for (UpgradeButton* up_button : m_upgrade_buttons)
+        up_button->update(player_coins);
+}
+
 Widget* UpgradePanel::create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons) {
     Widget* upgrades_panel = parent->add_widget(Widget::create());
     std::vector<Widget*> upgrade_buttons;
@@ -156,11 +163,12 @@ Widget* UpgradePanel::create_buttons_for_upgrade(Widget* parent, IBuilding* buil
 
 void UpgradePanel::visit(MiniGun& minigun) {
     auto& achievement_system = AchievementSystem::Instance();
-    Widget* upgrade_buttons_panel = add_widget(Widget::create());
+    Widget* upgrade_buttons_panel = content_widget->add_widget(Widget::create());
     Widget* penetration_upgrades_panel = create_buttons_for_upgrade(upgrade_buttons_panel, &minigun, &achievement_system.minigun_penetration_upgrade, { TextureID::MinigunShellsUpgradeI, TextureID::MinigunShellsUpgradeII, TextureID::MinigunShellsUpgradeIII });
     Widget* cooling_upgrade_panel = create_buttons_for_upgrade(upgrade_buttons_panel, &minigun, &achievement_system.minigun_cooling_upgrade, { TextureID::MinigunCoolingUpgradeI, TextureID::MinigunCoolingUpgradeI, TextureID::MinigunCoolingUpgradeI });
     Widget* lubricant_upgrade_panel = create_buttons_for_upgrade(upgrade_buttons_panel, &minigun, &achievement_system.minigun_lubricant_upgrade, { TextureID::MinigunLubricantUpgradeI, TextureID::MinigunLubricantUpgradeI, TextureID::MinigunLubricantUpgradeI });
     upgrade_buttons_panel->vbox({ penetration_upgrades_panel, cooling_upgrade_panel, lubricant_upgrade_panel });
+    
 
     content_widget->size_include(upgrade_buttons_panel);
     

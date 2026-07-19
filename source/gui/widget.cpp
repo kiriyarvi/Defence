@@ -591,6 +591,24 @@ void Widget::position_centering(Widget* parent) {
     }, { {parent, Property::SIZE}, {this, Property::SIZE} });
 }
 
+void Widget::x_centering(Widget* parent) {
+    if (parent == nullptr)
+        parent = m_parent;
+    assert(parent != nullptr && "Invalid call");
+    add_rule(Property::X, [parent](Layout& layout) {
+        layout.x = (parent->layout.width - layout.width) / 2.f;
+    }, { {parent, Property::WIDTH}, {this, Property::WIDTH} });
+}
+
+void Widget::y_centering(Widget* parent) {
+    if (parent == nullptr)
+        parent = m_parent;
+    assert(parent != nullptr && "Invalid call");
+    add_rule(Property::Y, [parent](Layout& layout) {
+        layout.y = (parent->layout.height - layout.height) / 2.f;
+    }, { {parent, Property::HEIGHT}, {this, Property::HEIGHT} });
+}
+
 /// Вычисляет позицию виджета так, как будто это tooltip
 /// виджет цепляется к позиции мыши за ancher.
 /// Вычисление позиции становится абсолютным.

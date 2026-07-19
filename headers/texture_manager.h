@@ -90,7 +90,8 @@ enum class TextureID {
     Heart,
     Slider,
     PanelsTileset,
-    ButtonCapture
+    UpgradeButtonCapture,
+    UPgradeLock
 };
 
 class TextureManager {
