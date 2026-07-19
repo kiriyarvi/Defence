@@ -15,10 +15,10 @@ public:
     void logic(double dtime) override;
     bool is_destroyed() override { return false; }
     ACCEPT(Radar)
-    BuildingUpgrade radius_upgrade;
-    BuildingUpgrade uncovering_level_upgrade;
-    BuildingUpgrade uncovering_speed_upgrade;
-    BuildingUpgrade long_distance_communication_upgrade;
+    int radius_upgrade;
+    int uncovering_level_upgrade;
+    int uncovering_speed_upgrade;
+    int long_distance_communication_upgrade;
     bool m_part_of_net = false;
     virtual ~Radar();
 private:

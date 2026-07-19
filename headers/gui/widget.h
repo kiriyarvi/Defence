@@ -36,7 +36,7 @@ struct Query {
     static const size_t PERFORM_DEFFERED = 0b01; //< выполнить все отложенные запросы (удаление/добавление виджетов/подписок), при этом workflow обязательно должен быть =REPEAT.
     static const size_t CALC_LAYOUT = 0b10; //< пересчитать layout
     bool pure_pass() { return workflow == Workflow::PASS && query == 0; }
-    static Query ignore(bool from_subscribe);
+    static Query skip(bool from_subscribe);
 };
 
 class WidgetIterator;
@@ -260,6 +260,7 @@ public:
 
     Widget* add_widget(std::unique_ptr<Widget>&& child);
     void delete_widget(Widget* widget, RemovePolicy policy);
+    void delete_all_widgets(RemovePolicy policy);
     void add_widget_deffered(std::unique_ptr<Widget>&& child);
     void delete_widget_deffered(Widget* widget, RemovePolicy policy);
     Widget* get_root();
@@ -282,7 +283,7 @@ public:
         Block,
         //Сразу вернет false
         Terminate
-    } hit_test_policy;
+    } hit_test_policy = HitTestPolicy::Normal;
 
     bool hit_test(std::list<HitListNode>& hit_list, glm::uvec2 mouse_pos);
     struct EventContext {

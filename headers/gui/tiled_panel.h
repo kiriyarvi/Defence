@@ -10,7 +10,7 @@ public:
     TiledPanel(Type type, Widget* tile_size_reference);
     void draw(const glm::vec2& position_transform, sf::RenderTarget& window);
     Widget* content_widget;
-private:
+protected:
     Type m_type;
     sf::Sprite m_tile;
     Widget* m_tile_size_reference;

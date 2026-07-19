@@ -7,7 +7,7 @@
     #include <unordered_set>
 #endif
 
-Query Query::ignore(bool from_subscribe){
+Query Query::skip(bool from_subscribe){
     if (from_subscribe)
         return Query{ Query::PASS };
     else
@@ -738,6 +738,13 @@ void Widget::delete_widget(Widget* widget, RemovePolicy policy) {
             m_children.erase(it);
             return;
         }
+    }
+}
+
+void Widget::delete_all_widgets(RemovePolicy policy) {
+    for (auto it = m_children.begin(); it != m_children.end();) {
+        it->get()->remove(policy);
+        it = m_children.erase(it);
     }
 }
 

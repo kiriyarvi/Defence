@@ -9,7 +9,7 @@
 #include "debugger.h"
 #include "net_manager.h"
 
-#if 0
+#if 1
 
 int main() {
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);

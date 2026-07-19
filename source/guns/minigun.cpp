@@ -35,27 +35,6 @@ MiniGun::MiniGun(int x_id, int y_id):  IRotatingGun(x_id, y_id), m_params(Params
 	m_belt_chain->layer = 1;
     m_belt_chain->shader = &ShaderManager::Instance().shaders[Shader::Scroll];
 
-    m_penetration_upgrade.on_changed = [this]() {
-        auto& sprite = m_belt_chain->sprite;
-        sprite.setTexture(TextureManager::Instance().textures[TextureID::MinigunShells]);
-        if (m_penetration_upgrade == 1) {
-            sprite.setTextureRect(sf::IntRect(0, 12, 26, 36));
-            sprite.setScale(3 / 26., 8. / 48.);
-            m_shell_size_coeff = 12.f / 128.f;
-        }
-        else if (m_penetration_upgrade == 2) {
-            sprite.setTextureRect(sf::IntRect(26, 12, 24, 36));
-            sprite.setScale(3 / 24.f, 8. / 48.);
-            m_shell_size_coeff = 12.f / 128.f;
-        }
-        else if (m_penetration_upgrade == 3) {
-            sprite.setTextureRect(sf::IntRect(0, 48 + 14, 26, 42));
-            sprite.setScale(3 / 26.f, 8. / 55.f);
-            m_shell_size_coeff = 14.f / 128.f;
-        }
-    };
-
-
 	m_steam_framer = std::make_unique<SteamFramer>();
 	m_overheat_animation.set_duration(0.5);
 	m_overheat_animation.add_framer(m_steam_framer);
@@ -137,6 +116,35 @@ void MiniGun::on_gun_pointed() {
 void MiniGun::on_gun_unpointed() {
 	if (m_state != State::CoolDown)
 		m_state = State::Cooling;
+}
+
+void MiniGun::upgrade_penetration(int level) {
+    m_penetration_upgrade = level;
+    auto& sprite = m_belt_chain->sprite;
+    sprite.setTexture(TextureManager::Instance().textures[TextureID::MinigunShells]);
+    if (m_penetration_upgrade == 1) {
+        sprite.setTextureRect(sf::IntRect(0, 12, 26, 36));
+        sprite.setScale(3 / 26., 8. / 48.);
+        m_shell_size_coeff = 12.f / 128.f;
+    }
+    else if (m_penetration_upgrade == 2) {
+        sprite.setTextureRect(sf::IntRect(26, 12, 24, 36));
+        sprite.setScale(3 / 24.f, 8. / 48.);
+        m_shell_size_coeff = 12.f / 128.f;
+    }
+    else if (m_penetration_upgrade == 3) {
+        sprite.setTextureRect(sf::IntRect(0, 48 + 14, 26, 42));
+        sprite.setScale(3 / 26.f, 8. / 55.f);
+        m_shell_size_coeff = 14.f / 128.f;
+    }
+}
+
+void MiniGun::upgrade_cooling(int level) {
+    m_cooling_upgrade = level;
+}
+
+void MiniGun::upgrade_lubricant(int level) {
+    m_lubricant_upgrade = level;
 }
 
 void MiniGun::drum_animation() {

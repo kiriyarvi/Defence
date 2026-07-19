@@ -114,4 +114,6 @@ TextureManager::TextureManager() {
     textures[TextureID::Slider].loadFromFile("sprites/slider.png");
 
     textures[TextureID::PanelsTileset].loadFromFile("tiles/paper.png");
+
+    textures[TextureID::ButtonCapture].loadFromFile("sprites/button_capture.png");
 }

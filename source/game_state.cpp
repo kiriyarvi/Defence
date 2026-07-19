@@ -79,6 +79,18 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
         layout.width = speed_controller->layout.x;
     }, { {speed_controller, Property::X} });
 
+    //m_tile_size_reference (испольщуется для тайловых виджетов)
+    m_tile_size_reference = m_game_process_ui->add_widget(Widget::create());
+    m_tile_size_reference->add_rule(Property::SIZE, [ui = m_game_process_ui](Widget::Layout& layout) {
+        layout.width = ui->layout.width * 0.05;
+        layout.height = ui->layout.width * 0.05;
+    }, { { m_game_process_ui, Property::HEIGHT } } );
+    //m_upgrade_panel_height_reference (вспомогательный виджет для панели апгрейдов), вычисляет высоту панели апгрейдов
+    m_upgrade_panel_height_reference = m_game_process_ui->add_widget(Widget::create());
+    m_upgrade_panel_height_reference->add_rule(Property::SIZE, [hc = m_player_health_count_widget, bp = m_building_panel, ui = m_game_process_ui](Widget::Layout& layout) {
+        layout.height = ui->layout.height - hc->layout.height - bp->layout.height;
+    }, { { m_player_health_count_widget, Property::HEIGHT }, {m_building_panel, Property::HEIGHT}, {m_game_process_ui, Property::HEIGHT} });
+
 
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" }; //TODO
     PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };//TODO
@@ -121,20 +133,6 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 	});
     m_ui->add(bottom_panel_group, "BottomPanelGroup");
 
-
-    m_panel = tgui::Panel::create();
-    m_panel->setTextSize(30);
-    m_panel->setVisible(false);
-    auto tooltip_renderer = m_panel->getRenderer();
-    tooltip_renderer->setBackgroundColor(tgui::Color::Color(50, 50, 50, 200));
-    tooltip_renderer->setBorders(3);
-    tooltip_renderer->setBorderColor(tgui::Color::Black);
-    tooltip_renderer->setFont(GOSTtypeA_font);
-    m_panel->setPosition("100%", "HealthCountWidget.height");
-    m_panel->setOrigin(1., 0);
-    m_panel->setSize("25%", "80%");
-
-    m_ui->add(m_panel);
     m_gui.add(m_ui);
 
     m_help.get_content()->getRenderer()->setFont(GOSTtypeA_font);
@@ -251,7 +249,7 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
             else if (event.key.code == sf::Keyboard::Key::Q) {
                 m_is_preparing = false;
                 EnemyManager::Instance().generate_waves();
-                init_stage(0);
+                init_stage(1);
             }
         }
     }
@@ -293,16 +291,23 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
                 size_t N = TileMap::Instance().map.size();
                 bool on_map = cell_id.x < N && cell_id.x >= 0 && cell_id.y < N && cell_id.y >= 0;
                 if (!on_map) {
-                    set_panel_content(nullptr);
+                    m_game_process_ui->delete_widget(m_upgrade_panel, Widget::RemovePolicy::Min);
+                    m_upgrade_panel = nullptr;
                     return false;
                 }
                 auto& cell = TileMap::Instance().map[cell_id.x][cell_id.y];
                 if (!cell.building) {
-                    set_panel_content(nullptr);
+                    m_game_process_ui->delete_widget(m_upgrade_panel, Widget::RemovePolicy::Min);
+                    m_upgrade_panel = nullptr;
                     return false;
                 }
-                cell.building->accept(m_upgrade_panel_creator);
-                set_panel_content(m_upgrade_panel_creator.panel);
+                if (m_upgrade_panel) {
+                    m_game_process_ui->delete_widget(m_upgrade_panel, Widget::RemovePolicy::Min);
+                    m_upgrade_panel = nullptr;
+                }
+                m_upgrade_panel = (UpgradePanel*)m_game_process_ui->add_widget(std::make_unique<UpgradePanel>(m_tile_size_reference, m_upgrade_panel_height_reference));
+                m_upgrade_panel->position_anchor(Anchor::RIGHT | Anchor::TOP, m_player_health_count_widget, Anchor::RIGHT | Anchor::BOTTOM);
+                cell.building->accept(*m_upgrade_panel);
             }
 			return true;
 		}
@@ -403,23 +408,6 @@ void GameState::init_stage(int stage) {
     else {
         player_coins_add(1000000);
         AchievementSystem::Instance().unlock_all();
-        enemy_defeated(EnemyType::CruiserI);
-    }
-}
-
-void GameState::update_upgrade_panel() {
-    m_upgrade_panel_creator.update();
-}
-
-void GameState::set_panel_content(tgui::Widget::Ptr content) {
-    m_panel->removeAllWidgets();
-    //m_upgrade_panel_creator.reset();
-    if (content) {
-        m_panel->add(content);
-        m_panel->setVisible(true);
-    }
-    else {
-        m_panel->setVisible(false);
     }
 }
 

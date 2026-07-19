@@ -94,7 +94,7 @@ Query ScrollIndicator::on_event(EventContext context) {
         GUI::Instance().unsubscribe_deffered(this, Event::MOUSE_MOVED | Event::BUTTON_RELEASED);
         return Query{ Query::PROCESSED };
     }
-    return Query::ignore(context.from_subscribe);
+    return Query::skip(context.from_subscribe);
 }
 
 void ScrollIndicator::set_scroll(float scroll) {

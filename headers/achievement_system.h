@@ -1,55 +1,172 @@
 #pragma once
 #include "tile_map.h"
 #include "enemies/IEnemy.h"
+#include "guns/minigun.h"
 #include <functional>
 #include <unordered_map>
+#include <vector>
 
-class BuildingUpgrade {
+
+struct IStringifier {
 public:
-    BuildingUpgrade& operator=(int value) {
-        level = value;
-        if (on_changed)
-            on_changed();
-        return *this;
-    }
-    operator int() {
-        return level;
-    }
-    std::function<void()> on_changed;
-private:
-    int level = 0;
+    struct Comparation {
+        std::string prop;
+        std::string current_value;
+        std::string goal_value;
+    };
+
+    virtual Comparation compare(const std::string& prop, float current, float goal) = 0;
+    virtual Comparation compare(const std::string& prop, int current, int goal) = 0;
+    virtual ~IStringifier() = default;
 };
 
-struct ICondition {
-    virtual std::string get_description() = 0;
-    virtual bool defeated(EnemyType enemy_type) = 0;
-};
-
-using Condition = std::unique_ptr<ICondition>;
-
-class EnemyDefeatedCondition: public ICondition {
-public:
-    EnemyDefeatedCondition(EnemyType type);
-    std::string get_description() override;
-    bool defeated(EnemyType enemy_type)override;
-private:
-    EnemyType m_type;
-};
 
 struct Upgrade {
-    Upgrade(const std::string& name, BuildingType building_type, int* upgrade_variable, int goal_value):
-        name{ name }, upgrade_variable{ upgrade_variable }, goal_value{ goal_value } {}
+    Upgrade() = default;
     std::string name;
-    BuildingType building_type;
-    int* upgrade_variable;
-    int goal_value;
+    std::string general_description;
+    int max_level;
+    int available_level = 0;
+    std::unordered_map<EnemyType, int> upgrade_conditions; //< TODO это можно читать из json.
+    virtual void upgrade(IBuilding* building, int goal) = 0;
+    virtual std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) = 0;
+    std::string get_unlock_condition_description(int goal);
+    virtual int cost(int level) = 0;
+    bool on_event(EnemyType defeated_enemy);
 };
 
-struct Achievement {
-    Condition condition;
-    std::vector<BuildingType> unlocked_buildings;
-    std::vector<Upgrade> upgrades;
+
+
+struct MinigunPenetrationUpgrade : public Upgrade {
+    MinigunPenetrationUpgrade() {
+        name = "Бронебойные снаряды";
+        general_description = "Пулемет получит снаряды повышенной бронепробиваемости.";
+        auto& params = ParamsManager::Instance().params.guns.minigun;
+        max_level = params.penetration_upgrades.size() - 1;
+        upgrade_conditions = {
+            { EnemyType::Pickup, 1 }
+        };
+    }
+ 
+    void upgrade(IBuilding* building, int goal) override {
+        MiniGun* minigun = static_cast<MiniGun*>(building);
+        minigun->upgrade_penetration(goal);
+    }
+
+    std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) override {
+        auto& params = ParamsManager::Instance().params.guns.minigun;
+        MiniGun* minigun = static_cast<MiniGun*>(building);
+        std::vector<IStringifier::Comparation> out;
+        out.push_back(stringifier->compare(
+            "бронепробиваемость при минимальном нагреве",
+            params.penetration_upgrades[goal - 1].min_armor_penetration_level,
+            params.penetration_upgrades[goal].min_armor_penetration_level
+        ));
+        out.push_back(stringifier->compare(
+            "бронепробиваемость при максимальной нагреве",
+            params.penetration_upgrades[goal - 1].max_armor_penetration_level,
+            params.penetration_upgrades[goal].max_armor_penetration_level
+        ));
+        out.push_back(stringifier->compare(
+            "минимальный урон",
+            params.penetration_upgrades[goal - 1].min_damage,
+            params.penetration_upgrades[goal].min_damage
+        ));
+        out.push_back(stringifier->compare(
+            "максимальный урон",
+            params.penetration_upgrades[goal - 1].max_damage,
+            params.penetration_upgrades[goal].max_damage
+        ));
+        return out;
+    }
+
+    int cost(int level) override {
+        auto& params = ParamsManager::Instance().params.guns.minigun;
+        return params.penetration_upgrades[level].cost;
+    }
 };
+
+
+struct MinigunCoolingUpgrade : public Upgrade {
+    MinigunCoolingUpgrade() {
+        name = "Система охлаждения";
+        general_description = "Пулемет получит улучшенную систему охлаждения, продливающую время работы при критическом нагреве, а также увеличивающую скорость охлаждения.";
+        auto& params = ParamsManager::Instance().params.guns.minigun;
+        max_level = params.cooling_upgrades.size() - 1;
+        upgrade_conditions = {
+            { EnemyType::CruiserI, 1 }
+        };
+    }
+
+    void upgrade(IBuilding* building, int goal) override {
+        MiniGun* minigun = static_cast<MiniGun*>(building);
+        minigun->upgrade_cooling(goal);
+    }
+
+    std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) override {
+        auto& params = ParamsManager::Instance().params.guns.minigun;
+        MiniGun* minigun = static_cast<MiniGun*>(building);
+        std::vector<IStringifier::Comparation> out;
+        out.push_back(stringifier->compare(
+            "время работы при критическом перегреве",
+            params.cooling_upgrades[goal - 1].critical_temperature_work_duration,
+            params.cooling_upgrades[goal].critical_temperature_work_duration
+        ));
+        out.push_back(stringifier->compare(
+            "время полного охлаждения",
+            params.cooling_upgrades[goal - 1].cooling_time,
+            params.cooling_upgrades[goal].cooling_time
+        ));
+        out.push_back(stringifier->compare(
+            "время на охлаждение после перегрева",
+            params.cooling_upgrades[goal - 1].cooldown_duration,
+            params.cooling_upgrades[goal].cooldown_duration
+        ));
+        return out;
+    }
+
+    int cost(int level) override {
+        auto& params = ParamsManager::Instance().params.guns.minigun;
+        return params.cooling_upgrades[level].cost;
+    }
+};
+
+struct MinigunLubricantUpgrade : public Upgrade {
+    MinigunLubricantUpgrade() {
+        name = "Смазка";
+        general_description = "Пулемет получит улучшенную смачную систему, что позволит ему набирать максимальную скорость вращения барабана быстрее. При этом соответсвие скорости и нагрева останется прежним.";
+        auto& params = ParamsManager::Instance().params.guns.minigun;
+        max_level = params.lubricant_upgrades.size() - 1;
+        upgrade_conditions = {
+            { EnemyType::CruiserI, 1 }
+        };
+    }
+
+    void upgrade(IBuilding* building, int goal) override {
+        MiniGun* minigun = static_cast<MiniGun*>(building);
+        minigun->upgrade_lubricant(goal);
+    }
+
+    std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) override {
+        auto& params = ParamsManager::Instance().params.guns.minigun;
+        MiniGun* minigun = static_cast<MiniGun*>(building);
+        std::vector<IStringifier::Comparation> out;
+        out.push_back(stringifier->compare(
+            "Время нагрева до максимальной температуры",
+            params.lubricant_upgrades[goal - 1].heating_time,
+            params.lubricant_upgrades[goal].heating_time
+        ));
+        return out;
+    }
+
+    int cost(int level) override {
+        auto& params = ParamsManager::Instance().params.guns.minigun;
+        return params.lubricant_upgrades[level].cost;
+    }
+};
+
+
+
 
 class AchievementSystem {
 public:
@@ -64,32 +181,25 @@ public:
     AchievementSystem& operator=(const AchievementSystem&) = delete;
     AchievementSystem(AchievementSystem&&) = delete;
     AchievementSystem& operator=(AchievementSystem&&) = delete;
+
     bool defeated(EnemyType enemy_type);
     bool is_unlocked(BuildingType type);
     std::string get_building_unlock_condition_description(BuildingType type);
-    std::string get_upgrade_unlock_condition_description(int* var, int goal_value);
 
-    static struct MinigunUpgrades {
-        int penetration_upgrade = 0;
-        int cooling_upgrade = 0;
-        int lubricant_update = 0;
-        static Upgrade create_penetration_upgrade(int n);
-        static Upgrade create_lubricant_upgrade(int n);
-        static Upgrade create_cooling_upgrade(int n);
-    } minigun_upgrades;
-
-    struct RadarUpgrades {
-        int radius_upgrades = 0;
-        int uncovering_level_upgrades = 0;
-        int uncovering_speed_upgrades = 0;
-        int long_distance_communication_upgrade = 0;
-    } radar_upgrades;
-
+    //Minigun upgrades
+    MinigunPenetrationUpgrade minigun_penetration_upgrade;
+    MinigunCoolingUpgrade minigun_cooling_upgrade;
+    MinigunLubricantUpgrade minigun_lubricant_upgrade;
+    ////Radar upgrades
+    //int radar_radius_upgrades = 0;
+    //int radar_uncovering_level_upgrades = 0;
+    //int radar_uncovering_speed_upgrades = 0;
+    //int radar_long_distance_communication_upgrade = 0;
 
     void unlock_all();
 private:
     AchievementSystem();
-    std::list<Achievement> m_achievements;
-private:
     std::unordered_map<BuildingType, bool> m_unlocked_buildings;
+    std::unordered_map<EnemyType, std::vector<BuildingType>> m_building_unlock_achievements;
+    std::vector<Upgrade*> m_upgrades;
 };

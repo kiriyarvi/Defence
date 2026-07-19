@@ -11,6 +11,7 @@
 #include "gui/widget.h"
 #include "gui/label.h"
 #include "gui/next_wave_button.h"
+#include "utils/animation.h"
 
 #include <list>
 
@@ -39,13 +40,11 @@ public:
     int get_player_coins() const { return m_player_coins; }
     void enemy_defeated(EnemyType type);
     void win();
-    void set_panel_content(tgui::Widget::Ptr content);
     void display_help(bool help);
     bool is_help_displayed() {
         return m_is_help_displayed;
     }
     void init_stage(int stage);
-    void update_upgrade_panel();
     void set_tooltip_content(const std::string& content, sf::Vector2f origin = {0.,1.});
     void set_wave_info(const std::string& wave);
     sf::Window& window;
@@ -85,6 +84,9 @@ private:
     BuildingPanel* m_building_panel;
     NextWaveButton* m_next_wave_button;
     float m_time_multiplier = 1.f;
+    UpgradePanel* m_upgrade_panel = nullptr;
+    Widget* m_tile_size_reference;
+    Widget* m_upgrade_panel_height_reference;
 
 	tgui::Gui m_gui;
     tgui::Group::Ptr m_ui;
@@ -98,8 +100,6 @@ private:
 	tgui::Label::Ptr m_centered_message; // сообщение по центру
 	sf::Vector2f m_mouse_pos;
     tgui::RichTextLabel::Ptr m_mouse_tooltip;
-    UpgradePanelCreator m_upgrade_panel_creator;
-    tgui::Panel::Ptr m_panel = nullptr;
     std::vector<Enter> m_enters;
     Enter* m_showed_enter = nullptr;
     struct Message {

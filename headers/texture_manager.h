@@ -89,7 +89,8 @@ enum class TextureID {
     Coin,
     Heart,
     Slider,
-    PanelsTileset
+    PanelsTileset,
+    ButtonCapture
 };
 
 class TextureManager {

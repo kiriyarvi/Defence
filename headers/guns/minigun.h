@@ -3,7 +3,6 @@
 #include "utils/animation.h"
 #include "utils/sprite_chain.h"
 #include "params_manager.h"
-#include "achievement_system.h"
 
 class MiniGun : public IRotatingGun {
 	friend class GameState;
@@ -15,10 +14,13 @@ public:
 	void shoot_logic(IEnemy& enemy) override;
 	void on_gun_pointed() override;
 	void on_gun_unpointed() override;
+    void upgrade_penetration(int level);
+    void upgrade_cooling(int level);
+    void upgrade_lubricant(int level);
     ACCEPT(Minigun)
-    BuildingUpgrade m_penetration_upgrade;
-    BuildingUpgrade m_cooling_upgrade;
-    BuildingUpgrade m_lubricant_upgrade;
+    int m_penetration_upgrade = 0;
+    int m_cooling_upgrade = 0;
+    int m_lubricant_upgrade = 0;
 private:
 	void temperature_logic(double dtime_microseconds);
 	void drum_animation();
