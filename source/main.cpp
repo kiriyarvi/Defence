@@ -104,40 +104,50 @@ int main() {
     Widget* root = GUI::Instance().get_root();
     DEBUG_TAG(root, "root");
 
-    ScrollIndicatorGroove* groove_horisontal = (ScrollIndicatorGroove*)root->add_widget(std::make_unique<ScrollIndicatorGroove>(Direction::HORISONTAL, ScrollIndicatorType::Paper));
-    DEBUG_TAG(groove_horisontal, "groove_horisontal");
-    groove_horisontal->add_rule(Property::WIDTH, [root](Widget::Layout& layout) {
-        layout.width = root->layout.width - layout.height;
-    }, { { root, Property::WIDTH }, { groove_horisontal , Property::HEIGHT } });
-    groove_horisontal->property_equal(Property::HEIGHT, false, root, Property::HEIGHT, true, modifiers::Multiply(0.05));
-    groove_horisontal->position_anchor(Anchor::BOTTOM | Anchor::RIGHT, root, Anchor::BOTTOM | Anchor::RIGHT);
-
-    ScrollIndicatorGroove* groove_vertical = (ScrollIndicatorGroove*)root->add_widget(std::make_unique<ScrollIndicatorGroove>(Direction::VERTICAL, ScrollIndicatorType::BluePrint));
-    DEBUG_TAG(groove_vertical, "groove_vertical");
-    groove_vertical->add_rule(Property::HEIGHT, [root](Widget::Layout& layout) {
-        layout.height = root->layout.height - layout.width;
-    }, { { root, Property::HEIGHT }, { groove_vertical , Property::WIDTH } });
-    groove_vertical->property_equal(Property::WIDTH, false, root, Property::HEIGHT, true, modifiers::Multiply(0.05));
+  
 
     Widget* tile_size = root->add_widget(Widget::create());
     tile_size->property_equal(Property::HEIGHT, false, root, Property::HEIGHT, false, modifiers::Multiply(0.05));
     tile_size->property_equal(Property::WIDTH, false, root, Property::HEIGHT, false, modifiers::Multiply(0.05));
 
-    TiledPanel* tiled_panel = (TiledPanel*)root->add_widget(std::make_unique<TiledPanel>(TiledPanel::Type::Blueprint, tile_size));
-    DEBUG_TAG(tiled_panel, "tiled_panel")
-    Panel* panel = (Panel*)tiled_panel->content_widget->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Transparent));
-    DEBUG_TAG(panel, "panel")
-    Label* label = (Label*)panel->add_widget(Label::create());
-    DEBUG_TAG(label, "label")
-    label->add_text("This is the example of TiledPanel with paper stile, you can check that all sizes are computed correctly and ensure this just seing the source code.", sf::Color::Black);
-    label->add_text("This is the example of TiledPanel with paper stile, you can check that all sizes are computed correctly and ensure this just seing the source code.", sf::Color::Black);
-    label->add_text("This is the example of TiledPanel with paper stile, you can check that all sizes are computed correctly and ensure this just seing the source code.", sf::Color::White);
-
+    //HIERARCHY
+    //Tiled panel
+    TiledPanel* tiled_panel = (TiledPanel*)root->add_widget(std::make_unique<TiledPanel>(TiledPanel::Type::Paper, tile_size));
+    DEBUG_TAG(tiled_panel, "tiled_panel");
+        //Content widget
+        Widget* tiled_panel_content_widget = tiled_panel->content_widget;
+        DEBUG_TAG(tiled_panel_content_widget, "tiled_panel_content_widget");
+            //vertical groove
+            ScrollIndicatorGroove* groove_vertical = (ScrollIndicatorGroove*)tiled_panel_content_widget->add_widget(std::make_unique<ScrollIndicatorGroove>(Direction::VERTICAL, ScrollIndicatorType::Paper));
+            DEBUG_TAG(groove_vertical, "groove_vertical");
+            groove_vertical->property_equal(Property::WIDTH, false, root, Property::HEIGHT, true, modifiers::Multiply(0.05));
+            //scrollable_panel, groove_vertical controls scroll
+            ScrollablePanel* scrollable_panel = (ScrollablePanel*)tiled_panel_content_widget->add_widget(std::make_unique<ScrollablePanel>(Direction::VERTICAL, groove_vertical));
+            DEBUG_TAG(scrollable_panel, "scrollable_panel");
+                //scrollable panel content
+                Widget* scrollable_panel_content = scrollable_panel->content_widget;
+                DEBUG_TAG(scrollable_panel_content, "scrollable_panel_content");
+                    //Panel
+                    Panel* panel = (Panel*)scrollable_panel_content->add_widget(Panel::create(sf::Color::Transparent, sf::Color(56, 42, 28)));
+                    DEBUG_TAG(panel, "panel")
+                        //Label on panel
+                        Label* label = (Label*)panel->add_widget(Label::create());
+                        DEBUG_TAG(label, "label")
+                        for (size_t i = 0; i < 10; ++i)
+                            label->add_text("This is the example of TiledPanel with paper style, you can check that all sizes are computed correctly and ensure this just seing the source code.", sf::Color(56, 42, 28));
+    //LAYOUT
     label->property_from_content(panel, Property::WIDTH);
-    panel->property_from_content(tiled_panel->content_widget, Property::WIDTH);
     panel->property_content_from(label, Property::HEIGHT);
-    tiled_panel->content_widget->property_content_from(panel, Property::HEIGHT);
-    tiled_panel->content_widget->property_equal(Property::WIDTH, false, root, Property::WIDTH, false, modifiers::Multiply(0.5));
+    panel->property_equal(Property::WIDTH, false, root, Property::WIDTH, false, modifiers::Multiply(0.5));
+
+    scrollable_panel_content->size_include(panel);
+
+    scrollable_panel->property_equal(Property::HEIGHT, false, root, Property::HEIGHT, false, modifiers::Multiply(0.5));
+    scrollable_panel->property_content_from(scrollable_panel_content, Property::WIDTH);
+
+    groove_vertical->property_equal(Property::HEIGHT, false, scrollable_panel, Property::HEIGHT, false, {});
+    groove_vertical->property_equal(Property::WIDTH, false, scrollable_panel, Property::HEIGHT, false, modifiers::Multiply(0.05));
+    tiled_panel_content_widget->hbox({ scrollable_panel , groove_vertical });
     tiled_panel->position_centering();
 
     sf::Clock clock;

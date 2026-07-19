@@ -3,6 +3,7 @@
 
 Blocker::Blocker() {
     hit_test_policy = HitTestPolicy::Block;
+    m_texture.setSmooth(false);
 }
 
 void Blocker::draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderTarget& window) {
@@ -10,16 +11,15 @@ void Blocker::draw_hierarchy(int frame, const glm::vec2& position_transform, sf:
     glm::vec2 transform = position_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
 
     auto content_rect = layout.get_content_rect();
-    if (m_texture.getSize().x != content_rect.width || m_texture.getSize().y != content_rect.height)
+    if (m_texture.getSize().x != (int)content_rect.width || m_texture.getSize().y != (int)content_rect.height)
         m_texture.create(content_rect.width, content_rect.height);
     m_texture.clear(sf::Color::Transparent);
     for (auto& child : m_children) {
         child->draw_hierarchy(frame, child->layout.absolute ? (-transform) : glm::vec2(0.f, 0.f), m_texture);
     }
     m_texture.display();
-    m_children_sprite.setTexture(m_texture.getTexture());
-    m_children_sprite.setPosition(transform.x, transform.y);
-    m_children_sprite.setScale(content_rect.width / m_texture.getSize().x, content_rect.height / m_texture.getSize().y);
+    m_children_sprite.setTexture(m_texture.getTexture(), true);
+    m_children_sprite.setPosition((int)transform.x, (int)transform.y);
     window.draw(m_children_sprite);
 }
 
@@ -72,6 +72,8 @@ void ScrollIndicator::compute_scroll_by_mouse_pos() {
         float x_rel_to_groove = mouse_pos.x - m_capture_offset - groove_rect.left;
         m_scroll = std::clamp(x_rel_to_groove / (groove_rect.width - layout.width), 0.f, 1.f);
     }
+    if (m_on_scroll_changed)
+        m_on_scroll_changed(m_scroll);
     m_scroll_invalidated = false;
 }
 
@@ -97,9 +99,10 @@ Query ScrollIndicator::on_event(EventContext context) {
 
 void ScrollIndicator::set_scroll(float scroll) {
     m_scroll = scroll;
+    if (m_on_scroll_changed)
+        m_on_scroll_changed(m_scroll);
     m_scroll_invalidated = false;
     invalidate(Property::POSITION);
-
 }
 
 void ScrollIndicator::request_to_calc_my_mouse_pos() {
@@ -188,6 +191,39 @@ Query ScrollIndicatorGroove::on_event(EventContext context) {
     if (context.event_type == Event::BUTTON_PRESSED && GUI::Instance().mouse_button == sf::Mouse::Left) {
         m_indicator->request_to_calc_my_mouse_pos();
         return Query{ Query::PROCESSED };
+    }
+    return Query{};
+}
+
+
+ScrollablePanel::ScrollablePanel(Direction direction, ScrollIndicatorGroove* associated_groove):
+    m_direction(direction), m_associated_groove(associated_groove)
+{
+    content_widget = add_widget(Widget::create());
+    m_axis_size_prop_member = m_direction == Direction::VERTICAL ? &Layout::height : &Layout::width;
+    m_axis_size_prop = m_direction == Direction::VERTICAL ? Property::HEIGHT : Property::WIDTH;
+    m_axis_coord_prop_member = m_direction == Direction::VERTICAL ? &Layout::y : &Layout::x;
+    m_axis_coord_prop = m_direction == Direction::VERTICAL ? Property::Y : Property::X;
+
+    content_widget->add_rule(m_axis_coord_prop, [this](Layout& layout) {
+        m_cached_this_size_prop = this->layout.*m_axis_size_prop_member;
+        m_cached_content_size_prop = layout.*m_axis_size_prop_member;
+        layout.*m_axis_coord_prop_member = m_scroll * (m_cached_this_size_prop - m_cached_content_size_prop);
+    }, { { content_widget, m_axis_size_prop }, {this, m_axis_size_prop} });
+
+
+    associated_groove->get_indicator()->set_on_scroll_changed([this](float scroll) {
+        m_scroll = scroll;
+        content_widget->invalidate(m_axis_coord_prop);
+    });
+}
+
+Query ScrollablePanel::on_event(EventContext event_context) {
+    if (event_context.event_type == Event::WHEEL_SCROLLED) {
+        m_scroll -= 0.1 * (m_cached_this_size_prop / m_cached_content_size_prop) * GUI::Instance().wheel_delta;
+        m_scroll = std::clamp<float>(m_scroll, 0.0, 1.f);
+        m_associated_groove->get_indicator()->set_scroll(m_scroll);
+        return Query{Query::PROCESSED};
     }
     return Query{};
 }

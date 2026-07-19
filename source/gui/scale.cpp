@@ -141,6 +141,6 @@ Query ScaleSlider::on_event(Widget::EventContext event_context) {
 
 void ScaleSlider::draw(const glm::vec2& position_transform, sf::RenderTarget& window) {
     m_slider.setScale({ layout.width / 5.f, layout.height / 14.f });
-    m_slider.setPosition(position_transform.x + layout.x, position_transform.y + layout.y);
+    m_slider.setPosition(static_cast<int>(position_transform.x + layout.x), position_transform.y + layout.y);
     window.draw(m_slider);
 }

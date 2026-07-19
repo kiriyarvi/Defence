@@ -122,7 +122,8 @@ bool GUI::event(const sf::Event& event) {
     bool valid_event =
         (event.type == sf::Event::MouseMoved ||
             event.type == sf::Event::MouseButtonPressed ||
-            event.type == sf::Event::MouseButtonReleased);
+            event.type == sf::Event::MouseButtonReleased ||
+            event.type == sf::Event::MouseWheelScrolled);
     if (!valid_event)
         return false;
     //1. Заполним переменные контекста
@@ -427,6 +428,11 @@ void Widget::calc_properties(Property::Type property) {
             }
         }
     }
+    //Experimental (use integer coords to prevent artefacts)
+    for (auto& [prop, member] : Layout::s_property_map) {
+        if (prop & property)
+            (layout.*member) = std::round((layout.*member));
+    }
     //для некоторых свойств не нашлось правил для их вычисления => применяем правила по умолчанию
     Property::Type required = layout.m_invalidated_props & property;
     if (required != 0) {
@@ -456,11 +462,14 @@ void Widget::calc_layout() {
 void Widget::invalidate(Property::Type property) {
     if ((layout.m_invalidated_props & property) == property)
         return; //уже инвалидировано
-    layout.invalidate(property);
+    Property::Type old_invalidated = layout.m_invalidated_props;
+    layout.invalidate(property); //инвалидируем
     for (auto& [prop, member] : Layout::s_property_map) {
-        for (auto& dependent : (layout.*member).dependents) {
-            //у зависимого нужно инвалидировать те свойства, которые вычисляются по member. Они как раз указаны в dependent.output.
-            dependent.widget->invalidate(dependent.output);
+        if (prop & property & (~old_invalidated)) { //свойство пересекается с теми, которые просят инвализировать и пересекается с теми, которые еще не инвалидированы
+            for (auto& dependent : (layout.*member).dependents) {
+                //у зависимого нужно инвалидировать те свойства, которые вычисляются по member. Они как раз указаны в dependent.output.
+                dependent.widget->invalidate(dependent.output);
+            }
         }
     }
 }
@@ -646,6 +655,35 @@ void Widget::vbox(const std::vector<Widget*>& elements) {
         layout.width = width;
     }, width_dependencies);
 }
+
+void Widget::hbox(const std::vector<Widget*>& elements) {
+    for (size_t i = 1; i < elements.size(); ++i) {
+        elements[i]->add_rule(Property::POSITION, [prev = elements[i - 1]](Layout& layout) {
+            layout.x = prev->layout.x + prev->layout.width;
+            layout.y = prev->layout.y;
+        }, { { elements[i - 1], Property::POSITION | Property::WIDTH } });
+    }
+
+    std::vector<Dependency> height_dependencies(elements.size());
+    std::vector<Dependency> width_dependencies(elements.size());
+    for (size_t i = 0; i < elements.size(); ++i) {
+        height_dependencies[i] = { elements[i], Property::HEIGHT };
+        width_dependencies[i] = { elements[i], Property::WIDTH };
+    }
+
+    add_rule(Property::HEIGHT, [elements](Layout& layout) {
+        float height = 0.0;
+        for (auto& e : elements) height = std::max(height, static_cast<float>(e->layout.height));
+        layout.height = height;
+    }, height_dependencies);
+
+    add_rule(Property::WIDTH, [elements](Layout& layout) {
+        float width = 0.0;
+        for (auto& e : elements) width += e->layout.width;
+        layout.width = width;
+    }, width_dependencies);
+}
+
 
 std::unique_ptr<Widget> Widget::create(Widget* parent) {
     return std::make_unique<Widget>(parent);

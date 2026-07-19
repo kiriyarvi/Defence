@@ -241,6 +241,7 @@ public:
     void position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor);
     //CONTAINERS
     void vbox(const std::vector<Widget*>& elements);
+    void hbox(const std::vector<Widget*>& elements);
     //WIDGET HIERARCHY
     enum class RemovePolicy {
         /// Минимальное удаление, сохраняющее работоспособность системы
