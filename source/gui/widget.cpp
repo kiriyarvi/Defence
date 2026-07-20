@@ -143,8 +143,8 @@ bool GUI::event(const sf::Event& event) {
     }
     //2. Обработаем событие
     bool processed = event_impl();
-    perform_deffered();
-    m_event_processing = false;
+    m_event_processing = false; //можно выполнять команды по изменению иерархии не отложено.
+    perform_deffered(); 
     return processed;
 }
 
@@ -180,7 +180,9 @@ bool GUI::event_impl() {
             //5. Выполнение запросов
             if (query.query & Query::PERFORM_DEFFERED) {
                 assert(query.workflow == Query::Workflow::REPEAT && "Invalid workflow");
+                m_event_processing = false; //можно выполнять команды по изменению иерархии не отложено.
                 perform_deffered();
+                m_event_processing = true; //далее продолжаем event_precessing
             }
             if (query.query & Query::CALC_LAYOUT) {
                 m_root->calc_layout();
@@ -216,15 +218,19 @@ void GUI::subscribe_deffered(Widget* widget, Event::Type type) {
 
 void GUI::unsubscribe_deffered(Widget* widget, Event::Type type) {
     m_deffered_commands.push_back([this, widget, type]() {
-        auto sub = std::find_if(m_subscribers.begin(), m_subscribers.end(), [widget](Subscriber& subscriber) {
-            return subscriber.subscriber == widget;
-        });
-        if (sub == m_subscribers.end())
-            return;
-        sub->event_type &= ~type;
-        if (sub->event_type == 0)
-            m_subscribers.erase(sub);
+        unsubscribe(widget, type);
     });
+}
+
+void GUI::unsubscribe(Widget* widget, Event::Type type) {
+    auto sub = std::find_if(m_subscribers.begin(), m_subscribers.end(), [widget](Subscriber& subscriber) {
+        return subscriber.subscriber == widget;
+    });
+    if (sub == m_subscribers.end())
+        return;
+    sub->event_type &= ~type;
+    if (sub->event_type == 0)
+        m_subscribers.erase(sub);
 }
 
 void GUI::perform_deffered() {
@@ -247,6 +253,27 @@ size_t Anchor::TOP = 0b0010;
 size_t Anchor::BOTTOM = 0b0001;
 size_t Anchor::CENTER = 0;
 
+std::string Widget::Layout::to_string(Property::Type type) {
+    static std::unordered_map<Property::Type, std::string> m{
+        {Property::X, "X"},
+        {Property::Y, "Y"},
+        {Property::WIDTH, "WIDTH"},
+        {Property::HEIGHT, "HEIGHT"}
+    };
+    std::vector<std::string> v;
+    for (auto [prop, _] : Widget::Layout::s_property_map) {
+        if (type & prop)
+            v.push_back(m[prop]);
+    }
+    std::string out;
+    for (size_t i = 0; i < v.size(); ++i) {
+        out += v[i];
+        if (i != v.size() - 1)
+            out += " | ";
+    }
+    return out;
+}
+
 const std::unordered_map<Property::Type, Property Widget::Layout::*> Widget::Layout::s_property_map {
     {Property::X, &Widget::Layout::x},
     {Property::Y, &Widget::Layout::y},
@@ -261,6 +288,22 @@ const std::unordered_map<Property::Type, float Rect::*> Widget::Layout::s_proper
     {Property::HEIGHT, &Rect::height}
 };
 
+void VHBoxOptions::add_item(Widget* widget, Anchor::Type anchor) {
+    items.push_back({ widget, anchor });
+}
+
+float VHBoxOptions::get_margin(float cell_size) const {
+    switch (margin_function) {
+    case VHBoxOptions::MarginSource::ABSOLUTE:
+        return margin_source;
+    case VHBoxOptions::MarginSource::FRACTION_OF_CELL:
+        return margin_source * cell_size;
+    case VHBoxOptions::MarginSource::FRACTION_OF_REFERENCE_WIDTH:
+        return margin_source * reference->layout.width;
+    case VHBoxOptions::MarginSource::FRACTION_OF_REFERENCE_HEIGHT:
+        return margin_source * reference->layout.height;
+    }
+}
 
 /// Возвращает прямоугольник контента
 Rect Widget::Layout::get_content_rect() const {
@@ -338,16 +381,22 @@ void Property::clear_dependent(Dependent dependent) {
 }
 
 /// Удаляет правила вычисления свойств properties. Инвалидирует properties
-void Widget::clear_rules(Property::Type properties) {
+///hard - не пытаться сообщать зависимостям, что зависимости больше нет
+void Widget::clear_rules(Property::Type properties, bool hard) {
     for (auto rule = m_rules.begin(); rule != m_rules.end();) {
         if ((rule->output & properties) == rule->output) { //rule->properties всключает все флаги что и properties
-            for (auto& dependency : rule->dependencies) {
-                //должны сказать зависимостям, что мы больше вычисление свойств rule->properties данного виджета не зависит от них.
-                for (auto& [prop, member] : Layout::s_property_map) {
-                    if (dependency.source & prop)
-                        (dependency.widget->layout.*member).clear_dependent({ this, rule->output });
+            if (!hard) {
+                for (auto& dependency : rule->dependencies) {
+                    //должны сказать зависимостям, что мы больше вычисление свойств rule->properties данного виджета не зависит от них.
+                    for (auto& [prop, member] : Layout::s_property_map) {
+                        if (dependency.source & prop)
+                            (dependency.widget->layout.*member).clear_dependent({ this, rule->output });
+                    }
                 }
             }
+#ifdef GUI_DEBUG_ENABLED
+            std::cout << "ERASE " << debug_name << " RULE for " + Layout::to_string(rule->output) << std::endl;
+#endif
             rule = m_rules.erase(rule);
             continue;
         }
@@ -646,62 +695,90 @@ void Widget::position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor
     }, { {to, Property::LAYOUT}, {this, Property::SIZE} });
 }
 
-void Widget::vbox(const std::vector<Widget*>& elements) {
-    for (size_t i = 1; i < elements.size(); ++i) {
-        elements[i]->add_rule(Property::POSITION, [prev = elements[i - 1]](Layout& layout) {
-            layout.x = prev->layout.x;
-            layout.y = prev->layout.y + prev->layout.height;
-        }, { { elements[i - 1], Property::POSITION | Property::HEIGHT } });
-    }
 
-    std::vector<Dependency> height_dependencies(elements.size());
-    std::vector<Dependency> width_dependencies(elements.size());
-    for (size_t i = 0; i < elements.size(); ++i) {
-        height_dependencies[i] = { elements[i], Property::HEIGHT };
-        width_dependencies[i] = { elements[i], Property::WIDTH };
-    }
+void Widget::vhbox(const VHBoxOptions& options, bool vertical) {
+    Property::Type height_prop = vertical ? Property::HEIGHT : Property::WIDTH;
+    Property::Type width_prop = vertical ? Property::WIDTH : Property::HEIGHT;
+    Property::Type x_prop = vertical ? Property::X : Property::Y;
+    Property::Type y_prop = vertical ? Property::Y : Property::X;
+    Property Layout::* height_member = vertical ? &Layout::height : &Layout::width;
+    Property Layout::* width_member = vertical ? &Layout::width : &Layout::height;
+    Property Layout::* x_member = vertical ? &Layout::x : &Layout::y;
+    Property Layout::* y_member = vertical ? &Layout::y : &Layout::x;
 
-    add_rule(Property::HEIGHT, [elements](Layout& layout) {
+    //Код пишем как для vbox, используя указатели на мемберы, подменяя их при vertical = false
+    //1. вычисляем ширину и высоту контейнера
+    std::vector<Dependency> height_dependencies;
+    std::transform(options.items.begin(), options.items.end(), std::back_inserter(height_dependencies), [height_prop](const VHBoxOptions::Item& item) {return Dependency{ item.widget, height_prop }; });
+    std::vector<Dependency> width_dependencies;
+    std::transform(options.items.begin(), options.items.end(), std::back_inserter(width_dependencies), [width_prop](const VHBoxOptions::Item& item) {return Dependency{ item.widget, width_prop }; });
+
+    height_dependencies.push_back({ this, width_prop });
+    if (options.margin_function == VHBoxOptions::MarginSource::FRACTION_OF_REFERENCE_HEIGHT)
+        height_dependencies.push_back({ options.reference, Property::HEIGHT });
+    else if (options.margin_function == VHBoxOptions::MarginSource::FRACTION_OF_REFERENCE_WIDTH)
+        height_dependencies.push_back({ options.reference, Property::WIDTH });
+    add_rule(height_prop, [=](Layout& layout) {
         float height = 0.0;
-        for (auto& e : elements) height += e->layout.height;
-        layout.height = height;
+        for (auto& item : options.items)
+            height += item.widget->layout.*height_member;
+        float width_padding = vertical ? (layout.padding.left + layout.padding.right) : (layout.padding.top + layout.padding.bottom);
+        float height_padding = vertical ? (layout.padding.top + layout.padding.bottom) : (layout.padding.left + layout.padding.right);
+        height += (options.items.size() - 1) * options.get_margin(layout.*width_member - width_padding);
+        layout.*height_member = height + height_padding;
     }, height_dependencies);
 
-    add_rule(Property::WIDTH, [elements](Layout& layout) {
+    add_rule(width_prop, [=](Layout& layout) {
         float width = 0.0;
-        for (auto& e : elements) width = std::max(width, static_cast<float>(e->layout.width));
-        layout.width = width;
+        for (auto& item : options.items)
+            width = std::max<float>(width, item.widget->layout.*width_member);
+        float width_padding = vertical ? (layout.padding.left + layout.padding.right) : (layout.padding.top + layout.padding.bottom);
+        layout.*width_member = width + width_padding;
     }, width_dependencies);
+
+    //2. Выравнивание детей.
+    Widget* prev = nullptr;
+    for (auto& item : options.items) {
+        std::vector<Dependency> dependencies;
+        if (prev)
+            dependencies.push_back({ prev, y_prop | height_prop });
+        dependencies.push_back({ this, width_prop });
+        dependencies.push_back({ item.widget, Property::SIZE });
+        item.widget->add_rule(Property::POSITION, [=, alignment = item.alignment, container = this](Layout& layout) {
+            float width_padding = vertical ? (layout.padding.left + layout.padding.right) : (layout.padding.top + layout.padding.bottom);
+            float cell_width = container->layout.*width_member - width_padding;
+            float margin = options.get_margin(cell_width);
+            layout.*y_member = prev ? (prev->layout.*y_member + prev->layout.*height_member + margin) : 0;
+            if (alignment == Anchor::LEFT || alignment == Anchor::TOP)
+                layout.*x_member = 0;
+            else if (alignment == Anchor::RIGHT || alignment == Anchor::BOTTOM)
+                layout.*x_member = cell_width - layout.*width_member;
+            else //centering by default
+                layout.*x_member = (cell_width - layout.*width_member) * 0.5f;
+        }, dependencies);
+        prev = item.widget;
+    }
 }
 
-void Widget::hbox(const std::vector<Widget*>& elements) {
-    for (size_t i = 1; i < elements.size(); ++i) {
-        elements[i]->add_rule(Property::POSITION, [prev = elements[i - 1]](Layout& layout) {
-            layout.x = prev->layout.x + prev->layout.width;
-            layout.y = prev->layout.y;
-        }, { { elements[i - 1], Property::POSITION | Property::WIDTH } });
-    }
-
-    std::vector<Dependency> height_dependencies(elements.size());
-    std::vector<Dependency> width_dependencies(elements.size());
-    for (size_t i = 0; i < elements.size(); ++i) {
-        height_dependencies[i] = { elements[i], Property::HEIGHT };
-        width_dependencies[i] = { elements[i], Property::WIDTH };
-    }
-
-    add_rule(Property::HEIGHT, [elements](Layout& layout) {
-        float height = 0.0;
-        for (auto& e : elements) height = std::max(height, static_cast<float>(e->layout.height));
-        layout.height = height;
-    }, height_dependencies);
-
-    add_rule(Property::WIDTH, [elements](Layout& layout) {
-        float width = 0.0;
-        for (auto& e : elements) width += e->layout.width;
-        layout.width = width;
-    }, width_dependencies);
+void Widget::hbox(const std::vector<Widget*>& elements, VHBoxOptions options) {
+    for (auto& elem : elements)
+        options.add_item(elem, options.alignment);
+    hbox(options);
 }
 
+void Widget::vbox(const std::vector<Widget*>& elements, VHBoxOptions options) {
+    for (auto& elem : elements)
+        options.add_item(elem, options.alignment);
+    vbox(options);
+}
+
+void Widget::vbox(const VHBoxOptions& options) {
+    vhbox(options, true);
+}
+
+void Widget::hbox(const VHBoxOptions& options) {
+    vhbox(options, false);
+}
 
 std::unique_ptr<Widget> Widget::create(Widget* parent) {
     return std::make_unique<Widget>(parent);
@@ -760,11 +837,11 @@ void Widget::delete_widget(Widget* widget, RemovePolicy policy) {
 }
 
 void Widget::delete_all_widgets(RemovePolicy policy) {
-    for (auto it = m_children.begin(); it != m_children.end();) {
-        it->get()->remove(policy);
-        it = m_children.erase(it);
-    }
+    for (auto& child : m_children)
+        child->remove(policy);
+    m_children.clear();
 }
+
 
 Widget* Widget::add_widget_deffered(std::unique_ptr<Widget>&& child) {
     Widget* child_ptr = child.release();
@@ -815,17 +892,20 @@ void Widget::delete_dependent_rules(Property::Type props, bool hard) {
             continue;
         for (auto& dependency : (layout.*member).dependents) { //каждое свойство знает, кто от него зависит
             for (auto rule = dependency.widget->m_rules.begin(); rule != dependency.widget->m_rules.end();) { //идем по правилам зависимого
-                auto this_it = std::find_if(rule->dependencies.begin(), rule->dependencies.end(), [this](const Dependency& dependency) {
-                    return dependency.widget == this;
-                }); //ищем правила, зависимые от this.
+                auto this_it = std::find_if(rule->dependencies.begin(), rule->dependencies.end(), [this, prop](const Dependency& dependency) {
+                    return dependency.widget == this && ((dependency.source & prop) != 0);
+                }); //ищем правила, зависимые от this и вычисляемые по this->prop.
                 if (this_it == rule->dependencies.end()) {
                     ++rule;
                     continue;
-                }
-                if (!hard && rule->dependencies.size() == 1) //в случае не жесткого удаления, не можем удалить правила, зависящие от нас частично
+                } //не нашли
+                if (!hard && rule->dependencies.size() != 1) //в случае не жесткого удаления, не можем удалить правила, зависящие от нас частично
                     throw "Cannot delete partial rule";
                 dependency.widget->invalidate(rule->output); //инвализация
                 dependency.widget->delete_dependent_rules(rule->output, hard); //удаляем правила, зависящие от output правила, которое мы хотим удалить
+#ifdef GUI_DEBUG_ENABLED
+                std::cout << "ERASE " << dependency.widget->debug_name << " RULE for " + Layout::to_string(rule->output) << std::endl;
+#endif
                 rule = dependency.widget->m_rules.erase(rule); //удаляем
             }
         }
@@ -842,6 +922,7 @@ void Widget::remove(RemovePolicy policy) {
         delete_dependent_rules(Property::LAYOUT, policy == Widget::RemovePolicy::DeleteDepententRulesHard);
     for (auto& child : m_children)
         child->remove(policy);
+    GUI::Instance().unsubscribe(this, Property::LAYOUT);
 }
 
 
@@ -910,7 +991,12 @@ Query Clickable::click_event(Widget::EventContext event_context) {
         m_clicked = false;
         return on_released ? on_released(event_context) : Query{ Query::PROCESSED };
     }
-    return Query{ Query::PASS };
+    return Query::skip(event_context.from_subscribe);
 }
 
 
+HoverableWidget::HoverableWidget(): Hoverable(this) {}
+
+Query HoverableWidget::on_event(EventContext event_context) {
+    return hover_event(event_context);
+}

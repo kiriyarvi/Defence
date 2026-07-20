@@ -7,7 +7,12 @@ public:
     BuildingWithHealth(int x_id, int y_id) : IBuilding(x_id, y_id) {}
     int get_health() { return m_health; }
     void set_health_changed_callback(const std::function<void()>& callback) { m_on_health_changed = callback; }
-    void set_health(int health) { m_health = health; if (m_on_health_changed) m_on_health_changed(); }
+    void set_health(int health) {
+        bool changed = m_health != health;
+        m_health = health;
+        if (m_on_health_changed && changed)
+            m_on_health_changed();
+    }
     bool is_destroyed() override { return m_health <= 0; }
     bool auto_repair = false;
 private:

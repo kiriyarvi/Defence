@@ -13,6 +13,7 @@ public:
     void clear();
     static sf::Color coins_color;
     static sf::Color prohibited_color;
+    static sf::Color blueprint_color;
 
 
     std::function<float()> width_func;

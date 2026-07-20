@@ -5,6 +5,7 @@
 
 sf::Color Label::coins_color = sf::Color(255, 211, 3);
 sf::Color Label::prohibited_color = sf::Color(255, 0, 0);
+sf::Color Label::blueprint_color = sf::Color(0xb3fff2FF);
 
 sf::FloatRect Label::FontInfo::get_text_bounds(const std::basic_string<sf::Uint32>& text, sf::Text::Style style) {
     sf::Text widget(sf::String(text), *font, size);

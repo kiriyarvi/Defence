@@ -116,5 +116,8 @@ TextureManager::TextureManager() {
     textures[TextureID::PanelsTileset].loadFromFile("tiles/paper.png");
 
     textures[TextureID::UpgradeButtonCapture].loadFromFile("sprites/upgrade_button_capture.png");
-    textures[TextureID::UPgradeLock].loadFromFile("sprites/upgrade_lock.png");
+    textures[TextureID::UpgradeLock].loadFromFile("sprites/upgrade_lock.png");
+
+    textures[TextureID::Switch].loadFromFile("sprites/switch.png");
+    textures[TextureID::TextButton].loadFromFile("sprites/text_button.png");
 }

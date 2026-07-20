@@ -93,7 +93,7 @@ int main() {
 	return 0;
 }
 
-#else
+#elif 0
 
 #include "gui/scroller.h"
 #include "gui/tiled_panel.h"
@@ -172,6 +172,70 @@ int main() {
         // логика
         //отрисовка
         clock.restart(); 
+        window.clear(sf::Color::Black);
+        GUI::Instance().draw(window);
+        window.display();
+    }
+    return 0;
+}
+
+#else
+#include "gui/scroller.h"
+#include "gui/tiled_panel.h"
+
+int main() {
+    sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
+    GUI::Instance().set_root(Widget::create(), window);
+    Widget* root = GUI::Instance().get_root();
+    DEBUG_TAG(root, "root");
+
+    //HIERARCHY
+    Panel* panel = (Panel*)root->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Blue));
+    Widget* box_1 = panel->add_widget(Panel::create());
+    DEBUG_TAG(box_1, "box_1");
+    Widget* box_2 = panel->add_widget(Panel::create());
+    DEBUG_TAG(box_2, "box_2");
+    Widget* box_3 = panel->add_widget(Panel::create());
+    DEBUG_TAG(box_3, "box_3");
+    Widget* box_4 = panel->add_widget(Panel::create());
+    DEBUG_TAG(box_4, "box_4");
+    box_1->size_fixed(100, 100);
+    box_2->size_fixed(40, 20);
+    box_3->size_fixed(30, 50);
+    box_4->size_fixed(40, 90);
+
+    VHBoxOptions options;
+    options.add_item(box_1);
+    options.add_item(box_2, Anchor::LEFT);
+    options.add_item(box_3, Anchor::CENTER);
+    options.add_item(box_4, Anchor::RIGHT);
+    options.margin_source = 10;
+    options.margin_function = VHBoxOptions::MarginSource::ABSOLUTE;
+    panel->hbox(options);
+    panel->position_centering();
+
+    sf::Clock clock;
+
+    const float dt = 1.f / 60.f; // логика обновляется 60 раз в секунду
+    float accumulator = 0.f;
+
+    size_t frame = 0;
+
+    while (window.isOpen()) {
+        if (frame > 10000000) {
+            frame = 0;
+        }
+        ++frame;
+
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            GUI::Instance().event(event);
+        }
+        // логика
+        //отрисовка
+        clock.restart();
         window.clear(sf::Color::Black);
         GUI::Instance().draw(window);
         window.display();

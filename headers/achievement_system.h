@@ -30,7 +30,7 @@ struct Upgrade {
     std::unordered_map<EnemyType, int> upgrade_conditions; //< TODO это можно читать из json.
     virtual void upgrade(IBuilding* building, int goal) = 0;
     virtual int get_current_upgrate(IBuilding* building) = 0;
-    virtual std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) = 0;
+    virtual std::vector<IStringifier::Comparation> compare(IStringifier& stringifier, IBuilding* building, int level) = 0;
     std::string get_unlock_condition_description(int level);
     virtual int cost(int level) = 0;
     bool on_event(EnemyType defeated_enemy);
@@ -59,29 +59,29 @@ struct MinigunPenetrationUpgrade : public Upgrade {
         return minigun->m_penetration_upgrade;
     }
 
-    std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) override {
+    std::vector<IStringifier::Comparation> compare(IStringifier& stringifier, IBuilding* building, int level) override {
         auto& params = ParamsManager::Instance().params.guns.minigun;
         MiniGun* minigun = static_cast<MiniGun*>(building);
         std::vector<IStringifier::Comparation> out;
-        out.push_back(stringifier->compare(
+        out.push_back(stringifier.compare(
             "бронепробиваемость при минимальном нагреве",
-            params.penetration_upgrades[goal - 1].min_armor_penetration_level,
-            params.penetration_upgrades[goal].min_armor_penetration_level
+            params.penetration_upgrades[level - 1].min_armor_penetration_level,
+            params.penetration_upgrades[level].min_armor_penetration_level
         ));
-        out.push_back(stringifier->compare(
+        out.push_back(stringifier.compare(
             "бронепробиваемость при максимальной нагреве",
-            params.penetration_upgrades[goal - 1].max_armor_penetration_level,
-            params.penetration_upgrades[goal].max_armor_penetration_level
+            params.penetration_upgrades[level - 1].max_armor_penetration_level,
+            params.penetration_upgrades[level].max_armor_penetration_level
         ));
-        out.push_back(stringifier->compare(
+        out.push_back(stringifier.compare(
             "минимальный урон",
-            params.penetration_upgrades[goal - 1].min_damage,
-            params.penetration_upgrades[goal].min_damage
+            params.penetration_upgrades[level - 1].min_damage,
+            params.penetration_upgrades[level].min_damage
         ));
-        out.push_back(stringifier->compare(
+        out.push_back(stringifier.compare(
             "максимальный урон",
-            params.penetration_upgrades[goal - 1].max_damage,
-            params.penetration_upgrades[goal].max_damage
+            params.penetration_upgrades[level - 1].max_damage,
+            params.penetration_upgrades[level].max_damage
         ));
         return out;
     }
@@ -114,24 +114,24 @@ struct MinigunCoolingUpgrade : public Upgrade {
         return minigun->m_cooling_upgrade;
     }
 
-    std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) override {
+    std::vector<IStringifier::Comparation> compare(IStringifier& stringifier, IBuilding* building, int level) override {
         auto& params = ParamsManager::Instance().params.guns.minigun;
         MiniGun* minigun = static_cast<MiniGun*>(building);
         std::vector<IStringifier::Comparation> out;
-        out.push_back(stringifier->compare(
+        out.push_back(stringifier.compare(
             "время работы при критическом перегреве",
-            params.cooling_upgrades[goal - 1].critical_temperature_work_duration,
-            params.cooling_upgrades[goal].critical_temperature_work_duration
+            params.cooling_upgrades[level - 1].critical_temperature_work_duration,
+            params.cooling_upgrades[level].critical_temperature_work_duration
         ));
-        out.push_back(stringifier->compare(
+        out.push_back(stringifier.compare(
             "время полного охлаждения",
-            params.cooling_upgrades[goal - 1].cooling_time,
-            params.cooling_upgrades[goal].cooling_time
+            params.cooling_upgrades[level - 1].cooling_time,
+            params.cooling_upgrades[level].cooling_time
         ));
-        out.push_back(stringifier->compare(
+        out.push_back(stringifier.compare(
             "время на охлаждение после перегрева",
-            params.cooling_upgrades[goal - 1].cooldown_duration,
-            params.cooling_upgrades[goal].cooldown_duration
+            params.cooling_upgrades[level - 1].cooldown_duration,
+            params.cooling_upgrades[level].cooldown_duration
         ));
         return out;
     }
@@ -163,14 +163,14 @@ struct MinigunLubricantUpgrade : public Upgrade {
         return minigun->m_lubricant_upgrade;
     }
 
-    std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) override {
+    std::vector<IStringifier::Comparation> compare(IStringifier& stringifier, IBuilding* building, int level) override {
         auto& params = ParamsManager::Instance().params.guns.minigun;
         MiniGun* minigun = static_cast<MiniGun*>(building);
         std::vector<IStringifier::Comparation> out;
-        out.push_back(stringifier->compare(
+        out.push_back(stringifier.compare(
             "Время нагрева до максимальной температуры",
-            params.lubricant_upgrades[goal - 1].heating_time,
-            params.lubricant_upgrades[goal].heating_time
+            params.lubricant_upgrades[level - 1].heating_time,
+            params.lubricant_upgrades[level].heating_time
         ));
         return out;
     }

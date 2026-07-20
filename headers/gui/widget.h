@@ -64,6 +64,7 @@ public:
     bool event(const sf::Event& event);
     void subscribe_deffered(Widget* widget, Event::Type type);
     void unsubscribe_deffered(Widget* widget, Event::Type type);
+    void unsubscribe(Widget* widget, Event::Type type);
     bool is_event_processing() const { return m_event_processing; }
     void add_deffered_command(std::function<void()>&& command) { m_deffered_commands.push_back(std::move(command)); }
     /// переменные контекста. Сюда заносится информация о событии
@@ -169,6 +170,24 @@ namespace modifiers {
     };
 }
 
+struct VHBoxOptions {
+    struct Item {
+        Widget* widget;
+        Anchor::Type alignment;
+    };
+    std::vector<Item> items;
+    void add_item(Widget* widget, Anchor::Type anchor = Anchor::LEFT);
+    float margin_source = 0.0f; //< используется для вычисления потоянного margin между ячейками
+    enum class MarginSource {
+        ABSOLUTE, //< margin = margin_source
+        FRACTION_OF_CELL, //< margin = margin_source * <величина ячейки(высота если hbox и ширина если vbox)> 
+        FRACTION_OF_REFERENCE_WIDTH, //<margin = reference->layout.width
+        FRACTION_OF_REFERENCE_HEIGHT //<margin = reference->layout.height
+    } margin_function = MarginSource::ABSOLUTE;
+    Widget* reference = nullptr;
+    Anchor::Type alignment = Anchor::LEFT; //выравнивание по умолчанию. Используется в функциях vbox, hbox, принимающих вектор Widget*
+    float get_margin(float cell_size) const;
+};
 
 class Widget {
 public:
@@ -206,6 +225,7 @@ public:
         glm::vec2 get_anchor_relative_to_center(Anchor::Type anchor) const;
         Property::Type invalidated_props() const { return m_invalidated_props; }
     private:
+        static std::string to_string(Property::Type type);
         const static std::unordered_map<Property::Type, Property Layout::*> s_property_map;
         const static std::unordered_map<Property::Type, float Rect::*> s_property_map_rect;
         void invalidate(Property::Type props) { m_invalidated_props |= props; }
@@ -222,7 +242,7 @@ public:
     void calc_properties(Property::Type property);
     void calc_layout();
     void invalidate(Property::Type property);
-    void clear_rules(Property::Type properties);
+    void clear_rules(Property::Type properties, bool hard = false);
     glm::vec2 get_position_transform() const;
     glm::vec2 get_content_transform() const;
     //LAYOUT FUNCTIONS
@@ -242,8 +262,12 @@ public:
     void position_tooltip(size_t ancher);
     void position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor);
     //CONTAINERS
-    void vbox(const std::vector<Widget*>& elements);
-    void hbox(const std::vector<Widget*>& elements);
+    void vbox(const VHBoxOptions& options);
+    void vbox(const std::vector<Widget*>& elements, VHBoxOptions options = {});
+    void hbox(const VHBoxOptions& options);
+    void hbox(const std::vector<Widget*>& elements, VHBoxOptions options = {});
+    //TODO GRID
+
     //WIDGET HIERARCHY
     enum class RemovePolicy {
         /// Минимальное удаление, сохраняющее работоспособность системы
@@ -307,6 +331,8 @@ protected:
     std::list<Rule> m_rules;
     void remove(RemovePolicy policy); //< только перестаивает дерево соотвествующим образом, не совершает реального удаления, не удаляет детей
     void delete_dependent_rules(Property::Type props, bool hard);
+private:
+    void vhbox(const VHBoxOptions& options, bool vertical);
 };
 
 
@@ -345,4 +371,11 @@ private:
     bool m_clicked = false;
     Widget* m_widget;
     sf::Mouse::Button m_button;
+};
+
+
+class HoverableWidget : public Widget, public Hoverable {
+public:
+    HoverableWidget();
+    Query on_event(EventContext event_context) override;
 };

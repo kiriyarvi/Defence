@@ -91,7 +91,9 @@ enum class TextureID {
     Slider,
     PanelsTileset,
     UpgradeButtonCapture,
-    UPgradeLock
+    UpgradeLock,
+    Switch,
+    TextButton
 };
 
 class TextureManager {

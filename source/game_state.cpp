@@ -408,8 +408,8 @@ void GameState::init_stage(int stage) {
         m_building_panel->update(m_player_coins);
     }
     else {
-        player_coins_add(1000000);
         AchievementSystem::Instance().unlock_all();
+        player_coins_add(1000);
     }
 }
 
@@ -441,5 +441,10 @@ void GameState::wave_preparing() {
 
 void GameState::wave_started() {
     m_next_wave_button->set_active(false);
+}
+
+void GameState::close_upgrade_panel() {
+    m_game_process_ui->delete_widget(m_upgrade_panel, Widget::RemovePolicy::Min);
+    m_upgrade_panel = nullptr;
 }
 

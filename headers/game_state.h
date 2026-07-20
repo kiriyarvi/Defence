@@ -68,6 +68,7 @@ public:
     void wave_started();
     float get_time_multiplier() const { return m_time_multiplier; }
     Widget* get_tile_size_reference() { return m_tile_size_reference; }
+    void close_upgrade_panel();
 private:
 	friend class BuildingButton;	
 private:

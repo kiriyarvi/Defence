@@ -33,6 +33,10 @@ public:
     void set_capture(bool capture);
     void update(int player_coins);
     Query on_event(EventContext event_context);
+    Upgrade* get_upgrate() const { return m_upgrade; }
+    IBuilding* get_building() const { return m_building; }
+    int get_level() const { return m_level; }
+    bool is_captured() const { return m_captured; };
 private:
     void create_tooltip_smart();
     void delete_tooltip_smart();
@@ -63,11 +67,17 @@ public:
     void visit(RadioMast& radio_tower) override;
     void capture(UpgradeButton* button);
     void update(int player_coins);
+    Query on_event(EventContext event_context) override;
+    ~UpgradePanel();
 private:
-   Widget* create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons);
+    Widget* create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons);
+    void create_info_panel_for_button(UpgradeButton* button);
     Widget* m_tile_size_reference;
     Widget* m_height_reference;
+    Widget* m_upgrade_info_widget; 
     std::vector<UpgradeButton*> m_upgrade_buttons;
+    std::vector<std::function<void()>> m_on_kill_actions;
+    std::vector<std::function<void(int)>> m_update_callbacks;
 };
 
 
