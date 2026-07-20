@@ -13,6 +13,7 @@ class Upgrade;
 class UpgradeButton : public LayeredIcon {
 public:
     UpgradeButton(
+        Widget* ui,
         UpgradePanel* upgrade_panel,
         UpgradeButton* prev_upgrade_button,
         IBuilding* building,
@@ -33,6 +34,8 @@ public:
     void update(int player_coins);
     Query on_event(EventContext event_context);
 private:
+    void create_tooltip_smart();
+    void delete_tooltip_smart();
     UpgradeButton* m_prev_upgrade_button;
     IBuilding* m_building;
     UpgradePanel* m_upgrade_panel;
@@ -42,6 +45,9 @@ private:
     Icon* m_capture_icon = nullptr;
     Upgrade* m_upgrade;
     int m_level;
+    Widget* m_tooltip = nullptr;
+    Widget* m_ui;
+    bool m_clicked = false;
 };
 
 class UpgradePanel : public TiledPanel, public IBuildingVisitor {

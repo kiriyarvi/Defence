@@ -31,7 +31,7 @@ struct Upgrade {
     virtual void upgrade(IBuilding* building, int goal) = 0;
     virtual int get_current_upgrate(IBuilding* building) = 0;
     virtual std::vector<IStringifier::Comparation> compare(IStringifier* stringifier, IBuilding* building, int goal) = 0;
-    std::string get_unlock_condition_description(int goal);
+    std::string get_unlock_condition_description(int level);
     virtual int cost(int level) = 0;
     bool on_event(EnemyType defeated_enemy);
 };
@@ -144,8 +144,8 @@ struct MinigunCoolingUpgrade : public Upgrade {
 
 struct MinigunLubricantUpgrade : public Upgrade {
     MinigunLubricantUpgrade() {
-        name = "Смазка";
-        general_description = "Пулемет получит улучшенную смачную систему, что позволит ему набирать максимальную скорость вращения барабана быстрее. При этом соответсвие скорости и нагрева останется прежним.";
+        name = "Смазочная система";
+        general_description = "Пулемет получит улучшенную смазочную систему, что позволит ему набирать максимальную скорость вращения барабана быстрее. При этом соответсвие скорости и нагрева останется прежним.";
         auto& params = ParamsManager::Instance().params.guns.minigun;
         max_level = params.lubricant_upgrades.size() - 1;
         upgrade_conditions = {

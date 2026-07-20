@@ -766,12 +766,24 @@ void Widget::delete_all_widgets(RemovePolicy policy) {
     }
 }
 
-void Widget::add_widget_deffered(std::unique_ptr<Widget>&& child) {
+Widget* Widget::add_widget_deffered(std::unique_ptr<Widget>&& child) {
     Widget* child_ptr = child.release();
     GUI::Instance().add_deffered_command([this, child = child_ptr]() {
         child->m_parent = this;
         m_children.push_back(std::unique_ptr<Widget>(child));
     });
+    return child_ptr;
+}
+
+/// В зависимости от того, происходит ли сейчас обработка событий или нет
+/// вызывает либо add_widget либо add_widget_deffered
+Widget* Widget::add_widget_smart(std::unique_ptr<Widget>&& child) {
+    Widget* w = child.get();
+    if (GUI::Instance().is_event_processing())
+        add_widget_deffered(std::move(child));
+    else
+        add_widget(std::move(child));
+    return w;
 }
 
 void Widget::delete_widget_deffered(Widget* widget, RemovePolicy policy) {
@@ -785,6 +797,16 @@ void Widget::delete_widget_deffered(Widget* widget, RemovePolicy policy) {
         }
     });
 }
+
+/// В зависимости от того, происходит ли сейчас обработка событий или нет
+/// вызывает либо delete_widget либо delete_widget_deffered
+void Widget::delete_widget_smart(Widget* widget, RemovePolicy policy) {
+    if (GUI::Instance().is_event_processing())
+        delete_widget_deffered(widget, policy);
+    else
+        delete_widget(widget, policy);
+}
+
 
 void Widget::delete_dependent_rules(Property::Type props, bool hard) {
     //удаляем правила других виджетов, зависимые от нас.

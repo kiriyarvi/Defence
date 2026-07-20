@@ -1,10 +1,10 @@
 #include "achievement_system.h"
 #include "game_state.h"
 
-std::string Upgrade::get_unlock_condition_description(int goal) {
+std::string Upgrade::get_unlock_condition_description(int level) {
     for (auto [type, val] : upgrade_conditions) {
-        if (val == goal)
-            return "необходимо уничтожить " + to_string(type);
+        if (val == level)
+            return "необходимо уничтожить: " + to_string(type);
     }
     return "cooming soon";
 }
@@ -55,21 +55,22 @@ bool AchievementSystem::is_unlocked(BuildingType type) {
 std::string AchievementSystem::get_building_unlock_condition_description(BuildingType type) {
     for (auto [enemy, buildings]: m_building_unlock_achievements) {
         if (std::find(buildings.begin(), buildings.end(), type) != buildings.end())
-            return "необхоимо уничтожить " + to_string(enemy);
+            return "необхоимо уничтожить: " + to_string(enemy);
     }
     return "cooming soon";
 }
 
 
 void AchievementSystem::unlock_all() {
-    m_unlocked_buildings[BuildingType::AntitankGun] = true;
+    m_unlocked_buildings[BuildingType::Minigun] = true;
+   /* m_unlocked_buildings[BuildingType::AntitankGun] = true;
     m_unlocked_buildings[BuildingType::Hedgehogs] = true;
     m_unlocked_buildings[BuildingType::Mine] = true;
-    m_unlocked_buildings[BuildingType::Minigun] = true;
     m_unlocked_buildings[BuildingType::Spikes] = true;
     m_unlocked_buildings[BuildingType::TwinGun] = true;
     m_unlocked_buildings[BuildingType::RadioMast] = true;
-    minigun_penetration_upgrade.available_level = minigun_penetration_upgrade.max_level;
-    minigun_cooling_upgrade.available_level = minigun_cooling_upgrade.max_level;
-    minigun_lubricant_upgrade.available_level = minigun_lubricant_upgrade.max_level;
+    m_unlocked_buildings[BuildingType::Radar] = true;*/
+    //minigun_penetration_upgrade.available_level = minigun_penetration_upgrade.max_level;
+    //minigun_cooling_upgrade.available_level = minigun_cooling_upgrade.max_level;
+    //minigun_lubricant_upgrade.available_level = minigun_lubricant_upgrade.max_level;
 }

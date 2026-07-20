@@ -3,7 +3,8 @@
 #include <SFML/System/Utf.hpp>
 
 
-sf::Color Label::gold_color = sf::Color(255, 211, 3);
+sf::Color Label::coins_color = sf::Color(255, 211, 3);
+sf::Color Label::prohibited_color = sf::Color(255, 0, 0);
 
 sf::FloatRect Label::FontInfo::get_text_bounds(const std::basic_string<sf::Uint32>& text, sf::Text::Style style) {
     sf::Text widget(sf::String(text), *font, size);
@@ -126,6 +127,11 @@ void Label::add_text(const std::string& text, sf::Color color, sf::Text::Style s
         invalidate(Property::SIZE);
     else
         invalidate(Property::HEIGHT);
+}
+
+void Label::add_line(const std::string& text, sf::Color color, sf::Text::Style style) {
+    add_text(text, color, style);
+    m_text.back().compulsory_line_break = true;
 }
 
 void Label::clear() {

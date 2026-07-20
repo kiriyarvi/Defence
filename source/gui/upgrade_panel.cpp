@@ -2,14 +2,17 @@
 #include "gui/label.h"
 #include "achievement_system.h"
 #include "game_state.h"
+#include "gui/tooltip.h"
 
 UpgradeButton::UpgradeButton(
+    Widget* ui,
     UpgradePanel* upgrade_panel,
     UpgradeButton* prev_upgrade_button,
     IBuilding* building,
     Upgrade* upgrade,
     int level,
     TextureID upgrade_icon):
+    m_ui{ui},
     m_upgrade_panel{upgrade_panel},
     m_prev_upgrade_button{prev_upgrade_button},
     m_building{building},
@@ -29,18 +32,46 @@ void UpgradeButton::update(int player_coins) {
             return; //остается UNDISCOVERED
     }
     State state = player_coins >= m_upgrade->cost(m_level) ? State::ACTIVE : State::NOT_ENOGTH_MONEY;
+    if (m_tooltip && m_state != state) { //состояние изменилось => нужно изменить tooltip.
+        delete_tooltip_smart();
+        create_tooltip_smart();
+    }
     set_state(state);
 }
 
 Query UpgradeButton::on_event(EventContext event_context) {
-    if (event_context.event_type == Event::BUTTON_PRESSED) {
+    if (event_context.event_type == Event::MOUSE_MOVED && !event_context.from_subscribe) {
+        //мышь навели на кнопку.
+        GUI::Instance().subscribe_deffered(this, Event::MOUSE_MOVED); //подпишемся
+        create_tooltip_smart();//создадим tooltip
+        return Query{ Query::PROCESSED };
+    }
+    else if (event_context.event_type == Event::MOUSE_MOVED && event_context.from_subscribe) {
+        //mouse move по подписке. Проверим, что это не происходит во время нажатия кнопки мыши.
+        if (!m_clicked) { //значит это обычный hover.
+            if (event_context.hit_list.empty() || event_context.hit_list.back().widget != this) {
+                delete_tooltip_smart(); //unhover
+                GUI::Instance().unsubscribe_deffered(this, Event::MOUSE_MOVED); //отпишемся
+                return Query{ Query::REPEAT, Query::PERFORM_DEFFERED };
+            }
+            else {
+                m_tooltip->invalidate(Property::POSITION); //иначе просто инвалидируем позицию tolltip.
+                return Query{ Query::PROCESSED };
+            }
+        }
+        return Query{ Query::PROCESSED };
+    }
+    else if (event_context.event_type == Event::BUTTON_PRESSED) {
+        m_clicked = true;
         if (GUI::Instance().mouse_button == sf::Mouse::Left && m_state != State::ACTIVE)
             return Query{ Query::PROCESSED }; //взаимодействия точно не будет
         //потенциальное взаимодействие => подпишемся
-        GUI::Instance().subscribe_deffered(this, Event::BUTTON_RELEASED | Event::MOUSE_MOVED);
+        GUI::Instance().subscribe_deffered(this, Event::BUTTON_RELEASED | Event::MOUSE_MOVED); //Event::MOUSE_MOVED чтобы не взаимодейстовать с другими элементами во время удержания кнопки
+        delete_tooltip_smart(); //удалим tooltip, чтобы не мешал
         return Query{ Query::PROCESSED };
     }
     else if (event_context.event_type == Event::BUTTON_RELEASED) {
+        m_clicked = false;
         if (GUI::Instance().mouse_button == sf::Mouse::Left) { //попытка купить
             if (m_state == State::ACTIVE) { //нужно проверить, пока мышь была зажата, деньги могли уменьшиться (автовостановление шипов)
                 m_upgrade->upgrade(m_building, m_level); //апгрейдим до нужного уровня.
@@ -58,6 +89,43 @@ Query UpgradeButton::on_event(EventContext event_context) {
         return Query::skip(event_context.from_subscribe);
 }
 
+void UpgradeButton::create_tooltip_smart() {
+    auto [tooltip, label] = ::create_tooltip(Anchor::TOP | Anchor::RIGHT);
+    m_tooltip = tooltip.get();
+
+    label->add_line(m_upgrade->name + " " + std::string(m_level, 'I'), sf::Color::White, sf::Text::Style::Bold);
+    switch (m_state) {
+    case UpgradeButton::State::ACTIVE:
+        label->add_line("Стоимость: " + std::to_string(m_upgrade->cost(m_level)), Label::coins_color);
+        label->add_line("ПКМ: купить.", sf::Color::White, sf::Text::Italic);
+        break;
+    case UpgradeButton::State::BOUGTH:
+        label->add_line("Установлено");
+        break;
+    case UpgradeButton::State::NOT_ENOGTH_MONEY:
+        label->add_line("Стоимость: " + std::to_string(m_upgrade->cost(m_level)), Label::coins_color);
+        label->add_line("Недостаточно средств.", Label::prohibited_color);
+        break;
+    case UpgradeButton::State::UNDISCOVERED:
+        if (m_prev_upgrade_button && m_prev_upgrade_button->get_state() != State::BOUGTH)
+            label->add_line("Закрыто: необходимо купить предыдущее улучшение.", Label::prohibited_color);
+        else
+            label->add_line("Закрыто: " + m_upgrade->get_unlock_condition_description(m_level), Label::prohibited_color);
+        break;
+    default:
+        break;
+    }
+    label->add_line("ЛКМ: выделить апгрейд для просмотра детальной информации.", sf::Color::White, sf::Text::Italic);
+
+    m_ui->add_widget_smart(std::move(tooltip));
+}
+
+void UpgradeButton::delete_tooltip_smart() {
+    if (m_tooltip) {
+        m_ui->delete_widget_smart(m_tooltip, RemovePolicy::Min);
+        m_tooltip = nullptr;
+    }
+}
 
 
 void UpgradeButton::set_state(State state) {
@@ -142,6 +210,7 @@ Widget* UpgradePanel::create_buttons_for_upgrade(Widget* parent, IBuilding* buil
     std::vector<Widget*> upgrade_buttons;
     for (size_t i = 1; i <= upgrade->max_level; ++i) {
         UpgradeButton* button = (UpgradeButton*)upgrades_panel->add_widget(std::make_unique<UpgradeButton>(
+            m_parent,
             this,
             static_cast<UpgradeButton*>(i == 1 ? nullptr : upgrade_buttons.back()),
             building,

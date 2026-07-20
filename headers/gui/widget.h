@@ -261,10 +261,12 @@ public:
     };
 
     Widget* add_widget(std::unique_ptr<Widget>&& child);
+    Widget* add_widget_deffered(std::unique_ptr<Widget>&& child);
+    Widget* add_widget_smart(std::unique_ptr<Widget>&& child);
     void delete_widget(Widget* widget, RemovePolicy policy);
-    void delete_all_widgets(RemovePolicy policy);
-    void add_widget_deffered(std::unique_ptr<Widget>&& child);
     void delete_widget_deffered(Widget* widget, RemovePolicy policy);
+    void delete_widget_smart(Widget* widget, RemovePolicy policy);
+    void delete_all_widgets(RemovePolicy policy);
     Widget* get_root();
     //DRAW CALLS
     virtual void draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderTarget& window);

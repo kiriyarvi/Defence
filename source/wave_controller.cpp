@@ -127,44 +127,17 @@ std::pair<RoadGraph::PathID, RoadGraph::PathID> random_routes_from_to_random_ent
 WaveController::WaveController() {
     int all_paths = EnemyManager::Instance().all_paths.size();
 
-   // // Волна 0
-   //{
-   //     auto r1 = std::make_unique<UniformSpawner>();
-   //     r1->id = one_random_route();
-   //     r1->add_spawner(EnemyType::SmokeTruck, 1);
-   //     r1->add_spawner(EnemyType::MREW, 1);
-   //     r1->add_spawner(EnemyType::Truck, 2);
-   //     r1->add_spawner(EnemyType::Pickup, 2);
-   //     r1->add_spawner(EnemyType::Tank, 6);
-   //     r1->add_spawner(EnemyType::SmokeTruck, 1);
-   //     r1->add_spawner(EnemyType::Truck, 2);
-   //     r1->add_spawner(EnemyType::MREW, 2);
-   //     r1->add_spawner(EnemyType::SmokeTruck, 1);
-   //     r1->add_spawner(EnemyType::Truck, 2);
-   //     r1->add_spawner(EnemyType::MREW, 2);
-   //     r1->add_spawner(EnemyType::CruiserI, 4);
-   //     r1->add_spawner(EnemyType::Truck, 2);
-   //     r1->add_spawner(EnemyType::MREW, 2);
-   //     r1->add_spawner(EnemyType::SmokeTruck, 1);
-   //     r1->add_spawner(EnemyType::Truck, 2);
-   //     r1->add_spawner(EnemyType::MREW, 2);
-   //     r1->add_spawner(EnemyType::Truck, 2);
-   //     r1->add_spawner(EnemyType::MREW, 2);
-   //     r1->add_spawner(EnemyType::SmokeTruck, 1);
-   //     r1->add_spawner(EnemyType::Truck, 2);
-   //     r1->add_spawner(EnemyType::MREW, 2);
-   //     r1->add_spawner(EnemyType::Truck, 2);
-   //     r1->add_spawner(EnemyType::MREW, 2);
-   //     r1->add_spawner(EnemyType::SmokeTruck, 1);
-   //     r1->add_spawner(EnemyType::Truck, 2);
-   //     r1->add_spawner(EnemyType::MREW, 2);
-
-   //     Wave w;
-   //     w.prepairing_time = 60;
-   //     w.routes.push_back(std::move(r1));
-   //     w.reward = 1000;
-   //     m_waves.push_back(std::move(w));
-   // }
+    // Волна 0
+   {
+        auto r1 = std::make_unique<UniformSpawner>();
+        r1->id = one_random_route();
+        r1->add_spawner(EnemyType::Pickup, 1);
+        Wave w;
+        w.prepairing_time = 60;
+        w.routes.push_back(std::move(r1));
+        w.reward = 1000;
+        m_waves.push_back(std::move(w));
+    }
 
     // Волна 1
     {

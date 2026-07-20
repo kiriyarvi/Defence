@@ -142,7 +142,7 @@ BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type
         //создадим tooltip
         auto [panel_ptr, label] = create_tooltip();       
         label->add_text(to_string(m_type) + "\n", sf::Color::White, sf::Text::Style::Bold);
-        label->add_text("Стоимость: " + std::to_string(m_cost) + "\n", Label::gold_color);
+        label->add_text("Стоимость: " + std::to_string(m_cost) + "\n", Label::coins_color);
         if (m_state == State::UNDISCOVERED)
             label->add_text("Закрыто: " + AchievementSystem::Instance().get_building_unlock_condition_description(m_type) + "\n", sf::Color::Red);
         label->add_text("Откройте справку, для получения подробностей", sf::Color::White, sf::Text::Style::Italic);

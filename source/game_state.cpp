@@ -22,7 +22,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     //coin indicator (Hierarchy)
     m_player_coins_count_widget = (Label*)m_game_process_ui->add_widget(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
     DEBUG_TAG(m_player_coins_count_widget, "m_player_coins_count_widget")
-    m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
+    m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::coins_color);
     Icon* coin_icon = (Icon*)m_game_process_ui->add_widget(Icon::create(TextureID::Coin));
     DEBUG_TAG(coin_icon, "coin_icon")
     //coin indicator (Layout)
@@ -428,7 +428,7 @@ void GameState::kill_player() {
 void GameState::player_coins_add(int coins) {
 	m_player_coins += coins;
     m_player_coins_count_widget->clear();
-    m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::gold_color);
+    m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::coins_color);
     m_building_panel->update(m_player_coins);
     if (m_upgrade_panel)
         m_upgrade_panel->update(m_player_coins);
