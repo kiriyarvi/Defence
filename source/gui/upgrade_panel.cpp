@@ -53,6 +53,37 @@ UpgradeButton::UpgradeButton(
 {
     m_state = m_upgrade->get_current_upgrate(m_building) >= m_level ? State::BOUGTH : State::UNDISCOVERED;
     set_state(m_state);
+
+    m_button = Button::LEFT | Button::RIGHT;
+    capture_mode = true;
+    unhover_on_pressed = false;
+    set_on_hovered([this]() {
+        std::cout << "HOVERED" << std::endl;
+        create_tooltip_smart();
+    });
+
+    set_on_unhovered([this]() {
+        std::cout << "UNHOVERED" << std::endl;
+        delete_tooltip_smart();
+    });
+
+    set_on_mouse_moved([this]() {
+        if (m_tooltip)
+            m_tooltip->invalidate(Property::POSITION);
+    });
+
+    set_on_released([this](Button::Type button) {
+        if (button == Button::LEFT) { //попытка купить
+            if (m_state == State::ACTIVE) { //нужно проверить, пока мышь была зажата, деньги могли уменьшиться (автовостановление шипов)
+                m_upgrade->upgrade(m_building, m_level); //апгрейдим до нужного уровня.
+                set_state(State::BOUGTH);
+                GameState::Instance().player_coins_add(-m_upgrade->cost(m_level));
+            }
+        }
+        else { //правая кнопка => выделим
+            m_upgrade_panel->capture(this);
+        }
+    });
 }
 
 void UpgradeButton::update(int player_coins) {
@@ -70,55 +101,6 @@ void UpgradeButton::update(int player_coins) {
     set_state(state);
 }
 
-Query UpgradeButton::on_event(EventContext event_context) {
-    if (event_context.event_type == Event::MOUSE_MOVED && !event_context.from_subscribe) {
-        //мышь навели на кнопку.
-        GUI::Instance().subscribe_deffered(this, Event::MOUSE_MOVED); //подпишемся
-        create_tooltip_smart();//создадим tooltip
-        return Query{ Query::PROCESSED };
-    }
-    else if (event_context.event_type == Event::MOUSE_MOVED && event_context.from_subscribe) {
-        //mouse move по подписке. Проверим, что это не происходит во время нажатия кнопки мыши.
-        if (!m_clicked) { //значит это обычный hover.
-            if (event_context.hit_list.empty() || event_context.hit_list.back().widget != this) {
-                delete_tooltip_smart(); //unhover
-                GUI::Instance().unsubscribe_deffered(this, Event::MOUSE_MOVED); //отпишемся
-                return Query{ Query::REPEAT, Query::PERFORM_DEFFERED };
-            }
-            else {
-                m_tooltip->invalidate(Property::POSITION); //иначе просто инвалидируем позицию tolltip.
-                return Query{ Query::PROCESSED };
-            }
-        }
-        return Query{ Query::PROCESSED };
-    }
-    else if (event_context.event_type == Event::BUTTON_PRESSED) {
-        m_clicked = true;
-        if (GUI::Instance().mouse_button == sf::Mouse::Left && m_state != State::ACTIVE)
-            return Query{ Query::PROCESSED }; //взаимодействия точно не будет
-        //потенциальное взаимодействие => подпишемся
-        GUI::Instance().subscribe_deffered(this, Event::BUTTON_RELEASED | Event::MOUSE_MOVED); //Event::MOUSE_MOVED чтобы не взаимодейстовать с другими элементами во время удержания кнопки
-        delete_tooltip_smart(); //удалим tooltip, чтобы не мешал
-        return Query{ Query::PROCESSED };
-    }
-    else if (event_context.event_type == Event::BUTTON_RELEASED) {
-        m_clicked = false;
-        if (GUI::Instance().mouse_button == sf::Mouse::Left) { //попытка купить
-            if (m_state == State::ACTIVE) { //нужно проверить, пока мышь была зажата, деньги могли уменьшиться (автовостановление шипов)
-                m_upgrade->upgrade(m_building, m_level); //апгрейдим до нужного уровня.
-                set_state(State::BOUGTH);
-                GameState::Instance().player_coins_add(-m_upgrade->cost(m_level));
-            }
-        }
-        else { //правая кнопка => выделим
-            m_upgrade_panel->capture(this);
-        }
-        GUI::Instance().unsubscribe_deffered(this, Event::BUTTON_RELEASED | Event::MOUSE_MOVED);
-        return Query{ Query::PROCESSED };
-    }
-    else
-        return Query::skip(event_context.from_subscribe);
-}
 
 void UpgradeButton::create_tooltip_smart() {
     auto [tooltip, label] = ::create_tooltip(Anchor::TOP | Anchor::RIGHT);
@@ -165,18 +147,22 @@ void UpgradeButton::set_state(State state) {
     case UpgradeButton::State::ACTIVE:
         layers = { TextureID::UpgradeButtonBackground, m_upgrade_icon };
         grayscale = false;
+        enabled(Button::LEFT);
         break;
     case UpgradeButton::State::BOUGTH:
         layers = { TextureID::UpgradeButtonBackgroundCompleted, m_upgrade_icon };
         grayscale = false;
+        enabled(Button::LEFT);
         break;
     case UpgradeButton::State::NOT_ENOGTH_MONEY:
         layers = { TextureID::UpgradeButtonBackground, m_upgrade_icon };
+        enabled(~Button::LEFT);
         grayscale = true;
         break;
     case UpgradeButton::State::UNDISCOVERED:
         layers = { TextureID::UpgradeButtonBackground, m_upgrade_icon, TextureID::UpgradeLock };
         grayscale = true;
+        enabled(~Button::LEFT);
         break;
     default:
         break;
@@ -254,56 +240,21 @@ void UpgradePanel::create_info_panel_for_button(UpgradeButton* button) {
         DEBUG_TAG(prop_table, "prop_table");
 
         std::vector<IStringifier::Comparation> comparations = button->get_upgrate()->compare(Stringifier(), button->get_building(), button->get_level());
-        std::vector<std::vector<Label*>> prop_table_labels;
+        std::vector<std::vector<Widget*>> prop_table_labels;
         for (auto& comp : comparations) {
             auto& line = prop_table_labels.emplace_back();
             for (size_t i = 0; i < 4; ++i) {
-                line.push_back((Label*)prop_table->add_widget(Label::create(true)));
+                line.push_back(prop_table->add_widget(Label::create(true)));
                 DEBUG_TAG(line.back(), "elem[" + std::to_string(prop_table_labels.size() - 1) + "][" + std::to_string(i) + "]");
             }
-            line[0]->add_text(comp.prop, Label::blueprint_color);
-            line[1]->add_text(comp.current_value, Label::blueprint_color);
-            line[2]->add_text("->", Label::blueprint_color);
-            line[3]->add_text(comp.goal_value, Label::blueprint_color);
+            static_cast<Label*>(line[0])->add_text(comp.prop, Label::blueprint_color);
+            static_cast<Label*>(line[1])->add_text(comp.current_value, Label::coins_color);
+            static_cast<Label*>(line[2])->add_text("->", Label::coins_color);
+            static_cast<Label*>(line[3])->add_text(comp.goal_value, Label::coins_color);
         }
-
-        //POSITION_Y
-        for (size_t y = 1; y < comparations.size(); ++y) {
-            for (size_t x = 0; x < 4; ++x) {
-                prop_table_labels[y][x]->add_rule(Property::Y, [prev = prop_table_labels[y - 1][0]](Layout& layout) {
-                    layout.y = prev->layout.y + prev->layout.height;
-                }, { {prop_table_labels[y - 1][0], Property::Y | Property::HEIGHT } });
-            }
-        }
-        //POSITION_X
-        for (size_t x = 1; x < 4; ++x) {
-            std::vector<Dependency> dependency_list;
-            for (size_t y = 0; y < comparations.size(); ++y) {
-                dependency_list.push_back({ prop_table_labels[y][x - 1], Property::X | Property::WIDTH });
-            }
-            for (size_t y = 0; y < comparations.size(); ++y) {
-                prop_table_labels[y][x]->add_rule(Property::X, [prev_row = dependency_list](Layout& layout) {
-                    float x = 0.f;
-                    for (auto [widget, _] : prev_row)
-                        x = std::max(x, widget->layout.x + widget->layout.width);
-                    layout.x = x;
-                }, dependency_list);
-            }
-        }
-
-        std::vector<Dependency> last_row;
-        for (size_t y = 0; y < comparations.size(); ++y) {
-            last_row.push_back({ prop_table_labels[y][3], Property::X | Property::WIDTH });
-        }
-        last_row.back().source |= Property::LAYOUT;
-        prop_table->add_rule(Property::SIZE, [last_row](Layout& layout) {
-            float w = 0.0;
-            for (auto& l : last_row)
-                w = std::max(w, l.widget->layout.x + l.widget->layout.width);
-            layout.width = w;
-            layout.height = last_row.back().widget->layout.y + last_row.back().widget->layout.height;
-        }, last_row);
-
+        GridOptions options;
+        options.alignment = Anchor::BOTTOM | Anchor::LEFT;
+        prop_table->grid(prop_table_labels, {});
         //обязательная очистка, поскольку могли остаться правила после предыдущих использований
         //очистка жесткая, чтобы clear_rule не пытался сообщить старым description, prop_table
         //(которых уже нет), что m_upgrade_info_widget от них больше не зависит. 
@@ -352,10 +303,13 @@ Widget* UpgradePanel::create_buttons_for_upgrade(Widget* parent, IBuilding* buil
 }
 
 void UpgradePanel::visit(MiniGun& minigun) {
+    Widget* content = create_header_and_content(BuildingType::Minigun);
+    DEBUG_TAG(content, "content");
+
     auto& achievement_system = AchievementSystem::Instance();
-    Widget* upgrade_buttons_panel = content_widget->add_widget(Widget::create());
+    Widget* upgrade_buttons_panel = content->add_widget(Widget::create());
     DEBUG_TAG(upgrade_buttons_panel, "upgrade_buttons_panel");
-    m_upgrade_info_widget = content_widget->add_widget(Widget::create());
+    m_upgrade_info_widget = content->add_widget(Widget::create());
     DEBUG_TAG(m_upgrade_info_widget, "m_upgrade_info_widget");
     m_upgrade_info_widget->size_fixed(0, 0);
 
@@ -364,21 +318,50 @@ void UpgradePanel::visit(MiniGun& minigun) {
     Widget* lubricant_upgrade_panel = create_buttons_for_upgrade(upgrade_buttons_panel, &minigun, &achievement_system.minigun_lubricant_upgrade, { TextureID::MinigunLubricantUpgradeI, TextureID::MinigunLubricantUpgradeI, TextureID::MinigunLubricantUpgradeI });
     upgrade_buttons_panel->vbox({ penetration_upgrades_panel, cooling_upgrade_panel, lubricant_upgrade_panel });
 
-    content_widget->vbox({ upgrade_buttons_panel, m_upgrade_info_widget });
-    
+    VHBoxOptions options;
+    options.items = {
+        {upgrade_buttons_panel, Anchor::RIGHT},
+        {m_upgrade_info_widget, Anchor::LEFT}
+    };
+    options.margin_source = 0.1;
+    options.reference = m_tile_size_reference;
+    options.margin_function = Margin::Source::FRACTION_OF_REFERENCE_HEIGHT;
+    content->vbox(options);
+}
+
+Widget* UpgradePanel::create_header_and_content(BuildingType type) {
+    Widget* headline = content_widget->add_widget(Widget::create());
+    DEBUG_TAG(headline, "headline");
+        //HEADLINE
+        Label* title = headline->add_widget(Label::create(true, 40));
+        title->add_text(to_string(type), sf::Color::White, sf::Text::Bold);
+        DEBUG_TAG(title, "title");
+        //HRULE
+        Widget* rule = headline->add_widget(Panel::create(sf::Color::White, sf::Color::Transparent, 0));
+        DEBUG_TAG(rule, "rule");
+        VHBoxOptions vbox_options;
+        vbox_options.items = { {title, Anchor::CENTER}, { rule, Anchor::CENTER} };
+        vbox_options.margin_source = 0.1;
+        vbox_options.reference = m_tile_size_reference;
+        vbox_options.margin_function = Margin::Source::FRACTION_OF_REFERENCE_HEIGHT;
+        headline->vbox(vbox_options);
+
+    Widget* content = content_widget->add_widget(Widget::create());
+    vbox_options.items = { {headline, Anchor::CENTER}, { content, Anchor::CENTER} };
+    content_widget->vbox(vbox_options);
+
+    rule->add_rule(Property::WIDTH, [content, title](Layout& layout) {
+        layout.width = std::max<float>(content->layout.width, title->layout.width);
+    }, { {content, Property::WIDTH}, {title, Property::WIDTH} });
+    rule->property_equal(Property::HEIGHT, false, m_tile_size_reference, Property::HEIGHT, false, modifiers::Multiply(0.02));
+    return content;
 }
 
 void UpgradePanel::create_panel_for_building_with_health(BuildingType type, BuildingWithHealth* building, int enforce_cost, int repairing_hp) {
-    //HEADLINE
-    Label* headline = (Label*)content_widget->add_widget(Label::create(true, 40));
-    headline->add_text(to_string(type), sf::Color::White, sf::Text::Bold);
-    DEBUG_TAG(headline, "headline");
-    headline->x_centering();
-    //HRULE
-    Widget* rule = content_widget->add_widget(Panel::create(sf::Color::White, sf::Color::Transparent, 0));
-    DEBUG_TAG(rule, "rule");
+    Widget* content = create_header_and_content(type);
+    DEBUG_TAG(content, "content");
     //INTERFACE
-    Widget* interface = content_widget->add_widget(Widget::create());
+    Widget* interface = content->add_widget(Widget::create());
     DEBUG_TAG(interface, "interface");
         //HEALTH WIDGETS
         Label* health_panel_label = interface->add_widget(Label::create(true));
@@ -398,12 +381,9 @@ void UpgradePanel::create_panel_for_building_with_health(BuildingType type, Buil
         DEBUG_TAG(auto_repairing_label, "auto_repairing_label");
         auto_repairing_label->add_text("Автовосстановление");
     //INFO PANEL
-    m_upgrade_info_widget = content_widget->add_widget(Widget::create());
+    m_upgrade_info_widget = content->add_widget(Widget::create());
     DEBUG_TAG(m_upgrade_info_widget, "m_upgrade_info_widget");
     m_upgrade_info_widget->size_fixed(0, 0);
-
-    rule->property_equal(Property::WIDTH, false, interface, Property::WIDTH, false, {});
-    rule->property_equal(Property::HEIGHT, false, m_tile_size_reference, Property::HEIGHT, false, modifiers::Multiply(0.02));
 
     GridOptions grid_options; grid_options.alignment = Anchor::Y_CENTER | Anchor::LEFT;
     grid_options.margin_source = 0.1;
@@ -412,11 +392,11 @@ void UpgradePanel::create_panel_for_building_with_health(BuildingType type, Buil
     interface->grid({ { health_panel_label, enforce_button }, { auto_repairing_label, auto_repairing_switch} }, grid_options);
 
     VHBoxOptions vbox_options;
-    vbox_options.items = { {headline, Anchor::CENTER}, { rule, Anchor::CENTER}, {interface, Anchor::LEFT}, {m_upgrade_info_widget, Anchor::LEFT} };
+    vbox_options.items = { {interface, Anchor::LEFT}, {m_upgrade_info_widget, Anchor::LEFT} };
     vbox_options.margin_source = 0.1;
     vbox_options.reference = m_tile_size_reference;
     vbox_options.margin_function = Margin::Source::FRACTION_OF_REFERENCE_HEIGHT;
-    content_widget->vbox(vbox_options);
+    content->vbox(vbox_options);
 
     //EVENTS
     //INFOS

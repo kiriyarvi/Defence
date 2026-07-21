@@ -419,19 +419,28 @@ protected:
 
 class ClickableWidget : virtual public Widget {
 public:
-    ClickableWidget(sf::Mouse::Button button = sf::Mouse::Left, bool enabled = true) : m_button{ button }, m_enabled{ enabled } {}
-    void set_on_pressed(const std::function<void()>& on_pressed) { m_on_pressed = on_pressed; }
-    void set_on_released(const std::function<void()>& on_released) { m_on_released = on_released; }
-    void enabled(bool enabled);
+    struct Button {
+        using Type = int;
+        inline static Type LEFT = 0b01;
+        inline static Type RIGHT = 0b10;
+        inline static Type BOTH = 0b11;
+    };
+    Button::Type button_type_from(sf::Mouse::Button button);
+
+
+    ClickableWidget(Button::Type button = Button::LEFT, bool enabled = true) : m_button{ button }, m_enabled{ enabled } {}
+    void set_on_pressed(const std::function<void(Button::Type button)>& on_pressed) { m_on_pressed = on_pressed; }
+    void set_on_released(const std::function<void(Button::Type button)>& on_released) { m_on_released = on_released; }
+    void enabled(Button::Type enabled);
     bool is_enabled() { return  m_enabled; }
     Query on_event(EventContext event_context);
     bool capture_mode = true;
 protected:
-    std::function<void()> m_on_pressed;
-    std::function<void()> m_on_released;
-    bool m_enabled = true;
-    sf::Mouse::Button m_button;
-    bool m_clicked = false;
+    std::function<void(Button::Type button)> m_on_pressed;
+    std::function<void(Button::Type button)> m_on_released;
+    Button::Type m_enabled = true;
+    Button::Type m_button = 0;
+    Button::Type m_clicked = 0;
 };
 
 //TODO переделать классы с собственной логикой на HoverableClickableWidget, HoverableWidget, ClickableWidget

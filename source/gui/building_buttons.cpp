@@ -135,7 +135,7 @@ Query BuildingPanel::on_event(Widget::EventContext context) {
 BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type, TileRestrictions restrictions, int cost, float radius, TextureID icon):
     m_creator{ creator }, m_restrictions{ restrictions }, m_radius{ radius }, m_type{ type }, m_icon{ icon }, m_cost{ cost }
 {
-    m_button = sf::Mouse::Left;
+    m_button = Button::LEFT;
 
     set_state(State::UNDISCOVERED);
 
@@ -162,7 +162,7 @@ BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type
         ui->delete_widget_deffered(m_tooltip, RemovePolicy::Min);
     };
 
-    m_on_pressed = [this]() {
+    m_on_pressed = [this](Button::Type button) {
         if (m_state == State::UNDISCOVERED || m_state == State::NOT_ENOUGTH_MONEY)
             return Query{}; //не принимаем событие
         BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);

@@ -4,14 +4,14 @@
 Switch::Switch(bool initial_state, const std::function<void(bool)>& on_changed)
 {
     m_switch_sprite.setTexture(TextureManager::Instance().textures[TextureID::Switch]);
-    m_button = sf::Mouse::Left;
+    m_button = Button::LEFT;
     capture_mode = false;
     m_state = !initial_state;
     set_state(initial_state);
     add_rule(Property::WIDTH, [this](Layout& layout) {
         layout.width = (static_cast<float>(m_switch_sprite.getTextureRect().width) / m_switch_sprite.getTextureRect().height) * layout.height;
     }, { { this, Property::HEIGHT } });
-    m_on_pressed = [on_changed, this]() {
+    m_on_pressed = [on_changed, this](Button::Type type) {
         set_state(!m_state);
         on_changed(m_state);
     };

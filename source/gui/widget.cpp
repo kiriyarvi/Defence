@@ -1102,34 +1102,44 @@ Query HoverableWidget::on_event(EventContext event_context) {
 }
 
 
-void ClickableWidget::enabled(bool enabled) {
+void ClickableWidget::enabled(Button::Type enabled) {
     if (enabled == m_enabled)
         return;
-    if (!enabled && m_clicked) {
+    if (((~enabled & m_clicked) == m_clicked && m_clicked) ) { //то есть отключаем всё, на что ждем release
         GUI::Instance().unsubscribe_deffered(this, Event::BUTTON_RELEASED);
-        m_clicked = false;
+        m_clicked = 0;
     }
     m_enabled = enabled;
+}
+
+ClickableWidget::Button::Type ClickableWidget::button_type_from(sf::Mouse::Button button) {
+    if (button == sf::Mouse::Left)
+        return Button::LEFT;
+    else if (button == sf::Mouse::Right)
+        return Button::RIGHT;
+    else
+        return 0;
 }
 
 Query ClickableWidget::on_event(EventContext event_context) {
     if (!m_enabled) // если не активны, не взаимодействуем.
         return Query{ Query::PASS };
-    if (event_context.event_type == Event::BUTTON_PRESSED && GUI::Instance().mouse_button == m_button) { //если нажали кнопку
+    Button::Type mouse_button = button_type_from(GUI::Instance().mouse_button);
+    if (event_context.event_type == Event::BUTTON_PRESSED && (mouse_button & m_button)) { //если нажали кнопку
         if (capture_mode)
             GUI::Instance().subscribe_deffered(this, Event::BUTTON_RELEASED | Event::MOUSE_MOVED); //подпись
-        m_clicked = true;
+        m_clicked |= mouse_button; //указываем, что нажали
         if (m_on_pressed)
-            m_on_pressed();
+            m_on_pressed(mouse_button); //отправляем только то, что нажали, а не накопленное
         return Query{ Query::PROCESSED };
     }
-    else if (event_context.event_type == Event::BUTTON_RELEASED && GUI::Instance().mouse_button == m_button) {
+    else if (event_context.event_type == Event::BUTTON_RELEASED && (mouse_button & m_button)) {
         if (m_clicked) {
-            m_clicked = false;
             if (capture_mode)
                 GUI::Instance().unsubscribe_deffered(this, Event::BUTTON_RELEASED);
             if (m_on_released)
-                m_on_released();
+                m_on_released(mouse_button);
+            m_clicked &= ~mouse_button;
             return Query{ Query::PROCESSED };
         } //else - skip - кнопку зажали, навели на нас и отпустили или по какой-то причине мы не словили BUTTON_PRESSED (например виджет перед нами его перехватил) => игнорируем
     }
@@ -1138,28 +1148,31 @@ Query ClickableWidget::on_event(EventContext event_context) {
 
 
 Query HoverableClickableWidget::on_event(Widget::EventContext event_context) {
-    if (!m_enabled) // если не активны, не взаимодействуем.
-        return Query{ Query::PASS };
-    if (event_context.event_type == Event::BUTTON_PRESSED && GUI::Instance().mouse_button == m_button) { //если нажали кнопку
+    Button::Type mouse_button = button_type_from(GUI::Instance().mouse_button);
+    if (event_context.event_type == Event::BUTTON_PRESSED && (mouse_button & m_button)) { //если нажали кнопку
+        if (!m_enabled) // если не активны, не взаимодействуем.
+            return Query{ Query::PASS };
         if (capture_mode)
             GUI::Instance().subscribe_deffered(this, Event::BUTTON_RELEASED | Event::MOUSE_MOVED); //подпись
-        m_clicked = true;
+        m_clicked |= mouse_button;
         if (unhover_on_pressed && m_hovered) {
             m_hovered = false;
             if (m_on_unhovered)
                 m_on_unhovered();
         }
         if (m_on_pressed)
-            m_on_pressed();
+            m_on_pressed(mouse_button); //отправляем только то, что нажали, а не накопленное
         return Query{ Query::PROCESSED };
     }
-    else if (event_context.event_type == Event::BUTTON_RELEASED && GUI::Instance().mouse_button == m_button) {
+    else if (event_context.event_type == Event::BUTTON_RELEASED && (mouse_button & m_button)) {
+        if (!m_enabled) // если не активны, не взаимодействуем.
+            return Query{ Query::PASS };
         if (m_clicked) {
-            m_clicked = false;
             if (capture_mode)
                 GUI::Instance().unsubscribe_deffered(this, Event::BUTTON_RELEASED);
             if (m_on_released)
-                m_on_released();
+                m_on_released(mouse_button);
+            m_clicked &= ~mouse_button;
             return Query{ Query::PROCESSED };
         } //else - skip - кнопку зажали, навели на нас и отпустили или по какой-то причине мы не словили BUTTON_PRESSED (например виджет перед нами его перехватил) => игнорируем
     } else if (event_context.event_type == Event::MOUSE_MOVED) {

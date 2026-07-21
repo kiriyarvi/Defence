@@ -7,7 +7,7 @@ NextWaveButton::NextWaveButton() {
     //inactive state
     layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
     grayscale = true;
-    m_button = sf::Mouse::Left;
+    m_button = Button::LEFT;
 
     m_on_hovered = [this]()  {
         //создаем tooltip
@@ -22,12 +22,12 @@ NextWaveButton::NextWaveButton() {
     m_on_mouse_moved = [this]()  {
         m_tooltip->invalidate(Property::POSITION); //инвалидируем позицию у tooltip, чтобы он пересчитал её.
     };
-    m_on_pressed = [this]() {
+    m_on_pressed = [this](Button::Type) {
         if (m_active) {
             layers = { TextureID::ButtonClickedBackground, TextureID::NextWaveIcon };
         }
     };
-    m_on_released = [this]() {
+    m_on_released = [this](Button::Type) {
         if (m_active) {
             EnemyManager::Instance().start_wave();
             layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };

@@ -11,7 +11,7 @@
 class UpgradePanel;
 class Upgrade;
 
-class UpgradeButton : public LayeredIcon {
+class UpgradeButton : public LayeredIcon, public HoverableClickableWidget {
 public:
     UpgradeButton(
         Widget* ui,
@@ -33,7 +33,6 @@ public:
     State get_state() { return m_state; }
     void set_capture(bool capture);
     void update(int player_coins);
-    Query on_event(EventContext event_context);
     Upgrade* get_upgrate() const { return m_upgrade; }
     IBuilding* get_building() const { return m_building; }
     int get_level() const { return m_level; }
@@ -74,6 +73,7 @@ private:
     Widget* create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons);
     void create_info_panel_for_button(UpgradeButton* button);
     void create_panel_for_building_with_health(BuildingType type, BuildingWithHealth* building, int enforce_cost, int repairing_hp);
+    Widget* create_header_and_content(BuildingType type);
     Widget* m_tile_size_reference;
     Widget* m_height_reference;
     Widget* m_upgrade_info_widget; 
