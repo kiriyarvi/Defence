@@ -69,8 +69,12 @@ void AchievementSystem::unlock_all() {
     m_unlocked_buildings[BuildingType::Spikes] = true;
     m_unlocked_buildings[BuildingType::TwinGun] = true;
     m_unlocked_buildings[BuildingType::RadioMast] = true;
-    //m_unlocked_buildings[BuildingType::Radar] = true;
+    m_unlocked_buildings[BuildingType::Radar] = true;
     minigun_penetration_upgrade.available_level = minigun_penetration_upgrade.max_level;
     //minigun_cooling_upgrade.available_level = minigun_cooling_upgrade.max_level;
     //minigun_lubricant_upgrade.available_level = minigun_lubricant_upgrade.max_level;
+    radar_radius_upgrade.available_level = radar_radius_upgrade.max_level;
+    radar_uncovering_level_upgrade.available_level = radar_uncovering_level_upgrade.max_level;
+    radar_uncovering_speed_upgrade.available_level = radar_uncovering_speed_upgrade.max_level;
+    radar_long_distance_communication_upgrade.available_level = radar_long_distance_communication_upgrade.max_level;
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "gui/tiled_panel.h"
-#include "gui/icon_button.h"
+#include "gui/layered_icon.h"
 #include "gui/icon.h"
 #include "guns/building_with_health.h"
 
@@ -74,6 +74,7 @@ private:
     void create_info_panel_for_button(UpgradeButton* button);
     void create_panel_for_building_with_health(BuildingType type, BuildingWithHealth* building, int enforce_cost, int repairing_hp);
     Widget* create_header_and_content(BuildingType type);
+    VHBoxOptions options_for_vhbox();
     Widget* m_tile_size_reference;
     Widget* m_height_reference;
     Widget* m_upgrade_info_widget; 
@@ -81,50 +82,3 @@ private:
     std::vector<std::function<void()>> m_on_kill_actions;
     std::vector<std::function<void(int)>> m_update_callbacks;
 };
-
-
-//
-//
-//class UpgradeButton: public IconButton {
-//public:
-//	UpgradeButton(TextureID icon, int cost, UpgradeableProperty& building_upgrade,  int& achievement_system_upgrade, int goal_upgrade_value, const std::string name);
-//	UpgradeButton(UpgradeButton&& btn);
-//	UpgradeButton(const UpgradeButton&) = delete;
-//	UpgradeButton& operator=(const UpgradeButton&) = delete;
-//    void update();
-//	std::function<void()> on_mouse_enter;
-//	std::function<void()> on_mouse_leave;
-//private:
-//	void connect();
-//	int m_cost;
-//	UpgradeableProperty& m_building_upgrade;
-//	int& m_achievement_system_upgrade;
-//	int m_goal_upgrade_value;
-//	std::string m_name;
-//    std::string m_reason;
-//};
-//
-//
-//class  UpgradePanelCreator : public IBuildingVisitor {
-//public:
-//	UpgradePanelCreator();
-//	void update();
-//	virtual void visit(MiniGun& minigun);
-//	virtual void visit(Spikes& spikes);
-//	virtual void visit(Hedgehog& headgehogs);
-//	virtual void visit(AntitankGun& antitank_gun);
-//	virtual void visit(TwinGun& twingun);
-//	virtual void visit(Mine& mine);
-//  virtual void visit(Radar& radar);
-//  virtual void visit(RadioMast& radio_tower);
-//	tgui::Group::Ptr panel; //основная панель контента. Заполняется в visit
-//    tgui::Group::Ptr info;
-//    ~UpgradePanelCreator();
-//    void reset(); //internal use only. Очищает panel панель.
-//    std::vector<std::function<void()>> m_clear_actions; //internal use only
-//private:
-//    tgui::Button::Ptr create_sell_button(int x_id, int y_id);
-//    std::function<int()> m_compute_cost;
-//	std::vector<std::vector<UpgradeButton>> m_buttons;
-//};
-

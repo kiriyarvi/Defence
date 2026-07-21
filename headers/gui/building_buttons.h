@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gui/icon_button.h"
+#include "gui/layered_icon.h"
 #include "tile_map.h"
 #include <TGUI/TGUI.hpp>
 

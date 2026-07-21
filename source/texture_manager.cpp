@@ -102,10 +102,10 @@ TextureManager::TextureManager() {
 
     textures[TextureID::RadioMast].loadFromFile("sprites/Radio Mast.png");
 
-    textures[TextureID::RadarUpgradeInterferrenceSuppression].loadFromFile("sprites/radar_upgrade_interferrence_suppression.png");
-    textures[TextureID::RadarUpgradeLongDistanceCommunication].loadFromFile("sprites/radar_upgrade_long_distance_communication.png");
-    textures[TextureID::RadarUpgradeRadius].loadFromFile("sprites/radar_upgrade_radius.png");
-    textures[TextureID::RadarUpgradeUncoverSpeed].loadFromFile("sprites/radar_upgrade_uncover_speed.png");
+    textures[TextureID::RadarUncoveringLevelUpgrade].loadFromFile("sprites/radar_upgrade_uncovering_level.png");
+    textures[TextureID::RadarLongDistanceCommunicationUpgrade].loadFromFile("sprites/radar_upgrade_long_distance_communication.png");
+    textures[TextureID::RadarRadiusUpgrade].loadFromFile("sprites/radar_upgrade_radius.png");
+    textures[TextureID::RadarUncoveringSpeedUpgrade].loadFromFile("sprites/radar_upgrade_uncovering_speed.png");
 
 
     textures[TextureID::Coin].loadFromFile("sprites/coin.png");

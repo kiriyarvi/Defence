@@ -1,7 +1,6 @@
 #pragma once
 #include "tile_map.h"
 #include "params_manager.h"
-#include "achievement_system.h"
 #include "net_manager.h"
 #include <list>
 
@@ -14,11 +13,15 @@ public:
     void draw_effects(sf::RenderWindow& window) override;
     void logic(double dtime) override;
     bool is_destroyed() override { return false; }
-    ACCEPT(Radar)
-    int radius_upgrade;
-    int uncovering_level_upgrade;
-    int uncovering_speed_upgrade;
-    int long_distance_communication_upgrade;
+    ACCEPT(Radar);
+    void upgrade_radius(int level);
+    void upgrade_uncovering_level(int level);
+    void upgrade_uncovering_speed(int level);
+    void upgrade_long_distance_communication();
+    int radius_upgrade = 0;
+    int uncovering_level_upgrade = 0;
+    int uncovering_speed_upgrade = 0;
+    int long_distance_communication_upgrade = 0;
     bool m_part_of_net = false;
     virtual ~Radar();
 private:

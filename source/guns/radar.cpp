@@ -45,6 +45,21 @@ void Radar::draw_effects(sf::RenderWindow& window) {
     }
 }
 
+void Radar::upgrade_radius(int level) {
+    radius_upgrade = level;
+}
+
+void Radar::upgrade_uncovering_level(int level) {
+    uncovering_level_upgrade = level;
+}
+
+void Radar::upgrade_uncovering_speed(int level) {
+    uncovering_speed_upgrade = level;
+}
+
+void Radar::upgrade_long_distance_communication() {
+    long_distance_communication_upgrade = 1;
+}
 
 void Radar::logic(double dtime_microseconds) {
     m_rotation += dtime_microseconds / (1000.f * 1000.f) * 20.f;

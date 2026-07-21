@@ -11,7 +11,6 @@
 #include "guns/radio_mast.h"
 #include "shader_manager.h"
 #include "achievement_system.h"
-#include "gui/info_panel.h"
 #include "gui/tooltip.h"
 #include "net_manager.h"
 

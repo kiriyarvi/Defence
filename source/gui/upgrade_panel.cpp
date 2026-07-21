@@ -8,6 +8,7 @@
 
 #include "guns/spikes.h"
 #include "guns/hedgehog.h"
+#include "guns/radio_mast.h"
 
 struct Stringifier: public IStringifier {
 public:
@@ -236,31 +237,38 @@ void UpgradePanel::create_info_panel_for_button(UpgradeButton* button) {
         description->add_line(button->get_upgrate()->general_description, Label::blueprint_color);
         DEBUG_TAG(description, "description");
 
-        Widget* prop_table = m_upgrade_info_widget->add_widget(Widget::create());
-        DEBUG_TAG(prop_table, "prop_table");
-
+      
         std::vector<IStringifier::Comparation> comparations = button->get_upgrate()->compare(Stringifier(), button->get_building(), button->get_level());
-        std::vector<std::vector<Widget*>> prop_table_labels;
-        for (auto& comp : comparations) {
-            auto& line = prop_table_labels.emplace_back();
-            for (size_t i = 0; i < 4; ++i) {
-                line.push_back(prop_table->add_widget(Label::create(true)));
-                DEBUG_TAG(line.back(), "elem[" + std::to_string(prop_table_labels.size() - 1) + "][" + std::to_string(i) + "]");
+        if (!comparations.empty()) {
+            Widget* prop_table = m_upgrade_info_widget->add_widget(Widget::create());
+            DEBUG_TAG(prop_table, "prop_table");
+            std::vector<std::vector<Widget*>> prop_table_labels;
+            for (auto& comp : comparations) {
+                auto& line = prop_table_labels.emplace_back();
+                for (size_t i = 0; i < 4; ++i) {
+                    line.push_back(prop_table->add_widget(Label::create(true)));
+                    DEBUG_TAG(line.back(), "elem[" + std::to_string(prop_table_labels.size() - 1) + "][" + std::to_string(i) + "]");
+                }
+                static_cast<Label*>(line[0])->add_text(comp.prop, Label::blueprint_color);
+                static_cast<Label*>(line[1])->add_text(comp.current_value, Label::coins_color);
+                static_cast<Label*>(line[2])->add_text("->", Label::coins_color);
+                static_cast<Label*>(line[3])->add_text(comp.goal_value, Label::coins_color);
             }
-            static_cast<Label*>(line[0])->add_text(comp.prop, Label::blueprint_color);
-            static_cast<Label*>(line[1])->add_text(comp.current_value, Label::coins_color);
-            static_cast<Label*>(line[2])->add_text("->", Label::coins_color);
-            static_cast<Label*>(line[3])->add_text(comp.goal_value, Label::coins_color);
+            GridOptions options;
+            options.alignment = Anchor::BOTTOM | Anchor::LEFT;
+            prop_table->grid(prop_table_labels, {});
+            //обязательная очистка, поскольку могли остаться правила после предыдущих использований
+            //очистка жесткая, чтобы clear_rule не пытался сообщить старым description, prop_table
+            //(которых уже нет), что m_upgrade_info_widget от них больше не зависит. 
+            m_upgrade_info_widget->clear_rules(Property::SIZE, true);
+            m_upgrade_info_widget->vbox({ description, prop_table });
+            description->property_equal(Property::WIDTH, false, prop_table, Property::WIDTH, false, {});
         }
-        GridOptions options;
-        options.alignment = Anchor::BOTTOM | Anchor::LEFT;
-        prop_table->grid(prop_table_labels, {});
-        //обязательная очистка, поскольку могли остаться правила после предыдущих использований
-        //очистка жесткая, чтобы clear_rule не пытался сообщить старым description, prop_table
-        //(которых уже нет), что m_upgrade_info_widget от них больше не зависит. 
-        m_upgrade_info_widget->clear_rules(Property::SIZE, true);
-        m_upgrade_info_widget->vbox({ description, prop_table });
-        description->property_equal(Property::WIDTH, false, prop_table, Property::WIDTH, false, {});
+        else {
+            m_upgrade_info_widget->clear_rules(Property::SIZE, true);
+            description->property_equal(Property::WIDTH, false, button->get_parent()->get_parent(), Property::WIDTH, false, {});
+            m_upgrade_info_widget->size_include(description);
+        }
     });
 }
 
@@ -302,6 +310,15 @@ Widget* UpgradePanel::create_buttons_for_upgrade(Widget* parent, IBuilding* buil
     return upgrades_panel;
 }
 
+// автоматически настроит margin
+VHBoxOptions UpgradePanel::options_for_vhbox() {
+    VHBoxOptions vbox_options;
+    vbox_options.margin_source = 0.1;
+    vbox_options.reference = m_tile_size_reference;
+    vbox_options.margin_function = Margin::Source::FRACTION_OF_REFERENCE_HEIGHT;
+    return vbox_options;
+}
+
 void UpgradePanel::visit(MiniGun& minigun) {
     Widget* content = create_header_and_content(BuildingType::Minigun);
     DEBUG_TAG(content, "content");
@@ -318,14 +335,11 @@ void UpgradePanel::visit(MiniGun& minigun) {
     Widget* lubricant_upgrade_panel = create_buttons_for_upgrade(upgrade_buttons_panel, &minigun, &achievement_system.minigun_lubricant_upgrade, { TextureID::MinigunLubricantUpgradeI, TextureID::MinigunLubricantUpgradeI, TextureID::MinigunLubricantUpgradeI });
     upgrade_buttons_panel->vbox({ penetration_upgrades_panel, cooling_upgrade_panel, lubricant_upgrade_panel });
 
-    VHBoxOptions options;
+    VHBoxOptions options = options_for_vhbox();
     options.items = {
         {upgrade_buttons_panel, Anchor::RIGHT},
         {m_upgrade_info_widget, Anchor::LEFT}
     };
-    options.margin_source = 0.1;
-    options.reference = m_tile_size_reference;
-    options.margin_function = Margin::Source::FRACTION_OF_REFERENCE_HEIGHT;
     content->vbox(options);
 }
 
@@ -339,11 +353,8 @@ Widget* UpgradePanel::create_header_and_content(BuildingType type) {
         //HRULE
         Widget* rule = headline->add_widget(Panel::create(sf::Color::White, sf::Color::Transparent, 0));
         DEBUG_TAG(rule, "rule");
-        VHBoxOptions vbox_options;
+        VHBoxOptions vbox_options = options_for_vhbox();
         vbox_options.items = { {title, Anchor::CENTER}, { rule, Anchor::CENTER} };
-        vbox_options.margin_source = 0.1;
-        vbox_options.reference = m_tile_size_reference;
-        vbox_options.margin_function = Margin::Source::FRACTION_OF_REFERENCE_HEIGHT;
         headline->vbox(vbox_options);
 
     Widget* content = content_widget->add_widget(Widget::create());
@@ -391,11 +402,8 @@ void UpgradePanel::create_panel_for_building_with_health(BuildingType type, Buil
     grid_options.margin_function = Margin::Source::FRACTION_OF_REFERENCE_HEIGHT;
     interface->grid({ { health_panel_label, enforce_button }, { auto_repairing_label, auto_repairing_switch} }, grid_options);
 
-    VHBoxOptions vbox_options;
+    VHBoxOptions vbox_options = options_for_vhbox();
     vbox_options.items = { {interface, Anchor::LEFT}, {m_upgrade_info_widget, Anchor::LEFT} };
-    vbox_options.margin_source = 0.1;
-    vbox_options.reference = m_tile_size_reference;
-    vbox_options.margin_function = Margin::Source::FRACTION_OF_REFERENCE_HEIGHT;
     content->vbox(vbox_options);
 
     //EVENTS
@@ -476,478 +484,57 @@ void UpgradePanel::visit(Mine& mine) {
 }
 
 void UpgradePanel::visit(Radar& radar) {
+    Widget* content = create_header_and_content(BuildingType::Radar);
+    DEBUG_TAG(content, "content");
 
+    auto& achievement_system = AchievementSystem::Instance();
+    Widget* upgrade_buttons_panel = content->add_widget(Widget::create());
+    DEBUG_TAG(upgrade_buttons_panel, "upgrade_buttons_panel");
+    m_upgrade_info_widget = content->add_widget(Widget::create());
+    DEBUG_TAG(m_upgrade_info_widget, "m_upgrade_info_widget");
+    m_upgrade_info_widget->size_fixed(0, 0);
+
+    Widget* radius_upgrades_panel = create_buttons_for_upgrade(upgrade_buttons_panel, &radar, &achievement_system.radar_radius_upgrade, { TextureID::RadarRadiusUpgrade, TextureID::RadarRadiusUpgrade, TextureID::RadarRadiusUpgrade });
+    Widget* uncovering_level_upgrades_panel = create_buttons_for_upgrade(upgrade_buttons_panel, &radar, &achievement_system.radar_uncovering_level_upgrade, { TextureID::RadarUncoveringLevelUpgrade, TextureID::RadarUncoveringLevelUpgrade, TextureID::RadarUncoveringLevelUpgrade });
+    Widget* uncovering_speed_upgrades_panel = create_buttons_for_upgrade(upgrade_buttons_panel, &radar, &achievement_system.radar_uncovering_speed_upgrade, { TextureID::RadarUncoveringSpeedUpgrade, TextureID::RadarUncoveringSpeedUpgrade, TextureID::RadarUncoveringSpeedUpgrade });
+    Widget* long_distance_communication_upgrade = create_buttons_for_upgrade(upgrade_buttons_panel, &radar, &achievement_system.radar_long_distance_communication_upgrade, { TextureID::RadarLongDistanceCommunicationUpgrade });
+    upgrade_buttons_panel->vbox({ radius_upgrades_panel, uncovering_level_upgrades_panel, uncovering_speed_upgrades_panel, long_distance_communication_upgrade });
+
+    VHBoxOptions options = options_for_vhbox();
+    options.items = {
+        {upgrade_buttons_panel, Anchor::RIGHT},
+        {m_upgrade_info_widget, Anchor::LEFT}
+    };
+    content->vbox(options);
 }
+
 
 void UpgradePanel::visit(RadioMast& radio_tower) {
+    Widget* content = create_header_and_content(BuildingType::RadioMast);
+    DEBUG_TAG(content, "content");
 
+    auto& net_manager = NetManager::Instance();
+    auto& net = net_manager.get_net_by_radiotower({ radio_tower.x_id, radio_tower.y_id });
+
+    Label* headline = content->add_widget(Label::create(true));
+    headline->add_text("Параметры сети");
+
+    Widget* props_grid = content->add_widget(Widget::create());
+
+
+    auto make_prop = [](Widget* parent, std::string name, auto value)->std::vector<Widget*> {
+        Label* label = parent->add_widget(Label::create(true));
+        label->add_text(name, Label::blueprint_color);
+        Label* value_widget = parent->add_widget(Label::create(true));
+        value_widget->add_text(std::to_string(value), Label::coins_color);
+        return { label, value_widget };
+    };
+    std::vector<std::vector<Widget*>> props;
+    props.push_back(make_prop(props_grid, "число радиовышек в сети", net.radio_towers.size()));
+    props.push_back(make_prop(props_grid, "число радаров в сети", net.radars.size()));
+    GridOptions grid_options;
+    grid_options.alignment = Anchor::LEFT | Anchor::BOTTOM;
+    static_cast<Margin&>(grid_options) = options_for_vhbox();
+    props_grid->grid(props, grid_options);
+    content->vbox({ headline , props_grid });
 }
-
-
-
-
-
-//#include "tile_map.h"
-//#include <vector>
-//#include "guns/minigun.h"
-//#include "guns/radar.h"
-//#include "guns/radio_mast.h"
-//#include "game_state.h"
-//#include "achievement_system.h"
-//#include "gui/info_panel.h"
-//#include "net_manager.h"
-//
-//UpgradeButton::UpgradeButton(
-//    TextureID icon,
-//    int cost,
-//    UpgradeableProperty& building_upgrade,
-//    int& achievement_system_upgrade,
-//    int goal_upgrade_value,
-//    const std::string name
-//):
-//    m_cost(cost), m_building_upgrade(building_upgrade), m_achievement_system_upgrade(achievement_system_upgrade),
-//    m_goal_upgrade_value(goal_upgrade_value), m_name(name),
-//    IconButton(icon, TextureID::UpgradeButtonBackground, TextureID::UpgradeButtonBackgroundCompleted) {
-//    connect();
-//    update();
-//}
-//
-//UpgradeButton::UpgradeButton(UpgradeButton&& btn): IconButton(std::move(btn)),
-//    m_building_upgrade(btn.m_building_upgrade),
-//    m_achievement_system_upgrade(btn.m_achievement_system_upgrade),
-//    m_goal_upgrade_value(btn.m_goal_upgrade_value), m_name(btn.m_name), m_reason{btn.m_reason}
-//{
-//    m_cost = btn.m_cost;
-//    on_mouse_enter = btn.on_mouse_enter;
-//    on_mouse_leave = btn.on_mouse_leave;
-//    connect();
-//}
-//
-//void UpgradeButton::connect() {
-//    m_button->onPress.disconnectAll();
-//    m_button->onPress.connect([&]() {
-//        if (m_state == State::Active) {
-//            m_building_upgrade = m_goal_upgrade_value;
-//            GameState::Instance().player_coins_add(-m_cost);
-//            GameState::Instance().update_upgrade_panel();
-//        }
-//    });
-//    m_button->onMouseEnter.disconnectAll();
-//    m_button->onMouseEnter.connect([&]() {
-//        GameState::Instance().set_tooltip_content(
-//           "<b>"+  m_name + "</b>\n<color=#ffd303>Стоимость: " + std::to_string(m_cost) + "</color>" + m_reason
-//            , {1.,0.});
-//        if (on_mouse_enter) on_mouse_enter();
-//    });
-//    m_button->onMouseLeave.disconnectAll();
-//    m_button->onMouseLeave.connect([&]() {
-//        GameState::Instance().set_tooltip_content("");
-//        if (on_mouse_leave) on_mouse_leave();
-//    });
-//}
-//
-//
-//
-//void UpgradeButton::update() {
-//    m_reason = "";
-//    if (m_building_upgrade >= m_goal_upgrade_value) {
-//        set_state(State::Selected);
-//    }
-//    else { // еще не достигли нужного уровня
-//        bool locked = false;
-//        if (m_goal_upgrade_value > m_building_upgrade + 1) { // закрыто, так как нужно купить предыдущий уровень
-//            locked = true;
-//            m_reason = "\n<color=#ff0000>Закрыто: </color> требуется предыдущее улучшение.";
-//        }
-//        if (m_achievement_system_upgrade < m_goal_upgrade_value) {
-//            m_reason += "\n<color=#ff0000>Закрыто: </color> " + AchievementSystem::Instance().get_upgrade_unlock_condition_description(&m_achievement_system_upgrade, m_goal_upgrade_value) + "."; 
-//            locked = true;
-//        }
-//        if (locked) {
-//            set_state(State::Locked);
-//        }
-//        else { // открыто
-//            int current_coins_count = GameState::Instance().get_player_coins();
-//            if (current_coins_count >= m_cost)
-//                set_state(State::Active);
-//            else
-//                set_state(State::Disabled);
-//        }
-//    }
-//}
-//
-//
-//UpgradePanelCreator::UpgradePanelCreator() {
-//    panel = tgui::Group::create();
-//    panel->setSize("100%", "100%");
-//}
-//
-//void UpgradePanelCreator::reset() {
-//    m_buttons.clear();
-//    panel->removeAllWidgets();
-//    for (auto& action : m_clear_actions)
-//        action();
-//    m_clear_actions.clear();
-//}
-//
-//void UpgradePanelCreator::visit(MiniGun& minigun) {
-//    reset();
-//
-//    m_buttons.resize(3);
-//    auto& shells_upgrades = m_buttons[0];
-//    auto& cooling_upgrades = m_buttons[1];
-//    auto& lubricant_upgrades = m_buttons[2];
-//
-//    auto& params = ParamsManager::Instance().params.guns.minigun;
-//    UpgradeButton shells_upgrade_I(TextureID::MinigunShellsUpgradeI, params.penetration_upgrades[1].cost, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 1, "Бронебойные снаряды I");
-//    UpgradeButton shells_upgrade_II(TextureID::MinigunShellsUpgradeII, params.penetration_upgrades[2].cost, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 2, "Бронебойные снаряды II");
-//    UpgradeButton shells_upgrade_III(TextureID::MinigunShellsUpgradeIII, params.penetration_upgrades[3].cost, minigun.m_penetration_upgrade, AchievementSystem::Instance().minigun_upgrades.penetration_upgrade, 3, "Бронебойные снаряды III");
-//    shells_upgrades.push_back(std::move(shells_upgrade_I));
-//    shells_upgrades.push_back(std::move(shells_upgrade_II));
-//    shells_upgrades.push_back(std::move(shells_upgrade_III));
-//    for (size_t i = 0; i < 3;++i) {
-//        shells_upgrades[i].on_mouse_enter = [&, i]() {
-//            auto& up = shells_upgrades[i];
-//            InfoPanel panel;
-//            panel.set_name("Бронебойные снаряды " + std::string(i + 1, 'I'));
-//            panel.set_description("Пулемет получит снаряды повышенной бронепробиваемости.");
-//            panel.add_char("бронепробиваемость при минимальном нагреве", params.penetration_upgrades[i + 1].min_armor_penetration_level);
-//            panel.add_char("бронепробиваемость при максимальном нагреве", params.penetration_upgrades[i + 1].max_armor_penetration_level);
-//            panel.add_char("минимальный урон", params.penetration_upgrades[i + 1].min_damage);
-//            panel.add_char("максимальный урон", params.penetration_upgrades[i + 1].max_damage);
-//            panel.create();
-//            info->removeAllWidgets();
-//            info->add(panel.content);
-//        };
-//    }
-//    UpgradeButton cooling_upgrade_I(TextureID::MinigunCoolingUpgradeI, params.cooling_upgrades[1].cost, minigun.m_cooling_upgrade, AchievementSystem::Instance().minigun_upgrades.cooling_upgrade, 1, "Система охлаждения I");
-//    UpgradeButton cooling_upgrade_II(TextureID::MinigunCoolingUpgradeI, params.cooling_upgrades[2].cost, minigun.m_cooling_upgrade, AchievementSystem::Instance().minigun_upgrades.cooling_upgrade, 2, "Система охлаждения II");
-//    UpgradeButton cooling_upgrade_III(TextureID::MinigunCoolingUpgradeI, params.cooling_upgrades[3].cost, minigun.m_cooling_upgrade, AchievementSystem::Instance().minigun_upgrades.cooling_upgrade, 3, "Система охлаждения III");
-//    cooling_upgrades.push_back(std::move(cooling_upgrade_I));
-//    cooling_upgrades.push_back(std::move(cooling_upgrade_II));
-//    cooling_upgrades.push_back(std::move(cooling_upgrade_III));
-//    for (size_t i = 0; i < 3; ++i) {
-//        cooling_upgrades[i].on_mouse_enter = [&, i]() {
-//            auto& up = cooling_upgrades[i];
-//            InfoPanel panel;
-//            panel.set_name("Система охлаждения " + std::string(i + 1, 'I'));
-//            panel.set_description("Пулемет получит улучшенную систему охлаждения, продливающую время работы при критическом нагреве, а также увеличивающую скорость охлаждения.");
-//            panel.add_char("время работы при критическом перегреве", params.cooling_upgrades[i + 1].critical_temperature_work_duration);
-//            panel.add_char("время полного охлаждения", params.cooling_upgrades[i + 1].cooling_time);
-//            panel.add_char("время на охлаждение после перегрева", params.cooling_upgrades[i + 1].cooldown_duration);
-//            panel.create();
-//            info->removeAllWidgets();
-//            info->add(panel.content);
-//        };
-//    }
-//    UpgradeButton lubricant_upgrade_I(TextureID::MinigunLubricantUpgradeI, params.lubricant_upgrades[1].cost, minigun.m_lubricant_upgrade, AchievementSystem::Instance().minigun_upgrades.lubricant_update, 1, "Смазка I");
-//    UpgradeButton lubricant_upgrade_II(TextureID::MinigunLubricantUpgradeI, params.lubricant_upgrades[2].cost, minigun.m_lubricant_upgrade, AchievementSystem::Instance().minigun_upgrades.lubricant_update, 2, "Смазка II");
-//    UpgradeButton lubricant_upgrade_III(TextureID::MinigunLubricantUpgradeI, params.lubricant_upgrades[3].cost, minigun.m_lubricant_upgrade, AchievementSystem::Instance().minigun_upgrades.lubricant_update, 3, "Смазка III");
-//    lubricant_upgrades.push_back(std::move(lubricant_upgrade_I));
-//    lubricant_upgrades.push_back(std::move(lubricant_upgrade_II));
-//    lubricant_upgrades.push_back(std::move(lubricant_upgrade_III));
-//    for (size_t i = 0; i < 3; ++i) {
-//        lubricant_upgrades[i].on_mouse_enter = [&, i]() {
-//            auto& up = lubricant_upgrades[i];
-//            InfoPanel panel;
-//            panel.set_name("Смазка " + std::string(i + 1, 'I'));
-//            panel.set_description("Пулемет получит улучшенную смачную систему, что позволит ему набирать максимальную скорость вращения барабана быстрее. При этом соответсвие скорости и нагрева останется прежним.");
-//            panel.add_char("Время нагрева до максимальной температуры", params.lubricant_upgrades[i + 1].heating_time);
-//            panel.create();
-//            info->removeAllWidgets();
-//            info->add(panel.content);
-//        };
-//    }
-//
-//    tgui::Grid::Ptr grid = tgui::Grid::create();
-//    
-//    for (int cat = 0; cat < m_buttons.size(); ++cat)
-//        for (int up = 0; up < m_buttons[cat].size(); ++up) {
-//            grid->addWidget(m_buttons[cat][up].m_group, cat, up);
-//            float size = GameState::Instance().window.getSize().y * 0.1;
-//            m_buttons[cat][up].m_group->setSize(size, size);
-//        }
-//    panel->add(grid, "Grid");
-//
-//    m_compute_cost = [&]() {
-//        int cost = params.cost;
-//        for (int i = 1; i <= minigun.m_lubricant_upgrade; ++i) cost += params.lubricant_upgrades[i].cost;
-//        for (int i = 1; i <= minigun.m_cooling_upgrade; ++i) cost += params.cooling_upgrades[i].cost;
-//        for (int i = 1; i <= minigun.m_penetration_upgrade; ++i) cost += params.penetration_upgrades[i].cost;
-//        return cost;
-//    };
-//    auto sell_button = create_sell_button(minigun.x_id, minigun.y_id);
-//    sell_button->setPosition(0, "Grid.bottom");
-//    panel->add(sell_button, "SellButton");
-//
-//    info = tgui::Group::create();
-//    info->setPosition(0, "SellButton.bottom");
-//    panel->add(info);
-//}
-//
-//template<typename Params, typename Building>
-//tgui::Group::Ptr create_panel_for_building_with_health(UpgradePanelCreator* creator, BuildingType type, Params& params, Building& building) {
-//    auto label = tgui::RichTextLabel::create();
-//    auto update = [&building, creator, label = label.get(), type]() {
-//        if (building.get_health() <= 0) {
-//            creator->reset();
-//            return;
-//        }
-//        label->setText("<b>" + to_string(type) + "</b>\nПрочность: " + std::to_string(building.get_health()));
-//    };
-//    update();
-//    label->getRenderer()->setTextColor(sf::Color::White);
-//    building.set_health_changed_callback(update);
-//    creator->m_clear_actions.push_back([&building]() {
-//        building.set_health_changed_callback({});
-//    });
-//
-//    auto description = tgui::Label::create();
-//    description->setVisible(false);
-//    description->getRenderer()->setTextColor(sf::Color::White);
-//    auto button = tgui::Button::create("Укрепить");
-//    button->onMouseEnter.connect([&params, description = description.get()]() {
-//        description->setVisible(true);
-//        description->setText("Увеличит прочность на " + std::to_string(params.health)  + " единиц.");
-//        GameState::Instance().set_tooltip_content("<color=#ffd303>Стоимость: " + std::to_string(params.cost) + "</color>", { 1.,0. });
-//    });
-//    button->onMouseLeave.connect([description = description.get()]() {
-//        description->setVisible(false);
-//        GameState::Instance().set_tooltip_content("");
-//    });
-//    button->onClick.connect([&params, &building]() {
-//        int coins = GameState::Instance().get_player_coins();
-//        if (coins >= params.cost) {
-//            building.set_health(building.get_health() + 5);
-//            GameState::Instance().player_coins_add(-params.cost);
-//        }
-//    });
-//
-//    auto auto_repair_button = tgui::ToggleButton::create("Автовосстановление");
-//    auto_repair_button->onMouseEnter.connect([type, &params, description = description.get()]() {
-//        description->setVisible(true);
-//        description->setText("Включает автовосстановление. При достижении нулевой прочности и наличии достаточных средств, " + to_string(type) + " автоматически восстаноят 5 единиц прочности.");
-//    });
-//    auto_repair_button->onMouseLeave.connect([description = description.get()]() {
-//        description->setVisible(false);
-//    });
-//    auto_repair_button->onToggle([&building](bool isDown) {
-//        building.auto_repair = isDown;
-//    });
-//    auto_repair_button->setDown(building.auto_repair);
-//
-//
-//
-//    auto group = tgui::Group::create();
-//    group->setSize("100%", "100%");
-//
-//    group->add(label, "Header");
-//    button->setPosition(0, "Header.bottom");
-//    group->add(button, "Endurance");
-//    auto_repair_button->setPosition(0, "Endurance.bottom");
-//    group->add(auto_repair_button, "Repair");
-//    description->setPosition(0, "Repair.bottom");
-//    group->add(description);
-//    group->onSizeChange.connect([group = group.get(), description = description.get()]() {
-//        description->setMaximumTextWidth(group->getSize().x);
-//    });
-//    return group;
-//}
-//
-//tgui::Button::Ptr UpgradePanelCreator::create_sell_button(int x_id, int y_id) {
-//    auto sell_button = tgui::Button::create("продать");
-//    sell_button->onClick([x_id, y_id, this]() {
-//        GameState::Instance().player_coins_add(int(m_compute_cost() * 0.5));
-//        TileMap::Instance().delete_building(x_id, y_id);
-//        reset();
-//    });
-//    sell_button->onMouseEnter([this]() {
-//        auto content = tgui::ScrollablePanel::create();
-//        content->setSize("100%", "100%");
-//        content->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Automatic);
-//        content->setHorizontalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
-//        content->getRenderer()->setBackgroundColor(sf::Color::Transparent);
-//        content->setContentSize({ 10000, 3000 });
-//
-//        auto text = tgui::RichTextLabel::create("<color=#ffd303>" + std::to_string(int(m_compute_cost() * 0.5)) + "</color> (половина от стоимости с учетом улучшений)");
-//        text->getRenderer()->setTextColor(tgui::Color::White);
-//        text->onSizeChange.connect([d = text, c = content]() {
-//            d->setMaximumTextWidth(c->getSize().x);
-//        });
-//        content->add(text);
-//        info->removeAllWidgets();
-//        info->add(content);
-//    });
-//    return sell_button;
-//    
-//}
-//
-//void UpgradePanelCreator::visit(Spikes& spikes) {
-//    // TODO этот код почему-то вызывает ошибку при закрытии программы
-//    reset();   
-//    panel->add(create_panel_for_building_with_health(this, BuildingType::Spikes, ParamsManager::Instance().params.guns.spikes, spikes));
-//}
-//
-//void UpgradePanelCreator::visit(Hedgehog& headgehogs) {
-//    // TODO этот код почему-то вызывает ошибку при закрытии программы
-//    reset();
-//    panel->add(create_panel_for_building_with_health(this, BuildingType::Hedgehogs, ParamsManager::Instance().params.guns.hedgehog, headgehogs));
-//}
-//
-//void UpgradePanelCreator::visit(AntitankGun& antitank_gun) {
-//    reset();
-//}
-//
-//void UpgradePanelCreator::visit(TwinGun& twingun) {
-//    reset();
-//}
-//
-//void UpgradePanelCreator::visit(Mine& mine) {
-//    reset();
-//}
-//
-//void UpgradePanelCreator::visit(Radar& radar) {
-//    reset();
-//
-//    m_buttons.resize(4);
-//    auto& radius_upgrades = m_buttons[0];
-//    auto& uncovering_level_upgrades = m_buttons[1];
-//    auto& uncovering_speed_upgrades = m_buttons[2];
-//    auto& long_distance_communication_upgrade = m_buttons[3];
-//
-//    auto& params = ParamsManager::Instance().params.guns.radar;
-//    UpgradeButton radius_upgrades_I(TextureID::RadarUpgradeRadius, params.radius_upgrades[1].cost, radar.radius_upgrade, AchievementSystem::Instance().radar_upgrades.radius_upgrades, 1, "Радиус обнаружения I");
-//    UpgradeButton radius_upgrades_II(TextureID::RadarUpgradeRadius, params.radius_upgrades[2].cost, radar.radius_upgrade, AchievementSystem::Instance().radar_upgrades.radius_upgrades, 2, "Радиус обнаружения II");
-//    UpgradeButton radius_upgrades_III(TextureID::RadarUpgradeRadius, params.radius_upgrades[3].cost, radar.radius_upgrade, AchievementSystem::Instance().radar_upgrades.radius_upgrades, 3, "Радиус обнаружения III");
-//    radius_upgrades.push_back(std::move(radius_upgrades_I));
-//    radius_upgrades.push_back(std::move(radius_upgrades_II));
-//    radius_upgrades.push_back(std::move(radius_upgrades_III));
-//    for (size_t i = 0; i < 3; ++i) {
-//        radius_upgrades[i].on_mouse_enter = [&, i]() {
-//            auto& up = radius_upgrades[i];
-//            InfoPanel panel;
-//            panel.set_name("Радиус обнаружения " + std::string(i + 1, 'I'));
-//            panel.set_description("Радиус обнаружения противников увеличиться");
-//            panel.add_char("Радиус обнаружения", params.radius_upgrades[i + 1].radius);
-//            panel.create();
-//            info->removeAllWidgets();
-//            info->add(panel.content);
-//        };
-//    }
-//    UpgradeButton uncovering_level_upgrade_I(TextureID::RadarUpgradeInterferrenceSuppression, params.uncovering_level_upgrades[1].cost, radar.uncovering_level_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_level_upgrades, 1, "Система радиоподавления I");
-//    UpgradeButton uncovering_level_upgrade_II(TextureID::RadarUpgradeInterferrenceSuppression, params.uncovering_level_upgrades[2].cost, radar.uncovering_level_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_level_upgrades, 2, "Система радиоподавления II");
-//    UpgradeButton uncovering_level_upgrade_III(TextureID::RadarUpgradeInterferrenceSuppression, params.uncovering_level_upgrades[3].cost, radar.uncovering_level_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_level_upgrades, 3, "Система радиоподавления III");
-//    uncovering_level_upgrades.push_back(std::move(uncovering_level_upgrade_I));
-//    uncovering_level_upgrades.push_back(std::move(uncovering_level_upgrade_II));
-//    uncovering_level_upgrades.push_back(std::move(uncovering_level_upgrade_III));
-//    for (size_t i = 0; i < 3; ++i) {
-//        uncovering_level_upgrades[i].on_mouse_enter = [&, i]() {
-//            auto& up = uncovering_level_upgrades[i];
-//            InfoPanel panel;
-//            panel.set_name("Система радиоподавления " + std::string(i + 1, 'I'));
-//            panel.set_description("Радар будет обнаруживать противников с более высоким уровнем маскировки.");
-//            panel.add_char("Уровень маскировки", params.uncovering_level_upgrades[i + 1].uncovering_level);
-//            panel.create();
-//            info->removeAllWidgets();
-//            info->add(panel.content);
-//        };
-//    }
-//    UpgradeButton uncovering_speed_upgrade_I(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_speed_upgrades[1].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 1, "Скорость обнаружения I");
-//    UpgradeButton uncovering_speed_upgrade_II(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_speed_upgrades[2].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 2, "Скорость обнаружения II");
-//    UpgradeButton uncovering_speed_upgrade_III(TextureID::RadarUpgradeUncoverSpeed, params.uncovering_speed_upgrades[3].cost, radar.uncovering_speed_upgrade, AchievementSystem::Instance().radar_upgrades.uncovering_speed_upgrades, 3, "Скорость обнаружения III");
-//    uncovering_speed_upgrades.push_back(std::move(uncovering_speed_upgrade_I));
-//    uncovering_speed_upgrades.push_back(std::move(uncovering_speed_upgrade_II));
-//    uncovering_speed_upgrades.push_back(std::move(uncovering_speed_upgrade_III));
-//    for (size_t i = 0; i < 3; ++i) {
-//        uncovering_speed_upgrades[i].on_mouse_enter = [&, i]() {
-//            auto& up = uncovering_speed_upgrades[i];
-//            InfoPanel panel;
-//            panel.set_name("Скорость обнаружения " + std::string(i + 1, 'I'));
-//            panel.set_description("Время выбора цели (наведения) и время её обнаружения уменьшиться.");
-//            panel.add_char("Время наведения", params.uncovering_speed_upgrades[i + 1].aiming_time);
-//            panel.add_char("Время обнаружения цели", params.uncovering_speed_upgrades[i + 1].uncover_time);
-//            panel.create();
-//            info->removeAllWidgets();
-//            info->add(panel.content);
-//        };
-//    }
-//
-//    UpgradeButton long_distace_communication_upgrade(TextureID::RadarUpgradeLongDistanceCommunication, params.long_distance_communication_upgrade_cost, radar.long_distance_communication_upgrade, AchievementSystem::Instance().radar_upgrades.long_distance_communication_upgrade, 1, "Дальняя связь");
-//    long_distace_communication_upgrade.on_mouse_enter = [&] () {
-//        InfoPanel panel;
-//        panel.set_name("Дальняя связь");
-//        panel.set_description("Радар получит возможность быть частью сети, образованной радиовышками.");
-//        panel.create();
-//        info->removeAllWidgets();
-//        info->add(panel.content);
-//    };
-//    long_distance_communication_upgrade.push_back(std::move(long_distace_communication_upgrade));
-//
-//
-//    tgui::Grid::Ptr grid = tgui::Grid::create();
-//
-//    for (int cat = 0; cat < m_buttons.size(); ++cat)
-//        for (int up = 0; up < m_buttons[cat].size(); ++up) {
-//            grid->addWidget(m_buttons[cat][up].m_group, cat, up);
-//            float size = GameState::Instance().window.getSize().y * 0.1;
-//            m_buttons[cat][up].m_group->setSize(size, size);
-//        }
-//    panel->add(grid, "Grid");
-//
-//    m_compute_cost = [&]() {
-//        int cost = params.cost;
-//        for (int i = 1; i <= radar.radius_upgrade; ++i) cost += params.radius_upgrades[i].cost;
-//        for (int i = 1; i <= radar.uncovering_level_upgrade; ++i) cost += params.uncovering_level_upgrades[i].cost;
-//        for (int i = 1; i <= radar.uncovering_speed_upgrade; ++i) cost += params.uncovering_speed_upgrades[i].cost;
-//        if (radar.long_distance_communication_upgrade)
-//            cost += params.long_distance_communication_upgrade_cost;
-//        return cost;
-//    };
-//    auto sell_button = create_sell_button(radar.x_id, radar.y_id);
-//    sell_button->setPosition(0, "Grid.bottom");
-//    panel->add(sell_button, "SellButton");
-//
-//    info = tgui::Group::create();
-//    info->setPosition(0, "SellButton.bottom");
-//    panel->add(info);
-//}
-//
-//void UpgradePanelCreator::visit(RadioMast& radio_tower) {
-//    auto& net_manager = NetManager::Instance();
-//    auto& net = net_manager.get_net_by_radiotower({ radio_tower.x_id, radio_tower.y_id });
-//
-//    reset();
-//
-//    InfoPanel info_panel;
-//    info_panel.set_name(to_string(BuildingType::RadioMast));
-//    info_panel.set_description("Параметры сети");
-//    info_panel.add_char("число радиовышек в сети", std::to_string(net.radio_towers.size()));
-//    info_panel.add_char("число радаров в сети", std::to_string(net.radars.size()));
-//    info_panel.create(false);
-//    panel->removeAllWidgets();
-//    panel->add(info_panel.content, "Content");
-//
-//
-//    m_compute_cost = []() {
-//        return ParamsManager::Instance().params.guns.radio_tower.cost;
-//    };
-//    tgui::Button::Ptr sell_button = create_sell_button(radio_tower.x_id, radio_tower.y_id);
-//    sell_button->setPosition(0, "Content.top");
-//    panel->add(sell_button, "SellButton");
-//
-//    info = tgui::Group::create();
-//    info->setPosition(0, "SellButton.bottom");
-//    panel->add(info);
-//}
-//
-//void UpgradePanelCreator::update() {
-//    for (auto& cat : m_buttons) {
-//        for (auto& up : cat) {
-//            up.update();
-//        }
-//    }
-//}
-//
-//UpgradePanelCreator::~UpgradePanelCreator() {
-//    reset();
-//}

@@ -341,6 +341,7 @@ public:
     void delete_widget_smart(Widget* widget, RemovePolicy policy);
     void delete_all_widgets(RemovePolicy policy);
     Widget* get_root();
+    Widget* get_parent() const { return m_parent; }
     //DRAW CALLS
     virtual void draw_hierarchy(int frame, const glm::vec2& position_transform, sf::RenderTarget& window);
     virtual void draw(const glm::vec2& position_transform, sf::RenderTarget& window) {}

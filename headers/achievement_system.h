@@ -2,6 +2,7 @@
 #include "tile_map.h"
 #include "enemies/IEnemy.h"
 #include "guns/minigun.h"
+#include "guns/radar.h"
 #include <functional>
 #include <unordered_map>
 #include <vector>
@@ -181,6 +182,154 @@ struct MinigunLubricantUpgrade : public Upgrade {
     }
 };
 
+struct RadarRadiusUpgrade : public Upgrade {
+    RadarRadiusUpgrade() {
+        name = "Радиус обнаружения";
+        general_description = "Радар получить более совершенное оборудование, позволяющее раскрывать противников на большем расстоянии.";
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        max_level = params.radius_upgrades.size() - 1;
+        upgrade_conditions = {};
+    }
+
+    void upgrade(IBuilding* building, int goal) override {
+        Radar* radar = static_cast<Radar*>(building);
+        radar->upgrade_radius(goal);
+    }
+
+    int get_current_upgrate(IBuilding* building) override {
+        Radar* radar = static_cast<Radar*>(building);
+        return radar->radius_upgrade;
+    }
+
+    std::vector<IStringifier::Comparation> compare(IStringifier& stringifier, IBuilding* building, int level) override {
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        Radar* radar = static_cast<Radar*>(building);
+        std::vector<IStringifier::Comparation> out;
+        out.push_back(stringifier.compare(
+            "Радиус обнаружения",
+            params.radius_upgrades[level - 1].radius,
+            params.radius_upgrades[level].radius
+        ));
+        return out;
+    }
+
+    int cost(int level) override {
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        return params.radius_upgrades[level].cost;
+    }
+};
+
+
+struct RadarUncoveringLevelUpgrade : public Upgrade {
+    RadarUncoveringLevelUpgrade() {
+        name = "Система радиоподавления";
+        general_description = "Радар будет обнаруживать противников с более высоким уровнем маскировки.";
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        max_level = params.uncovering_level_upgrades.size() - 1;
+        upgrade_conditions = {};
+    }
+
+    void upgrade(IBuilding* building, int goal) override {
+        Radar* radar = static_cast<Radar*>(building);
+        radar->upgrade_uncovering_level(goal);
+    }
+
+    int get_current_upgrate(IBuilding* building) override {
+        Radar* radar = static_cast<Radar*>(building);
+        return radar->uncovering_level_upgrade;
+    }
+
+    std::vector<IStringifier::Comparation> compare(IStringifier& stringifier, IBuilding* building, int level) override {
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        Radar* radar = static_cast<Radar*>(building);
+        std::vector<IStringifier::Comparation> out;
+        out.push_back(stringifier.compare(
+            "Уровень маскировки",
+            params.uncovering_level_upgrades[level - 1].uncovering_level,
+            params.uncovering_level_upgrades[level].uncovering_level
+        ));
+        return out;
+    }
+
+    int cost(int level) override {
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        return params.uncovering_level_upgrades[level].cost;
+    }
+};
+
+struct RadarUncoveringSpeedUpgrade : public Upgrade {
+    RadarUncoveringSpeedUpgrade() {
+        name = "Скорость обнаружения";
+        general_description = "Время выбора цели (наведения) и время её обнаружения уменьшиться.";
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        max_level = params.uncovering_speed_upgrades.size() - 1;
+        upgrade_conditions = {};
+    }
+
+    void upgrade(IBuilding* building, int goal) override {
+        Radar* radar = static_cast<Radar*>(building);
+        radar->upgrade_uncovering_speed(goal);
+    }
+
+    int get_current_upgrate(IBuilding* building) override {
+        Radar* radar = static_cast<Radar*>(building);
+        return radar->uncovering_speed_upgrade;
+    }
+
+    std::vector<IStringifier::Comparation> compare(IStringifier& stringifier, IBuilding* building, int level) override {
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        Radar* radar = static_cast<Radar*>(building);
+        std::vector<IStringifier::Comparation> out;
+        out.push_back(stringifier.compare(
+            "Время наведения",
+            params.uncovering_speed_upgrades[level - 1].aiming_time,
+            params.uncovering_speed_upgrades[level].aiming_time
+        ));
+        out.push_back(stringifier.compare(
+            "Время обнаружения цели",
+            params.uncovering_speed_upgrades[level - 1].uncover_time,
+            params.uncovering_speed_upgrades[level].uncover_time
+        ));
+        return out;
+    }
+
+    int cost(int level) override {
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        return params.uncovering_speed_upgrades[level].cost;
+    }
+};
+
+struct RadarLongDistanceCommunicationUpgrade : public Upgrade {
+    RadarLongDistanceCommunicationUpgrade() {
+        name = "Дальняя связь";
+        general_description = "Радар получит возможность быть частью сети, образованной радиовышками.";
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        max_level = 1;
+        upgrade_conditions = {};
+    }
+
+    void upgrade(IBuilding* building, int goal) override {
+        Radar* radar = static_cast<Radar*>(building);
+        radar->upgrade_long_distance_communication();
+    }
+
+    int get_current_upgrate(IBuilding* building) override {
+        Radar* radar = static_cast<Radar*>(building);
+        return radar->long_distance_communication_upgrade;
+    }
+
+    std::vector<IStringifier::Comparation> compare(IStringifier& stringifier, IBuilding* building, int level) override {
+        return {};
+    }
+
+    int cost(int level) override {
+        auto& params = ParamsManager::Instance().params.guns.radar;
+        return params.long_distance_communication_upgrade_cost;
+    }
+};
+
+
+
 
 
 
@@ -206,12 +355,10 @@ public:
     MinigunPenetrationUpgrade minigun_penetration_upgrade;
     MinigunCoolingUpgrade minigun_cooling_upgrade;
     MinigunLubricantUpgrade minigun_lubricant_upgrade;
-    ////Radar upgrades
-    //int radar_radius_upgrades = 0;
-    //int radar_uncovering_level_upgrades = 0;
-    //int radar_uncovering_speed_upgrades = 0;
-    //int radar_long_distance_communication_upgrade = 0;
-
+    RadarRadiusUpgrade radar_radius_upgrade;
+    RadarUncoveringLevelUpgrade radar_uncovering_level_upgrade;
+    RadarUncoveringSpeedUpgrade radar_uncovering_speed_upgrade;
+    RadarLongDistanceCommunicationUpgrade radar_long_distance_communication_upgrade;
     void unlock_all();
 private:
     AchievementSystem();

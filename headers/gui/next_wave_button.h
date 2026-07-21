@@ -1,5 +1,5 @@
 #pragma once
-#include "gui/icon_button.h"
+#include "gui/layered_icon.h"
 
 class NextWaveButton : public LayeredIcon, private HoverableClickableWidget {
 public:
