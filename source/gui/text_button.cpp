@@ -29,11 +29,12 @@ Query TextButton::on_event(EventContext event_context) {
             m_clicked = true; //установим статус clicked
             set_button_size(m_button_size, true); //обновим background
         }
-        assert(m_hovered && "It is reachable??");
+        //assert(m_hovered && "It is reachable??"); - да, вполне reachible в виду того, что может быть виджет поверх кнопки, блокирующий Event::MOUSE_MOVED
         return Query{ Query::PROCESSED };
     }
     else if (event_context.event_type == Event::BUTTON_RELEASED && GUI::Instance().mouse_button == sf::Mouse::Left) { //левую кнопку отпустили
-        // это могло быть только по подписке.
+        if (!event_context.from_subscribe)
+            return Query{ Query::PROCESSED }; //не по подписке => не считается взаимодействием
         GUI::Instance().unsubscribe_deffered(this, Event::BUTTON_RELEASED | Event::MOUSE_MOVED); //отписываемся
         if (m_on_click && m_enabled) //если все еще m_enabled, выполним действие.
             m_on_click();

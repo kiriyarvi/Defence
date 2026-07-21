@@ -3,43 +3,35 @@
 #include "gui/tooltip.h"
 #include "enemy_manager.h"
 
-NextWaveButton::NextWaveButton() : Hoverable(this), Clickable(this, sf::Mouse::Left) {
+NextWaveButton::NextWaveButton() {
     //inactive state
     layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
     grayscale = true;
+    m_button = sf::Mouse::Left;
 
-    on_hovered = [this](EventContext context) -> Query {
+    m_on_hovered = [this]()  {
         //создаем tooltip
         auto [panel_ptr, label] = create_tooltip(Anchor::BOTTOM | Anchor::RIGHT);
         label->add_text("начать следующую волну");
         m_tooltip = panel_ptr.get();
         m_parent->add_widget_deffered(std::move(panel_ptr));
-        return Query{ Query::Workflow::PROCESSED };
     };
-    on_unhovered = [this](EventContext context) ->size_t {
+    m_on_unhovered = [this]()  {
         m_parent->delete_widget_deffered(m_tooltip, Widget::RemovePolicy::Min);
-        return 0;
     };
-    on_mouse_moved = [this](EventContext context) ->Query {
+    m_on_mouse_moved = [this]()  {
         m_tooltip->invalidate(Property::POSITION); //инвалидируем позицию у tooltip, чтобы он пересчитал её.
-        return Query{ Query::Workflow::PROCESSED };
     };
-    on_pressed = [this](EventContext context) ->Query {
+    m_on_pressed = [this]() {
         if (m_active) {
             layers = { TextureID::ButtonClickedBackground, TextureID::NextWaveIcon };
-            return Query{ Query::Workflow::PROCESSED };
         }
-        else
-            return Query{};
     };
-    on_released = [this](EventContext context) ->Query {
+    m_on_released = [this]() {
         if (m_active) {
             EnemyManager::Instance().start_wave();
             layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
-            return Query{ Query::Workflow::PROCESSED };
         }
-        else
-            return Query{ Query::Workflow::PASS }; //PASS_TO_PARENT запрещен, поскольку это событие получаем по подписке.
     };
 }
 
@@ -55,12 +47,4 @@ void NextWaveButton::set_active(bool active) {
         }
     }
     m_active = active;
-}
-
-Query NextWaveButton::on_event(Widget::EventContext event_context) {
-    Query q;
-    q = hover_event(event_context);
-    if (!q.pure_pass()) return q;
-    q = click_event(event_context);
-    return q;
 }

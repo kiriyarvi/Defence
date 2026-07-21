@@ -2,6 +2,7 @@
 #include "gui/tiled_panel.h"
 #include "gui/icon_button.h"
 #include "gui/icon.h"
+#include "guns/building_with_health.h"
 
 #include "tile_map.h"
 
@@ -72,6 +73,7 @@ public:
 private:
     Widget* create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons);
     void create_info_panel_for_button(UpgradeButton* button);
+    void create_panel_for_building_with_health(BuildingType type, BuildingWithHealth* building, int enforce_cost, int repairing_hp);
     Widget* m_tile_size_reference;
     Widget* m_height_reference;
     Widget* m_upgrade_info_widget; 

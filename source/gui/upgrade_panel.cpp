@@ -7,6 +7,7 @@
 #include "gui/text_button.h"
 
 #include "guns/spikes.h"
+#include "guns/hedgehog.h"
 
 struct Stringifier: public IStringifier {
 public:
@@ -203,6 +204,7 @@ UpgradePanel::UpgradePanel(Widget* tile_size_reference, Widget* height_reference
     TiledPanel(TiledPanel::Type::Blueprint, tile_size_reference),
     m_tile_size_reference(tile_size_reference), m_height_reference(height_reference)
 {
+    DEBUG_TAG(content_widget, "content_widget");
     clear_rules(Property::LAYOUT);
 
     add_rule(Property::SIZE, [this](Layout& layout) {
@@ -325,11 +327,12 @@ Query UpgradePanel::on_event(EventContext event_context) {
 Widget* UpgradePanel::create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons) {
     Widget* upgrades_panel = parent->add_widget(Widget::create());
     std::vector<Widget*> upgrade_buttons;
+    UpgradeButton* prev = nullptr;
     for (size_t i = 1; i <= upgrade->max_level; ++i) {
-        UpgradeButton* button = (UpgradeButton*)upgrades_panel->add_widget(std::make_unique<UpgradeButton>(
+        UpgradeButton* button = upgrades_panel->add_widget(std::make_unique<UpgradeButton>(
             m_parent,
             this,
-            static_cast<UpgradeButton*>(i == 1 ? nullptr : upgrade_buttons.back()),
+            prev,
             building,
             upgrade,
             i,
@@ -342,6 +345,7 @@ Widget* UpgradePanel::create_buttons_for_upgrade(Widget* parent, IBuilding* buil
         static_cast<UpgradeButton*>(button)->update(GameState::Instance().get_player_coins());
         upgrade_buttons.push_back(button);
         m_upgrade_buttons.push_back(button);
+        prev = button;
     }
     upgrades_panel->hbox(upgrade_buttons);
     return upgrades_panel;
@@ -364,122 +368,119 @@ void UpgradePanel::visit(MiniGun& minigun) {
     
 }
 
-void UpgradePanel::visit(Spikes& spikes) {
-    auto& params = ParamsManager::Instance().params.guns.spikes;
+void UpgradePanel::create_panel_for_building_with_health(BuildingType type, BuildingWithHealth* building, int enforce_cost, int repairing_hp) {
     //HEADLINE
     Label* headline = (Label*)content_widget->add_widget(Label::create(true, 40));
-    headline->add_text(to_string(BuildingType::Spikes), sf::Color::White, sf::Text::Bold);
+    headline->add_text(to_string(type), sf::Color::White, sf::Text::Bold);
     DEBUG_TAG(headline, "headline");
     headline->x_centering();
-
+    //HRULE
+    Widget* rule = content_widget->add_widget(Panel::create(sf::Color::White, sf::Color::Transparent, 0));
+    DEBUG_TAG(rule, "rule");
+    //INTERFACE
     Widget* interface = content_widget->add_widget(Widget::create());
     DEBUG_TAG(interface, "interface");
-
-    //HEALTH_PANEL
-    Widget* health_panel = interface->add_widget(Widget::create());
-    DEBUG_TAG(health_panel, "health_panel");
-    Label* health_panel_label = (Label*)health_panel->add_widget(Label::create(true));
-    DEBUG_TAG(health_panel_label, "health_panel_label");
-    health_panel_label->add_text("Прочность: " + std::to_string(spikes.get_health()));
-    TextButton* enforce_button = (TextButton*)health_panel->add_widget(std::make_unique<TextButton>("Укрепить"));
-    enforce_button->enable(params.cost <= GameState::Instance().get_player_coins());
-    DEBUG_TAG(enforce_button, "enforce_button");
-    enforce_button->property_equal(Property::HEIGHT, false, m_parent, Property::HEIGHT, false, modifiers::Multiply(0.05));
-    VHBoxOptions center_alignment; center_alignment.alignment = Anchor::CENTER;
-    health_panel->hbox({ health_panel_label , enforce_button }, center_alignment);
-    //AUTO REPAIRING PANEL
-    HoverableWidget* auto_repairing_panel = (HoverableWidget*)interface->add_widget(std::make_unique<HoverableWidget>());
-    DEBUG_TAG(auto_repairing_panel, "auto_repairing_panel");
-    Switch* auto_repairing_switch = (Switch*)auto_repairing_panel->add_widget(std::make_unique<Switch>(spikes.auto_repair, [s = &spikes](bool autorepairing_enabled) {
-        s->auto_repair = autorepairing_enabled;
-    }));
-    DEBUG_TAG(auto_repairing_switch, "auto_repairing_switch");
-    auto_repairing_switch->property_equal(Property::HEIGHT, false, m_parent, Property::HEIGHT, false, modifiers::Multiply(0.05));
-    Label* auto_repairing_label = (Label*)auto_repairing_panel->add_widget(Label::create(true));
-    DEBUG_TAG(auto_repairing_label, "auto_repairing_label");
-    auto_repairing_label->add_text("Автовосстановление");
-    auto_repairing_panel->hbox({  auto_repairing_label, auto_repairing_switch }, center_alignment);
-
+        //HEALTH WIDGETS
+        Label* health_panel_label = interface->add_widget(Label::create(true));
+        DEBUG_TAG(health_panel_label, "health_panel_label");
+        health_panel_label->add_text("Прочность: " + std::to_string(building->get_health()));
+        TextButton* enforce_button = interface->add_widget(std::make_unique<TextButton>("Укрепить"));
+        enforce_button->enable(enforce_cost <= GameState::Instance().get_player_coins());
+        DEBUG_TAG(enforce_button, "enforce_button");
+        enforce_button->property_equal(Property::HEIGHT, false, m_parent, Property::HEIGHT, false, modifiers::Multiply(0.05));
+        //REPAIRING WIDGETS
+        Switch* auto_repairing_switch = interface->add_widget(std::make_unique<Switch>(building->auto_repair, [building](bool autorepairing_enabled) {
+            building->auto_repair = autorepairing_enabled;
+        }));
+        DEBUG_TAG(auto_repairing_switch, "auto_repairing_switch");
+        auto_repairing_switch->property_equal(Property::HEIGHT, false, m_parent, Property::HEIGHT, false, modifiers::Multiply(0.05));
+        Label* auto_repairing_label = interface->add_widget(Label::create(true));
+        DEBUG_TAG(auto_repairing_label, "auto_repairing_label");
+        auto_repairing_label->add_text("Автовосстановление");
     //INFO PANEL
-    m_upgrade_info_widget = interface->add_widget(Widget::create());
+    m_upgrade_info_widget = content_widget->add_widget(Widget::create());
     DEBUG_TAG(m_upgrade_info_widget, "m_upgrade_info_widget");
     m_upgrade_info_widget->size_fixed(0, 0);
 
-    interface->vbox({ health_panel, auto_repairing_panel, m_upgrade_info_widget });
-    interface->add_rule(Property::Y, [headline](Layout& layout) {
-        layout.y = headline->layout.height;
-    }, { {headline, Property::HEIGHT } });
+    rule->property_equal(Property::WIDTH, false, interface, Property::WIDTH, false, {});
+    rule->property_equal(Property::HEIGHT, false, m_tile_size_reference, Property::HEIGHT, false, modifiers::Multiply(0.02));
 
-    content_widget->add_rule(Property::SIZE, [interface, headline](Layout& layout) {
-        layout.width = std::max(headline->layout.width, interface->layout.width);
-        layout.height = headline->layout.height + interface->layout.height;
-    }, { { interface, Property::SIZE }, {headline, Property::SIZE} });
+    GridOptions grid_options; grid_options.alignment = Anchor::Y_CENTER | Anchor::LEFT;
+    grid_options.margin_source = 0.1;
+    grid_options.reference = m_tile_size_reference;
+    grid_options.margin_function = Margin::Source::FRACTION_OF_REFERENCE_HEIGHT;
+    interface->grid({ { health_panel_label, enforce_button }, { auto_repairing_label, auto_repairing_switch} }, grid_options);
+
+    VHBoxOptions vbox_options;
+    vbox_options.items = { {headline, Anchor::CENTER}, { rule, Anchor::CENTER}, {interface, Anchor::LEFT}, {m_upgrade_info_widget, Anchor::LEFT} };
+    vbox_options.margin_source = 0.1;
+    vbox_options.reference = m_tile_size_reference;
+    vbox_options.margin_function = Margin::Source::FRACTION_OF_REFERENCE_HEIGHT;
+    content_widget->vbox(vbox_options);
 
     //EVENTS
     //INFOS
-    auto_repairing_panel->on_hovered = [this, auto_repairing_panel](EventContext context)->Query {
-        GUI::Instance().add_deffered_command([this, auto_repairing_panel]() {
+    auto unhover_event = [this]() {
+        GUI::Instance().add_deffered_command([this]() {
+            m_upgrade_info_widget->size_fixed(0, 0);
+            m_upgrade_info_widget->delete_all_widgets(RemovePolicy::Min);
+        });
+    };
+    auto_repairing_switch->set_on_hovered([this, interface, type]() {
+        GUI::Instance().add_deffered_command([this, interface, type]() {
             m_upgrade_info_widget->delete_all_widgets(RemovePolicy::Min);
             Label* label = (Label*)m_upgrade_info_widget->add_widget(Label::create());
-            label->add_text("Включает автовосстановление. При достижении нулевой прочности и наличии достаточных средств, " + to_string(BuildingType::Spikes) + " автоматически восстановят 5 единиц прочности.", Label::blueprint_color);
-            label->property_equal(Property::WIDTH, false, auto_repairing_panel, Property::WIDTH, true, {});
+            label->add_text("Включает автовосстановление. При достижении нулевой прочности и наличии достаточных средств, " + to_string(type) + " автоматически восстановят 5 единиц прочности.", Label::blueprint_color);
+            label->property_equal(Property::WIDTH, false, interface, Property::WIDTH, true, {});
             m_upgrade_info_widget->clear_rules(Property::SIZE, true);
             m_upgrade_info_widget->size_include(label);
         });
         return Query{ Query::PROCESSED };
-    };
-    auto_repairing_panel->on_unhovered = [this](EventContext context) ->size_t {
-        GUI::Instance().add_deffered_command([this]() {
-            m_upgrade_info_widget->size_fixed(0, 0);
-            m_upgrade_info_widget->delete_all_widgets(RemovePolicy::Min);
-        });
-        return 0;
-    };
+    });
+    auto_repairing_switch->set_on_unhovered(unhover_event);
 
-    enforce_button->set_on_hovered([this, auto_repairing_panel]() {
-        GUI::Instance().add_deffered_command([this, auto_repairing_panel]() {
-            auto& params = ParamsManager::Instance().params.guns.spikes;
+    enforce_button->set_on_hovered([this, interface, repairing_hp, enforce_cost]() {
+        GUI::Instance().add_deffered_command([this, interface, repairing_hp, enforce_cost]() {
             m_upgrade_info_widget->delete_all_widgets(RemovePolicy::Min);
             Label* label = (Label*)m_upgrade_info_widget->add_widget(Label::create());
-            label->add_line("Увеличивает прочность на " + std::to_string(params.health) + " единиц.", Label::blueprint_color);
-            label->add_text("Стоимость:" + std::to_string(params.cost), Label::coins_color);
-            label->property_equal(Property::WIDTH, false, auto_repairing_panel, Property::WIDTH, true, {});
+            label->add_line("Увеличивает прочность на " + std::to_string(repairing_hp) + " единиц.", Label::blueprint_color);
+            label->add_text("Стоимость:" + std::to_string(enforce_cost), Label::coins_color);
+            label->property_equal(Property::WIDTH, false, interface, Property::WIDTH, true, {});
             m_upgrade_info_widget->clear_rules(Property::SIZE, true);
             m_upgrade_info_widget->size_include(label);
         });
     });
-
-    enforce_button->set_on_unhovered([this, auto_repairing_panel]() {
-        GUI::Instance().add_deffered_command([this]() {
-            m_upgrade_info_widget->size_fixed(0, 0);
-            m_upgrade_info_widget->delete_all_widgets(RemovePolicy::Min);
-        });
-    });
-
-    enforce_button->set_on_clicked([s = &spikes, plus = params.health, cost = params.cost]() {
-        s->set_health(s->get_health() + plus);
-        GameState::Instance().player_coins_add(-cost);
+    enforce_button->set_on_unhovered(unhover_event);
+    //ENFORCE
+    enforce_button->set_on_clicked([building, repairing_hp, enforce_cost]() {
+        building->set_health(building->get_health() + repairing_hp);
+        GameState::Instance().player_coins_add(-enforce_cost);
     });
 
     //CALLBACK ON HEALTH CHANGED
-    spikes.set_health_changed_callback([s = &spikes, health_panel_label]() {
+    building->set_health_changed_callback([building, health_panel_label]() {
         health_panel_label->clear();
-        health_panel_label->add_text("Прочность: " + std::to_string(s->get_health()));
-        if (s->get_health() <= 0) {
+        health_panel_label->add_text("Прочность: " + std::to_string(building->get_health()));
+        if (building->get_health() <= 0) {
             GameState::Instance().close_upgrade_panel();
         }
     });
-    m_on_kill_actions.push_back([s = &spikes]() {
-        s->set_health_changed_callback({}); //отписываемся.
+    m_on_kill_actions.push_back([building]() {
+        building->set_health_changed_callback({}); //отписываемся.
     });
-    m_update_callbacks.push_back([enforce_button, cost = params.cost](int coins) {
-        enforce_button->enable(coins >= cost);
+    m_update_callbacks.push_back([enforce_button, enforce_cost](int coins) {
+        enforce_button->enable(coins >= enforce_cost);
     });
+}
 
+void UpgradePanel::visit(Spikes& spikes) {
+    auto& params = ParamsManager::Instance().params.guns.spikes;
+    create_panel_for_building_with_health(BuildingType::Spikes, &spikes, params.cost, params.health);
 }
 
 void UpgradePanel::visit(Hedgehog& headgehogs) {
-
+    auto& params = ParamsManager::Instance().params.guns.hedgehog;
+    create_panel_for_building_with_health(BuildingType::Hedgehogs, &headgehogs, params.cost, params.health);
 }
 
 void UpgradePanel::visit(AntitankGun& antitank_gun) {

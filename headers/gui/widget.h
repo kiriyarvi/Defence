@@ -138,6 +138,8 @@ struct Anchor {
     static Type TOP;
     static Type BOTTOM;
     static Type CENTER;
+    static Type X_CENTER;
+    static Type Y_CENTER;
 };
 
 struct Spacing {
@@ -170,23 +172,37 @@ namespace modifiers {
     };
 }
 
-struct VHBoxOptions {
+struct Margin {
+    float margin_source = 0.0f; //< используется для вычисления потоянного margin между ячейками
+    enum Source {
+        ABSOLUTE, //< margin = margin_source
+        FRACTION_OF_CELL, //< margin = margin_source * <величина ячейки(высота если hbox и ширина если vbox)> (НЕ ИСПОЛЬЩУЕТСЯ ДЛЯ GRID)
+        FRACTION_OF_REFERENCE_WIDTH, //<margin = reference->layout.width
+        FRACTION_OF_REFERENCE_HEIGHT //<margin = reference->layout.height
+    } margin_function = Source::ABSOLUTE;
+    Widget* reference = nullptr;
+    float get_margin(float cell_size) const;
+};
+
+
+struct VHBoxOptions: public Margin {
     struct Item {
         Widget* widget;
         Anchor::Type alignment;
     };
     std::vector<Item> items;
-    void add_item(Widget* widget, Anchor::Type anchor = Anchor::LEFT);
-    float margin_source = 0.0f; //< используется для вычисления потоянного margin между ячейками
-    enum class MarginSource {
-        ABSOLUTE, //< margin = margin_source
-        FRACTION_OF_CELL, //< margin = margin_source * <величина ячейки(высота если hbox и ширина если vbox)> 
-        FRACTION_OF_REFERENCE_WIDTH, //<margin = reference->layout.width
-        FRACTION_OF_REFERENCE_HEIGHT //<margin = reference->layout.height
-    } margin_function = MarginSource::ABSOLUTE;
-    Widget* reference = nullptr;
+    void add_item(Widget* widget, Anchor::Type alignment = Anchor::LEFT);
     Anchor::Type alignment = Anchor::LEFT; //выравнивание по умолчанию. Используется в функциях vbox, hbox, принимающих вектор Widget*
-    float get_margin(float cell_size) const;
+};
+
+struct GridOptions : public Margin {
+    struct Item {
+        Widget* widget = nullptr;
+        Anchor::Type alignment = Anchor::LEFT | Anchor::TOP;
+    };
+    std::vector<std::vector<Item>> items;
+    void resize(size_t rows, size_t cols);
+    Anchor::Type alignment = Anchor::LEFT; //выравнивание по умолчанию. используется в функции grid от вектора виджетов.
 };
 
 class Widget {
@@ -261,13 +277,15 @@ public:
     void y_centering(Widget* parent = nullptr);
     void position_tooltip(size_t ancher);
     void position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor);
+    //LAYOUT
+    void layout_contains(std::vector<Widget*> elements);
     //CONTAINERS
     void vbox(const VHBoxOptions& options);
     void vbox(const std::vector<Widget*>& elements, VHBoxOptions options = {});
     void hbox(const VHBoxOptions& options);
     void hbox(const std::vector<Widget*>& elements, VHBoxOptions options = {});
-    //TODO GRID
-
+    void grid(const GridOptions& options);
+    void grid(const std::vector<std::vector<Widget*>> elements, GridOptions options = {});
     //WIDGET HIERARCHY
     enum class RemovePolicy {
         /// Минимальное удаление, сохраняющее работоспособность системы
@@ -284,9 +302,40 @@ public:
         DeleteDepententRulesHard = 0b0101, //< удалит правила других виджетов, зависимые от свойств удаляемого виджета. Удаляет даже смешанные правила.
     };
 
-    Widget* add_widget(std::unique_ptr<Widget>&& child);
-    Widget* add_widget_deffered(std::unique_ptr<Widget>&& child);
-    Widget* add_widget_smart(std::unique_ptr<Widget>&& child);
+    
+
+    template<typename T>
+    T* add_widget(std::unique_ptr<T>&& child) {
+        assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
+        T* ptr = child.get();
+        ptr->m_parent = this;
+        m_children.push_back(std::move(child));
+        return ptr;
+    }
+
+    template<typename T>
+    T* add_widget_deffered(std::unique_ptr<T>&& child) {
+        T* child_ptr = child.release();
+        GUI::Instance().add_deffered_command([this, child = child_ptr]() {
+            child->m_parent = this;
+            m_children.push_back(std::unique_ptr<Widget>(child));
+        });
+        return child_ptr;
+    }
+
+    /// В зависимости от того, происходит ли сейчас обработка событий или нет
+    /// вызывает либо add_widget либо add_widget_deffered
+    template<typename T>
+    T* add_widget_smart(std::unique_ptr<T>&& child) {
+        T* w = child.get();
+        if (GUI::Instance().is_event_processing())
+            add_widget_deffered(std::move(child));
+        else
+            add_widget(std::move(child));
+        return w;
+    }
+
+
     void delete_widget(Widget* widget, RemovePolicy policy);
     void delete_widget_deffered(Widget* widget, RemovePolicy policy);
     void delete_widget_smart(Widget* widget, RemovePolicy policy);
@@ -312,8 +361,9 @@ public:
         //Сразу вернет false
         Terminate
     } hit_test_policy = HitTestPolicy::Normal;
+    Event::Type transparent_for = 0; //< для данных событий виджет не существует. Тоже что и HitTestPolicy::Terminate, но более тонкая настройка
 
-    bool hit_test(std::list<HitListNode>& hit_list, glm::uvec2 mouse_pos);
+    bool hit_test(std::list<HitListNode>& hit_list, glm::uvec2 mouse_pos, Event::Type event_type);
     struct EventContext {
         const std::list<HitListNode>& hit_list;
         Event::Type event_type;
@@ -349,33 +399,44 @@ private:
     sf::RectangleShape m_rect;
 };
 
-class Hoverable {
+class HoverableWidget : virtual public Widget {
 public:
-    Hoverable(Widget* widget) : m_widget{ widget } {}
-    Query hover_event(Widget::EventContext event_context);
-    std::function<Query(Widget::EventContext)> on_hovered;
-    std::function<size_t(Widget::EventContext)> on_unhovered;
-    std::function<Query(Widget::EventContext)> on_mouse_moved;
-private:
-    Widget* m_widget;
+    void set_on_hovered(const std::function<void()>& on_hovered) { m_on_hovered = on_hovered; }
+    void set_on_unhovered(const std::function<void()>& on_unhovered) { m_on_unhovered = on_unhovered; }
+    void set_on_mouse_moved(const std::function<void()>& on_mouse_moved) { m_on_mouse_moved = on_mouse_moved; }
+    Query on_event(EventContext event_context);
+    bool is_hovered() { return m_hovered; }
+    Query on_hovered_return = Query{Query::PROCESSED};
+    Query on_unhovered_return = Query{ Query::REPEAT, Query::PERFORM_DEFFERED };
+    Query on_mouse_moved_return = Query{ Query::PROCESSED };
+    Query default_return = Query{ Query::PASS };
+protected:
+    std::function<void()> m_on_hovered;
+    std::function<void()> m_on_unhovered;
+    std::function<void()> m_on_mouse_moved;
+    bool m_hovered = false;
 };
 
-class Clickable {
+class ClickableWidget : virtual public Widget {
 public:
-    Clickable(Widget* widget, sf::Mouse::Button button) : m_widget{ widget }, m_button{ button } {}
-    Query click_event(Widget::EventContext event_context);
-    std::function<Query(Widget::EventContext)> on_pressed;
-    std::function<Query(Widget::EventContext)> on_released;
-    bool clicked() const { return m_clicked; }
-private:
-    bool m_clicked = false;
-    Widget* m_widget;
+    ClickableWidget(sf::Mouse::Button button = sf::Mouse::Left, bool enabled = true) : m_button{ button }, m_enabled{ enabled } {}
+    void set_on_pressed(const std::function<void()>& on_pressed) { m_on_pressed = on_pressed; }
+    void set_on_released(const std::function<void()>& on_released) { m_on_released = on_released; }
+    void enabled(bool enabled);
+    bool is_enabled() { return  m_enabled; }
+    Query on_event(EventContext event_context);
+    bool capture_mode = true;
+protected:
+    std::function<void()> m_on_pressed;
+    std::function<void()> m_on_released;
+    bool m_enabled = true;
     sf::Mouse::Button m_button;
+    bool m_clicked = false;
 };
 
-
-class HoverableWidget : public Widget, public Hoverable {
+//TODO переделать классы с собственной логикой на HoverableClickableWidget, HoverableWidget, ClickableWidget
+class HoverableClickableWidget : public HoverableWidget, public ClickableWidget {
 public:
-    HoverableWidget();
-    Query on_event(EventContext event_context) override;
+    Query on_event(EventContext event_context);
+    bool unhover_on_pressed = false;
 };

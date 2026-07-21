@@ -56,7 +56,7 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     DEBUG_TAG(m_building_panel, "m_building_panel");
 
     //next wave button(Hierarchy)
-    m_next_wave_button = (NextWaveButton*)m_game_process_ui->add_widget(std::make_unique<NextWaveButton>());
+    m_next_wave_button = m_game_process_ui->add_widget(std::make_unique<NextWaveButton>());
     DEBUG_TAG(m_next_wave_button, "m_next_wave_button");
     //next wave button(Layout)
     m_next_wave_button->position_anchor(Anchor::BOTTOM | Anchor::RIGHT, m_game_process_ui, Anchor::BOTTOM | Anchor::RIGHT);
@@ -409,7 +409,7 @@ void GameState::init_stage(int stage) {
     }
     else {
         AchievementSystem::Instance().unlock_all();
-        player_coins_add(1000);
+        player_coins_add(10000);
     }
 }
 

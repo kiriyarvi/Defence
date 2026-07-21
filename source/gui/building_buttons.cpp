@@ -17,14 +17,14 @@
 
 
 BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
-    BuildingButton* b1 = (BuildingButton*)add_widget(std::make_unique<MinigunBuildingButton>());
-    BuildingButton* b2 = (BuildingButton*)add_widget(std::make_unique<MineBuildingButton>());
-    BuildingButton* b3 = (BuildingButton*)add_widget(std::make_unique<SpikesBuildingButton>());
-    BuildingButton* b4 = (BuildingButton*)add_widget(std::make_unique<HedgehogBuildingButton>());
-    BuildingButton* b5 = (BuildingButton*)add_widget(std::make_unique<AntitankBuildingButton>());
-    BuildingButton* b6 = (BuildingButton*)add_widget(std::make_unique<TwinGunBuildingButton>());
-    BuildingButton* b7 = (BuildingButton*)add_widget(std::make_unique<RadarBuildingButton>());
-    BuildingButton* b8 = (BuildingButton*)add_widget(std::make_unique<RadioMastBuildingButton>());
+    BuildingButton* b1 = add_widget(std::make_unique<MinigunBuildingButton>());
+    BuildingButton* b2 = add_widget(std::make_unique<MineBuildingButton>());
+    BuildingButton* b3 = add_widget(std::make_unique<SpikesBuildingButton>());
+    BuildingButton* b4 = add_widget(std::make_unique<HedgehogBuildingButton>());
+    BuildingButton* b5 = add_widget(std::make_unique<AntitankBuildingButton>());
+    BuildingButton* b6 = add_widget(std::make_unique<TwinGunBuildingButton>());
+    BuildingButton* b7 = add_widget(std::make_unique<RadarBuildingButton>());
+    BuildingButton* b8 = add_widget(std::make_unique<RadioMastBuildingButton>());
     DEBUG_TAG(b1, "MinigunBuildingButton")
     DEBUG_TAG(b2, "MineBuildingButton")
     DEBUG_TAG(b3, "SpikesBuildingButton")
@@ -133,12 +133,13 @@ Query BuildingPanel::on_event(Widget::EventContext context) {
 }
 
 BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type, TileRestrictions restrictions, int cost, float radius, TextureID icon):
-    m_creator{ creator }, m_restrictions{ restrictions }, m_radius{ radius }, m_type{ type }, m_icon{ icon }, m_cost{ cost },
-    Hoverable{ this }, Clickable{this, sf::Mouse::Left}
+    m_creator{ creator }, m_restrictions{ restrictions }, m_radius{ radius }, m_type{ type }, m_icon{ icon }, m_cost{ cost }
 {
+    m_button = sf::Mouse::Left;
+
     set_state(State::UNDISCOVERED);
 
-    on_hovered = [this](EventContext context) -> Query {
+    m_on_hovered = [this]() {
         //создадим tooltip
         auto [panel_ptr, label] = create_tooltip();       
         label->add_text(to_string(m_type) + "\n", sf::Color::White, sf::Text::Style::Bold);
@@ -150,36 +151,24 @@ BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type
         //создаем запрос на его добавление
         Widget* ui = static_cast<BuildingPanel*>(m_parent)->ui;
         ui->add_widget_deffered(std::move(panel_ptr));
-        //событие обработано, никаких действий не требуется
-        return Query{ Query::Workflow::PROCESSED };
     };
-    on_mouse_moved = [this](EventContext context) ->Query {
+    m_on_mouse_moved = [this]() {
         m_tooltip->invalidate(Property::POSITION); //инвалидируем позицию у tooltip, чтобы он пересчитал её.
-        return Query{ Query::Workflow::PROCESSED };
     };
 
-    on_unhovered = [this](EventContext context) ->size_t {
+    m_on_unhovered = [this]() {
         //удаляем tooltip
         Widget* ui = static_cast<BuildingPanel*>(m_parent)->ui;
         ui->delete_widget_deffered(m_tooltip, RemovePolicy::Min);
-        return 0;
     };
 
-    on_pressed = [this](EventContext context) -> Query {
+    m_on_pressed = [this]() {
         if (m_state == State::UNDISCOVERED || m_state == State::NOT_ENOUGTH_MONEY)
             return Query{}; //не принимаем событие
         BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
         building_panel->select(this);
         return Query{ Query::Workflow::PROCESSED };
     };
-}
-
-Query BuildingButton::on_event(Widget::EventContext context) {
-    Query q;
-    q = hover_event(context);
-    if (!q.pure_pass()) return q;
-    q = click_event(context);
-    return q;
 }
 
 

@@ -152,7 +152,7 @@ bool GUI::event_impl() {
     while (true) { //REPEAT-while
         //1. hit-test
         std::list<Widget::HitListNode> hit_test;
-        m_root->hit_test(hit_test, mouse_pos);
+        m_root->hit_test(hit_test, mouse_pos, event_type);
 #ifdef GUI_DEBUG_ENABLED
         for (auto& w : hit_test) {
             std::cout << w.widget->debug_name << " -> ";
@@ -251,7 +251,9 @@ size_t Anchor::LEFT = 0b1000;
 size_t Anchor::RIGHT = 0b0100;
 size_t Anchor::TOP = 0b0010;
 size_t Anchor::BOTTOM = 0b0001;
-size_t Anchor::CENTER = 0;
+size_t Anchor::X_CENTER = 0b010000;
+size_t Anchor::Y_CENTER = 0b100000;
+size_t Anchor::CENTER = 0b110000;
 
 std::string Widget::Layout::to_string(Property::Type type) {
     static std::unordered_map<Property::Type, std::string> m{
@@ -288,22 +290,29 @@ const std::unordered_map<Property::Type, float Rect::*> Widget::Layout::s_proper
     {Property::HEIGHT, &Rect::height}
 };
 
-void VHBoxOptions::add_item(Widget* widget, Anchor::Type anchor) {
-    items.push_back({ widget, anchor });
-}
-
-float VHBoxOptions::get_margin(float cell_size) const {
+float Margin::get_margin(float cell_size) const {
     switch (margin_function) {
-    case VHBoxOptions::MarginSource::ABSOLUTE:
+    case Margin::Source::ABSOLUTE:
         return margin_source;
-    case VHBoxOptions::MarginSource::FRACTION_OF_CELL:
+    case Margin::Source::FRACTION_OF_CELL:
         return margin_source * cell_size;
-    case VHBoxOptions::MarginSource::FRACTION_OF_REFERENCE_WIDTH:
+    case Margin::Source::FRACTION_OF_REFERENCE_WIDTH:
         return margin_source * reference->layout.width;
-    case VHBoxOptions::MarginSource::FRACTION_OF_REFERENCE_HEIGHT:
+    case Margin::Source::FRACTION_OF_REFERENCE_HEIGHT:
         return margin_source * reference->layout.height;
     }
 }
+
+void VHBoxOptions::add_item(Widget* widget, Anchor::Type alignment) {
+    items.push_back({ widget, alignment });
+}
+
+void GridOptions::resize(size_t rows, size_t cols) {
+    items.resize(rows);
+    for (auto& row : items)
+        row.resize(cols);
+}
+
 
 /// Возвращает прямоугольник контента
 Rect Widget::Layout::get_content_rect() const {
@@ -424,7 +433,7 @@ void Widget::add_rule(Property::Type output, const std::function<void(Layout&)>&
         assert(set.insert(item.widget).second && "Duplicates in dependencies list");
 #endif
     clear_rules(output);
-    m_rules.push_back({ output, calc, dependencies });
+    m_rules.emplace_back(Rule{ output, std::move(calc), dependencies });
     for (auto& dependency : dependencies) {
         for (auto& [prop, member] : Layout::s_property_map) {
             if (dependency.source & prop)
@@ -695,6 +704,34 @@ void Widget::position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor
     }, { {to, Property::LAYOUT}, {this, Property::SIZE} });
 }
 
+void Widget::layout_contains(std::vector<Widget*> elements) {
+    std::vector<Dependency> dependencies;
+    dependencies.reserve(elements.size());
+    for (auto& element : elements)
+        dependencies.push_back({ element, Property::LAYOUT });
+    add_rule(Property::LAYOUT, [elements](Layout& layout) {
+        float min_x;
+        float max_x;
+        float min_y;
+        float max_y;
+        Rect sample_rect = elements[0]->layout.get_layout_rect();
+        min_x = sample_rect.x;
+        min_y = sample_rect.y;
+        max_x = sample_rect.x + sample_rect.width;
+        max_y = sample_rect.y + sample_rect.height;
+        for (auto& elem : elements) {
+            min_x = std::min<float>(min_x, elem->layout.x);
+            min_y = std::min<float>(min_y, elem->layout.y);
+            max_x = std::max<float>(max_x, elem->layout.x + elem->layout.width);
+            max_y = std::max<float>(max_y, elem->layout.y + elem->layout.height);
+        }
+        layout.x = min_x - layout.padding.left;
+        layout.y = min_y - layout.padding.right;
+        layout.width = max_x - min_x + layout.padding.left + layout.padding.right;
+        layout.height = max_y - min_y + layout.padding.top + layout.padding.bottom;
+    }, dependencies);
+}
+
 
 void Widget::vhbox(const VHBoxOptions& options, bool vertical) {
     Property::Type height_prop = vertical ? Property::HEIGHT : Property::WIDTH;
@@ -714,9 +751,9 @@ void Widget::vhbox(const VHBoxOptions& options, bool vertical) {
     std::transform(options.items.begin(), options.items.end(), std::back_inserter(width_dependencies), [width_prop](const VHBoxOptions::Item& item) {return Dependency{ item.widget, width_prop }; });
 
     height_dependencies.push_back({ this, width_prop });
-    if (options.margin_function == VHBoxOptions::MarginSource::FRACTION_OF_REFERENCE_HEIGHT)
+    if (options.margin_function == Margin::Source::FRACTION_OF_REFERENCE_HEIGHT)
         height_dependencies.push_back({ options.reference, Property::HEIGHT });
-    else if (options.margin_function == VHBoxOptions::MarginSource::FRACTION_OF_REFERENCE_WIDTH)
+    else if (options.margin_function == Margin::Source::FRACTION_OF_REFERENCE_WIDTH)
         height_dependencies.push_back({ options.reference, Property::WIDTH });
     add_rule(height_prop, [=](Layout& layout) {
         float height = 0.0;
@@ -780,6 +817,112 @@ void Widget::hbox(const VHBoxOptions& options) {
     vhbox(options, false);
 }
 
+struct GridLayoutAlgorithm {
+    struct CellInfo {
+        Rect cell_rect;
+        glm::vec2 item_pos;
+    };
+    GridOptions options;
+    std::vector<std::vector<CellInfo>> info;
+
+    void calc() {
+        //1. Вычислим высоты ячеек
+        for (size_t y = 0; y < options.items.size(); ++y) {
+            auto& row = options.items[y];
+            float height = 0.0;
+            for (auto& item : row)
+                height = std::max<float>(height, item.widget ? item.widget->layout.height : 0.0);
+            for (auto& item_info : info[y])
+                item_info.cell_rect.height = height;
+        }
+        //2. Вычислим ширины ячеек.
+        for (size_t x = 0; x < options.items[0].size(); ++x) {
+            float width = 0.0;
+            for (size_t y = 0; y < options.items.size(); ++y)
+                width = std::max<float>(width, options.items[y][x].widget ? options.items[y][x].widget->layout.width : 0.0);
+            for (size_t y = 0; y < options.items.size(); ++y)
+                info[y][x].cell_rect.width = width;
+        }
+        //вычисляем позиции ячеек
+        float margin = options.get_margin(0.0);
+        for (size_t y = 0; y < options.items.size(); ++y) {
+            auto& row = options.items[y];
+            for (size_t x = 0; x < row.size(); ++x) {
+                info[y][x].cell_rect.x = (x == 0 ? 0 : (info[y][x - 1].cell_rect.x + info[y][x - 1].cell_rect.width + margin));
+                info[y][x].cell_rect.y = (y == 0 ? 0 : (info[y - 1][x].cell_rect.y + info[y - 1][x].cell_rect.height + margin));
+                auto& item = options.items[y][x];
+                if (!item.widget)
+                    continue;
+                auto& item_info = info[y][x];
+                Anchor::Type alignment = item.alignment;
+                if (alignment & Anchor::LEFT)
+                    item_info.item_pos.x = 0;
+                else if (alignment & Anchor::RIGHT)
+                    item_info.item_pos.x = item_info.cell_rect.width - item.widget->layout.width;
+                else if (alignment & Anchor::X_CENTER)
+                    item_info.item_pos.x = (item_info.cell_rect.width - item.widget->layout.width) / 2.f;
+
+                if (alignment & Anchor::TOP)
+                    item_info.item_pos.y = 0;
+                else if (alignment & Anchor::BOTTOM)
+                    item_info.item_pos.y = item_info.cell_rect.height - item.widget->layout.height;
+                else if (alignment & Anchor::Y_CENTER)
+                    item_info.item_pos.y = (item_info.cell_rect.height - item.widget->layout.height) / 2.f;
+            }
+        }
+    }
+
+    void operator()(Widget::Layout& layout){
+        calc();
+        auto& last_item = info.back().back();
+        layout.width = last_item.cell_rect.x + last_item.cell_rect.width + layout.padding.left + layout.padding.right;
+        layout.height = last_item.cell_rect.y + last_item.cell_rect.height + layout.padding.top + layout.padding.bottom;
+    }
+};
+
+
+
+void Widget::grid(const GridOptions& options) {
+    auto algorithm = std::make_shared<GridLayoutAlgorithm>();
+    algorithm->info.resize(options.items.size());
+    for (size_t y = 0; y < algorithm->info.size(); ++y)
+        algorithm->info[y].resize(options.items[y].size());
+    algorithm->options = options;
+
+    std::vector<Dependency> dependencies;
+    for (auto& row : options.items)
+        for (auto& item : row)
+            if (item.widget)
+                dependencies.push_back({ item.widget, Property::SIZE });
+    if (options.margin_function == Margin::Source::FRACTION_OF_REFERENCE_HEIGHT)
+        dependencies.push_back({ options.reference, Property::HEIGHT });
+    else if (options.margin_function == Margin::Source::FRACTION_OF_REFERENCE_WIDTH)
+        dependencies.push_back({ options.reference, Property::WIDTH });
+    add_rule(Property::SIZE, [algorithm](Layout& layout) {
+        (*algorithm)(layout);
+    }, dependencies);
+
+    for (size_t y = 0; y < options.items.size(); ++y)
+        for (size_t x = 0; x < options.items[y].size(); ++x)
+            if (options.items[y][x].widget)
+                options.items[y][x].widget->add_rule(Property::POSITION, [y, x, algorithm](Layout& layout) {
+                    auto& cached_info = algorithm->info[y][x];
+                    layout.x = cached_info.item_pos.x + cached_info.cell_rect.x;
+                    layout.y = cached_info.item_pos.y + cached_info.cell_rect.y;
+                }, { {this, Property::SIZE} });
+}
+
+void Widget::grid(const std::vector<std::vector<Widget*>> elements, GridOptions options) {
+    int rows = elements.size();
+    int cols = elements[0].size();
+    options.resize(rows, cols);
+    for (size_t y = 0; y < rows; ++y) for (size_t x = 0; x < cols; ++x) {
+        options.items[y][x].widget = elements[y][x];
+        options.items[y][x].alignment = options.alignment;
+    }
+    grid(options);
+}
+
 std::unique_ptr<Widget> Widget::create(Widget* parent) {
     return std::make_unique<Widget>(parent);
 }
@@ -793,8 +936,8 @@ void Widget::draw_hierarchy(int frame, const glm::vec2& position_transform, sf::
     }
 }
 
-bool Widget::hit_test(std::list<Widget::HitListNode>& hit_list, glm::uvec2 mouse_pos) {
-    if (hit_test_policy == HitTestPolicy::Terminate)
+bool Widget::hit_test(std::list<Widget::HitListNode>& hit_list, glm::uvec2 mouse_pos, Event::Type event_type) {
+    if (hit_test_policy == HitTestPolicy::Terminate || (transparent_for & event_type))
         return false;
     glm::vec2 parent_transform = (hit_list.empty() || layout.absolute) ? glm::vec2(0, 0) : hit_list.back().parent_transform;
     glm::vec2 content_transform = parent_transform + glm::vec2{ layout.x + layout.padding.left, layout.y + layout.padding.top };
@@ -807,7 +950,7 @@ bool Widget::hit_test(std::list<Widget::HitListNode>& hit_list, glm::uvec2 mouse
     //если hit-test пройден или block_hit_test = false, проверяем hit-test детей.
     hit_list.push_back(Widget::HitListNode{ this, content_transform });
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-        if (it->get()->hit_test(hit_list, mouse_pos))
+        if (it->get()->hit_test(hit_list, mouse_pos, event_type))
             return true;
     }
     if (!hit_test_passed) //нет значения => вычислим
@@ -818,12 +961,6 @@ bool Widget::hit_test(std::list<Widget::HitListNode>& hit_list, glm::uvec2 mouse
     return false;
 }
 
-Widget* Widget::add_widget(std::unique_ptr<Widget>&& child) {
-    assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
-    child->m_parent = this;
-    m_children.push_back(std::move(child));
-    return m_children.back().get();
-}
 
 void Widget::delete_widget(Widget* widget, RemovePolicy policy) {
     assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
@@ -843,25 +980,6 @@ void Widget::delete_all_widgets(RemovePolicy policy) {
 }
 
 
-Widget* Widget::add_widget_deffered(std::unique_ptr<Widget>&& child) {
-    Widget* child_ptr = child.release();
-    GUI::Instance().add_deffered_command([this, child = child_ptr]() {
-        child->m_parent = this;
-        m_children.push_back(std::unique_ptr<Widget>(child));
-    });
-    return child_ptr;
-}
-
-/// В зависимости от того, происходит ли сейчас обработка событий или нет
-/// вызывает либо add_widget либо add_widget_deffered
-Widget* Widget::add_widget_smart(std::unique_ptr<Widget>&& child) {
-    Widget* w = child.get();
-    if (GUI::Instance().is_event_processing())
-        add_widget_deffered(std::move(child));
-    else
-        add_widget(std::move(child));
-    return w;
-}
 
 void Widget::delete_widget_deffered(Widget* widget, RemovePolicy policy) {
     GUI::Instance().add_deffered_command([this, widget, policy]() {
@@ -955,48 +1073,120 @@ void Panel::draw(const glm::vec2& position_transform, sf::RenderTarget& window) 
 }
 
 
-Query Hoverable::hover_event(Widget::EventContext event_context) {
+Query HoverableWidget::on_event(EventContext event_context) {
     if (event_context.event_type == Event::MOUSE_MOVED) {
-        if (!event_context.from_subscribe) {
-            GUI::Instance().subscribe_deffered(m_widget, Event::MOUSE_MOVED);
-            return on_hovered ? on_hovered(event_context) : Query{ Query::PROCESSED }; 
+        if (!m_hovered) {
+            GUI::Instance().subscribe_deffered(this, Event::MOUSE_MOVED);
+            m_hovered = true;
+            if (m_on_hovered)
+                m_on_hovered();
+            return on_hovered_return;
         }
         else {
-            if (!event_context.hit_list.empty() && event_context.hit_list.back().widget == m_widget)
-                return on_mouse_moved ? on_mouse_moved(event_context) : Query{ Query::PASS };
+            if (std::find_if(event_context.hit_list.begin(), event_context.hit_list.end(), [this](const Widget::HitListNode& node) { return node.widget == this; }) != event_context.hit_list.end()) {
+                if (m_on_mouse_moved)
+                    m_on_mouse_moved();
+                return on_mouse_moved_return;
+            }
             else {
-                GUI::Instance().unsubscribe_deffered(m_widget, Event::MOUSE_MOVED);
-                if (on_unhovered) {
-                    size_t query = on_unhovered(event_context);
-                    return Query{ Query::REPEAT, query | Query::PERFORM_DEFFERED };
+                GUI::Instance().unsubscribe_deffered(this, Event::MOUSE_MOVED);
+                m_hovered = false;
+                if (m_on_unhovered) {
+                    m_on_unhovered();
                 }
-                else
-                    return Query{ Query::REPEAT, Query::PERFORM_DEFFERED };
+                return on_unhovered_return;
             }
         }
     }
-    return Query{Query::PASS};
+    return default_return;
 }
 
 
-Query Clickable::click_event(Widget::EventContext event_context) {
-    if (event_context.event_type == Event::BUTTON_PRESSED && GUI::Instance().mouse_button == m_button) {
-        GUI::Instance().subscribe_deffered(m_widget, Event::BUTTON_RELEASED);
+void ClickableWidget::enabled(bool enabled) {
+    if (enabled == m_enabled)
+        return;
+    if (!enabled && m_clicked) {
+        GUI::Instance().unsubscribe_deffered(this, Event::BUTTON_RELEASED);
+        m_clicked = false;
+    }
+    m_enabled = enabled;
+}
+
+Query ClickableWidget::on_event(EventContext event_context) {
+    if (!m_enabled) // если не активны, не взаимодействуем.
+        return Query{ Query::PASS };
+    if (event_context.event_type == Event::BUTTON_PRESSED && GUI::Instance().mouse_button == m_button) { //если нажали кнопку
+        if (capture_mode)
+            GUI::Instance().subscribe_deffered(this, Event::BUTTON_RELEASED | Event::MOUSE_MOVED); //подпись
         m_clicked = true;
-        return on_pressed ? on_pressed(event_context) : Query{ Query::PROCESSED };
+        if (m_on_pressed)
+            m_on_pressed();
+        return Query{ Query::PROCESSED };
     }
     else if (event_context.event_type == Event::BUTTON_RELEASED && GUI::Instance().mouse_button == m_button) {
-        if (event_context.from_subscribe)
-            GUI::Instance().unsubscribe_deffered(m_widget, Event::BUTTON_RELEASED);
-        m_clicked = false;
-        return on_released ? on_released(event_context) : Query{ Query::PROCESSED };
+        if (m_clicked) {
+            m_clicked = false;
+            if (capture_mode)
+                GUI::Instance().unsubscribe_deffered(this, Event::BUTTON_RELEASED);
+            if (m_on_released)
+                m_on_released();
+            return Query{ Query::PROCESSED };
+        } //else - skip - кнопку зажали, навели на нас и отпустили или по какой-то причине мы не словили BUTTON_PRESSED (например виджет перед нами его перехватил) => игнорируем
     }
     return Query::skip(event_context.from_subscribe);
 }
 
 
-HoverableWidget::HoverableWidget(): Hoverable(this) {}
-
-Query HoverableWidget::on_event(EventContext event_context) {
-    return hover_event(event_context);
+Query HoverableClickableWidget::on_event(Widget::EventContext event_context) {
+    if (!m_enabled) // если не активны, не взаимодействуем.
+        return Query{ Query::PASS };
+    if (event_context.event_type == Event::BUTTON_PRESSED && GUI::Instance().mouse_button == m_button) { //если нажали кнопку
+        if (capture_mode)
+            GUI::Instance().subscribe_deffered(this, Event::BUTTON_RELEASED | Event::MOUSE_MOVED); //подпись
+        m_clicked = true;
+        if (unhover_on_pressed && m_hovered) {
+            m_hovered = false;
+            if (m_on_unhovered)
+                m_on_unhovered();
+        }
+        if (m_on_pressed)
+            m_on_pressed();
+        return Query{ Query::PROCESSED };
+    }
+    else if (event_context.event_type == Event::BUTTON_RELEASED && GUI::Instance().mouse_button == m_button) {
+        if (m_clicked) {
+            m_clicked = false;
+            if (capture_mode)
+                GUI::Instance().unsubscribe_deffered(this, Event::BUTTON_RELEASED);
+            if (m_on_released)
+                m_on_released();
+            return Query{ Query::PROCESSED };
+        } //else - skip - кнопку зажали, навели на нас и отпустили или по какой-то причине мы не словили BUTTON_PRESSED (например виджет перед нами его перехватил) => игнорируем
+    } else if (event_context.event_type == Event::MOUSE_MOVED) {
+        if (m_clicked && unhover_on_pressed)
+            return Query::skip(event_context.from_subscribe);
+        if (m_hovered) {
+            if (std::find_if(event_context.hit_list.begin(), event_context.hit_list.end(), [this](const Widget::HitListNode& node) { return node.widget == this; }) != event_context.hit_list.end()) {
+                if (m_on_mouse_moved)
+                    m_on_mouse_moved();
+                return on_mouse_moved_return;
+            }
+            else {
+                GUI::Instance().unsubscribe_deffered(this, Event::MOUSE_MOVED);
+                m_hovered = false;
+                if (m_on_unhovered) {
+                    m_on_unhovered();
+                }
+                return on_unhovered_return;
+            }
+        }
+        else {
+            GUI::Instance().subscribe_deffered(this, Event::MOUSE_MOVED);
+            m_hovered = true;
+            if (m_on_hovered)
+                m_on_hovered();
+            return on_hovered_return;
+        }
+    }
+    return Query::skip(event_context.from_subscribe);
 }

@@ -29,7 +29,7 @@ protected:
 };
 
 
-class LayeredIcon: public Widget {
+class LayeredIcon: virtual public Widget {
 public:
     LayeredIcon() = default;
     std::vector<TextureID> layers;

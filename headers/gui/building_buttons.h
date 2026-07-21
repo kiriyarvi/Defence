@@ -26,7 +26,7 @@ private:
     std::array<BuildingButton*, 8> m_buttons;
 };
 
-class BuildingButton : public LayeredIcon, private Hoverable, private Clickable {
+class BuildingButton : public LayeredIcon, private HoverableClickableWidget {
     friend class BuildingPanel;
 public:
     using BuildingCreator = std::function<std::unique_ptr<IBuilding>(int x_id, int y_id)>;
@@ -42,7 +42,6 @@ public:
             return std::make_unique<T>(x_id, y_id);
         };
     }
-    Query on_event(Widget::EventContext context) override;
     void update(int current_coins_count);
     void draw_building_plan(sf::RenderWindow& window, int x_id, int y_id);
     virtual void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed);

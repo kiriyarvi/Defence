@@ -190,29 +190,28 @@ int main() {
     DEBUG_TAG(root, "root");
 
     //HIERARCHY
-    Panel* panel = (Panel*)root->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Blue));
-    Widget* box_1 = panel->add_widget(Panel::create());
+    Panel* panel = (Panel*)root->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Red));
+    Widget* box_1 = panel->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Blue));
     DEBUG_TAG(box_1, "box_1");
-    Widget* box_2 = panel->add_widget(Panel::create());
+    Widget* box_2 = panel->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Blue));
     DEBUG_TAG(box_2, "box_2");
-    Widget* box_3 = panel->add_widget(Panel::create());
+    Widget* box_3 = panel->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Blue));
     DEBUG_TAG(box_3, "box_3");
-    Widget* box_4 = panel->add_widget(Panel::create());
+    Widget* box_4 = panel->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Blue));
     DEBUG_TAG(box_4, "box_4");
-    box_1->size_fixed(100, 100);
-    box_2->size_fixed(40, 20);
-    box_3->size_fixed(30, 50);
-    box_4->size_fixed(40, 90);
+    box_1->size_fixed(50, 50);
+    box_2->size_fixed(50, 50);
+    box_3->size_fixed(50, 50);
+    box_4->size_fixed(50, 50);
 
-    VHBoxOptions options;
-    options.add_item(box_1);
-    options.add_item(box_2, Anchor::LEFT);
-    options.add_item(box_3, Anchor::CENTER);
-    options.add_item(box_4, Anchor::RIGHT);
-    options.margin_source = 10;
-    options.margin_function = VHBoxOptions::MarginSource::ABSOLUTE;
-    panel->hbox(options);
-    panel->position_centering();
+    GridOptions options;
+    options.resize(2, 2);
+    options.items = {
+        {{box_1, Anchor::CENTER}, {box_2, Anchor::CENTER }},
+        {{box_3, Anchor::RIGHT|Anchor::Y_CENTER}, {box_4, Anchor::CENTER}}
+    };
+    options.margin_source = 4;
+    panel->grid(options);
 
     sf::Clock clock;
 
