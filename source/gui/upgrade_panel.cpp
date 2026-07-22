@@ -107,7 +107,7 @@ void UpgradeButton::create_tooltip_smart() {
     auto [tooltip, label] = ::create_tooltip(Anchor::TOP | Anchor::RIGHT);
     m_tooltip = tooltip.get();
 
-    label->add_line(m_upgrade->name + " " + std::string(m_level, 'I'), sf::Color::White, sf::Text::Style::Bold);
+    label->add_line(m_upgrade->get_name(m_level), sf::Color::White, sf::Text::Style::Bold);
     switch (m_state) {
     case UpgradeButton::State::ACTIVE:
         label->add_line("Стоимость: " + std::to_string(m_upgrade->cost(m_level)), Label::coins_color);

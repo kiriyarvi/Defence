@@ -24,6 +24,7 @@ public:
 
 struct Upgrade {
     Upgrade() = default;
+    BuildingType building_type;
     std::string name;
     std::string general_description;
     int max_level;
@@ -35,12 +36,14 @@ struct Upgrade {
     std::string get_unlock_condition_description(int level);
     virtual int cost(int level) = 0;
     bool on_event(EnemyType defeated_enemy);
+    virtual std::string get_name(int level) const { return name + " " + std::string(level, 'I'); }
 };
 
 
 
 struct MinigunPenetrationUpgrade : public Upgrade {
     MinigunPenetrationUpgrade() {
+        building_type = BuildingType::Minigun;
         name = "Бронебойные снаряды";
         general_description = "Пулемет получит снаряды повышенной бронепробиваемости.";
         auto& params = ParamsManager::Instance().params.guns.minigun;

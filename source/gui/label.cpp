@@ -6,6 +6,8 @@
 sf::Color Label::coins_color = sf::Color(255, 211, 3);
 sf::Color Label::prohibited_color = sf::Color(255, 0, 0);
 sf::Color Label::blueprint_color = sf::Color(0xb3fff2FF);
+sf::Color Label::unlock_buildng_color = sf::Color(8, 120, 38);
+sf::Color Label::unlock_upgrade_color = sf::Color(123, 22, 140);
 
 sf::FloatRect Label::FontInfo::get_text_bounds(const std::basic_string<sf::Uint32>& text, sf::Text::Style style) {
     sf::Text widget(sf::String(text), *font, size);
@@ -133,6 +135,11 @@ void Label::add_text(const std::string& text, sf::Color color, sf::Text::Style s
 void Label::add_line(const std::string& text, sf::Color color, sf::Text::Style style) {
     add_text(text, color, style);
     m_text.back().compulsory_line_break = true;
+}
+
+void Label::set_alpha(float opacity) {
+    for (auto& word : m_text)
+        word.color.a = opacity * 255.f;
 }
 
 void Label::clear() {

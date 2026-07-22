@@ -11,6 +11,7 @@
 #include "gui/widget.h"
 #include "gui/label.h"
 #include "gui/next_wave_button.h"
+#include "gui/console.h"
 #include "utils/animation.h"
 
 #include <list>
@@ -58,12 +59,8 @@ public:
     };
     void add_enter(RoadGraph::PathID id, const std::string& content);
     void delete_all_enters();
-    enum class MessageType {
-        UnlockedBuilding,
-        UnlockedUpgrade,
-        None
-    };
-    void add_message(const std::string& message, MessageType type);
+    Console* get_console() { return m_console; }
+
     void wave_preparing();
     void wave_started();
     float get_time_multiplier() const { return m_time_multiplier; }
@@ -89,14 +86,13 @@ private:
     UpgradePanel* m_upgrade_panel = nullptr;
     Widget* m_tile_size_reference;
     Widget* m_upgrade_panel_height_reference;
+    Console* m_console;
+    bool m_is_preparing = true;
 
 	tgui::Gui m_gui;
     tgui::Group::Ptr m_ui;
     Help m_help;
 
-    bool m_is_preparing = true;
-    int m_last_preparing_message = -1; // пока не используется
-    float m_prepairing_timer = 0; //пока не используется
     bool m_win = false;
     bool m_is_help_displayed = false;
 	tgui::Label::Ptr m_centered_message; // сообщение по центру
@@ -104,12 +100,6 @@ private:
     tgui::RichTextLabel::Ptr m_mouse_tooltip;
     std::vector<Enter> m_enters;
     Enter* m_showed_enter = nullptr;
-    struct Message {
-        tgui::Label::Ptr message;
-        Animation animation;
-    };
-    tgui::Group::Ptr m_console;
-    std::list<Message> m_messages;
 public:
     tgui::Font GOSTtypeA_font;
     tgui::Font PixelSplitter_Bold_font; // расположены здесь, чтобы уничтожались первее (иначе ошибка в tgui).

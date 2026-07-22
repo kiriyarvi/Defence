@@ -258,7 +258,7 @@ public:
     void calc_properties(Property::Type property);
     void calc_layout();
     void invalidate(Property::Type property);
-    void clear_rules(Property::Type properties, bool hard = false);
+    void clear_rules(Property::Type properties, bool hard = false, bool recursive = false);
     glm::vec2 get_position_transform() const;
     glm::vec2 get_content_transform() const;
     //LAYOUT FUNCTIONS

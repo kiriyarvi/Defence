@@ -17,8 +17,9 @@
 
 IBuilding::IBuilding(int x_id, int y_id) : x_id{ x_id }, y_id{ y_id } {}
 
-std::string to_string(BuildingType type) {
-    std::unordered_map<BuildingType, std::string> m{
+
+std::string to_string(BuildingType type, LanguageCase lan_case) {
+    std::unordered_map<BuildingType, std::string> nom{
         {BuildingType::AntitankGun, "Противотанковая пушка"},
         {BuildingType::Hedgehogs, "Противотанковые ежи"},
         {BuildingType::Mine, "Мина"},
@@ -28,7 +29,22 @@ std::string to_string(BuildingType type) {
         {BuildingType::Radar, "Радар"},
         {BuildingType::RadioMast, "Радиовышка"}
     };
-    return m[type];
+    std::unordered_map<BuildingType, std::string> gen{
+        {BuildingType::AntitankGun, "Противотанковой пушки"},
+        {BuildingType::Hedgehogs, "Противотанковых ежей"},
+        {BuildingType::Mine, "Мины"},
+        {BuildingType::Minigun, "Пулемета"},
+        {BuildingType::Spikes, "Шипов"},
+        {BuildingType::TwinGun, "Сдвоенной пушки"},
+        {BuildingType::Radar, "Радара"},
+        {BuildingType::RadioMast, "Радиовышки"}
+    };
+    switch (lan_case){
+    case LanguageCase::NOMINATIVE:
+        return nom[type];
+    case LanguageCase::GENETIVE:
+        return gen[type];
+    }
 }
 
 bool get_road_sprite(const std::array<RoadType, 4>& int_nodes, sf::Sprite& sprite, RoadType type) {

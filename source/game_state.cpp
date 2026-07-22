@@ -91,6 +91,9 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
         layout.height = ui->layout.height - hc->layout.height - bp->layout.height;
     }, { { m_player_health_count_widget, Property::HEIGHT }, {m_building_panel, Property::HEIGHT}, {m_game_process_ui, Property::HEIGHT} });
 
+    //Console
+    m_console = m_game_process_ui->add_widget(std::make_unique<Console>());
+    m_console->position_anchor(Anchor::BOTTOM | Anchor::LEFT, m_building_panel, Anchor::TOP | Anchor::LEFT);
 
     GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" }; //TODO
     PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };//TODO
@@ -150,24 +153,13 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
 
     m_ui->add(m_mouse_tooltip);
 
-    m_console = tgui::Group::create();
-    m_console->setOrigin(0, 1.);
-    m_console->setPosition(0, "BottomPanelGroup.top");
-    m_console->setSize("100%", "90%");
-    m_console->setTextSize(30);
-    auto console_renderer = m_console->getRenderer();
-    console_renderer->setFont(GOSTtypeA_font);
-    m_console->onSizeChange.connect([this]() {
-        this->align_console_labels();
-    });
-    m_ui->add(m_console);
-
+  
     TileMap::Instance().generate_map();
-    add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.", MessageType::None);
+    m_console->add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.");
 }
 
 GameState::~GameState() {
-    m_console->onSizeChange.disconnectAll(); // чтобы небыло Debug Assertion Failed
+
 }
 
 tgui::Gui& GameState::get_tgui() {
@@ -201,50 +193,11 @@ void GameState::delete_all_enters() {
     m_showed_enter = nullptr;
 }
 
-void GameState::add_message(const std::string& message, MessageType type) {
-    auto label = tgui::Label::create(message);
-    label->setTextSize(30);
-    switch (type) {
-    case MessageType::UnlockedBuilding:
-        label->getRenderer()->setTextColor(sf::Color(0, 255, 0));
-        break;
-    case MessageType::UnlockedUpgrade:
-        label->getRenderer()->setTextColor(sf::Color::Magenta);
-        break;
-    case MessageType::None:
-        label->getRenderer()->setTextColor(sf::Color::White);
-        break;
-    default:
-        break;
-    }
-    m_console->add(label);
-    Message msg;
-    msg.message = label;
-    msg.animation.set_duration(4);
-    auto& fade = msg.animation.add_subanimation(3, 4, Animation());
-    fade.on_progress = [=](float p) {
-        label->getRenderer()->setOpacity(1. - p);
-    };
-    msg.animation.start();
-    m_messages.push_back(std::move(msg));
-    align_console_labels();
-}
-
-void GameState::align_console_labels() {
-    float y = 0;
-    for (auto it = m_messages.begin(); it != m_messages.end(); ++it) {
-        y += it->message->getSize().y;
-        it->message->setPosition(0, m_console->getSize().y - y);
-    }
-}
-
 bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) {
     if (event.type == sf::Event::KeyPressed) {
         if (m_is_preparing) {
             if (event.key.code == sf::Keyboard::Key::R) {
                 TileMap::Instance().generate_map();
-                m_prepairing_timer = 0;
-                m_last_preparing_message = -1;
             }
             else if (event.key.code == sf::Keyboard::Key::Q) {
                 m_is_preparing = false;
@@ -327,39 +280,7 @@ void GameState::logic(double dtime_mc) {
     if (m_showed_enter) {
         m_showed_enter->drawer.logic(dtime_mc);
     }
-    if (!m_messages.empty()) {
-        bool erased = false;
-        auto it = m_messages.begin();
-        while (it != m_messages.end()) { // возможно можно переписать в помощью std::remove_if
-            it->animation.logic(dtime_mc);
-            if (it->animation.started())
-                ++it;
-            else {
-                it = m_messages.erase(it);
-                erased = true;
-            }
-        }
-        if (erased) {
-            m_console->removeAllWidgets();
-            for (auto& msg : m_messages) {
-                m_console->add(msg.message);
-            }
-            align_console_labels();
-        }
-    }
-   /* if (m_is_preparing) {
-        m_prepairing_timer += dtime_mc;
-        int p = m_prepairing_timer / (1000.f * 1000.f);
-        if (p > m_last_preparing_message) {
-            m_last_preparing_message = p;
-            add_message(std::to_string(4 - m_last_preparing_message) + " секунд до старта.", MessageType::None);
-        }
-        if (p == 4) {
-            m_is_preparing = false;
-            EnemyManager::Instance().generate_waves();
-            init_stage(0);
-        }
-    }*/
+    m_console->logic(dtime_mc);
 }
 
 void GameState::draw(sf::RenderWindow& current_window) {

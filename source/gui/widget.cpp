@@ -391,7 +391,7 @@ void Property::clear_dependent(Dependent dependent) {
 
 /// Удаляет правила вычисления свойств properties. Инвалидирует properties
 ///hard - не пытаться сообщать зависимостям, что зависимости больше нет
-void Widget::clear_rules(Property::Type properties, bool hard) {
+void Widget::clear_rules(Property::Type properties, bool hard, bool recursive) {
     for (auto rule = m_rules.begin(); rule != m_rules.end();) {
         if ((rule->output & properties) == rule->output) { //rule->properties всключает все флаги что и properties
             if (!hard) {
@@ -414,6 +414,9 @@ void Widget::clear_rules(Property::Type properties, bool hard) {
         ++rule;
     }
     invalidate(properties);
+    if (recursive)
+        for (auto& child : m_children)
+            child->clear_rules(properties, hard, recursive);
 }
 
 

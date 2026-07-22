@@ -11,11 +11,12 @@ public:
     void add_text(const std::string& text, sf::Color color = sf::Color::White, sf::Text::Style style = sf::Text::Style::Regular);
     void add_line(const std::string& text, sf::Color color = sf::Color::White, sf::Text::Style style = sf::Text::Style::Regular);
     void clear();
+    void set_alpha(float opacity);
     static sf::Color coins_color;
     static sf::Color prohibited_color;
     static sf::Color blueprint_color;
-
-
+    static sf::Color unlock_buildng_color;
+    static sf::Color unlock_upgrade_color;
     std::function<float()> width_func;
 private:
     void add_paragraph_text_rule();

@@ -41,7 +41,12 @@ public:
     virtual void visit(RadioMast& radio_tower) = 0;
 };
 
-std::string to_string(BuildingType type);
+enum class LanguageCase {
+    NOMINATIVE, //< именительный
+    GENETIVE, //< родительный
+};
+
+std::string to_string(BuildingType type, LanguageCase lan_case = LanguageCase::NOMINATIVE);
 
 
 #define ACCEPT(Type) \
