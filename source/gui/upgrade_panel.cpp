@@ -279,6 +279,17 @@ Query UpgradePanel::on_event(EventContext event_context) {
     return Query{ Query::PROCESSED };
 }
 
+bool UpgradePanel::is_interface_available(BuildingType type) {
+    static std::vector<BuildingType> available = {
+        BuildingType::Minigun,
+        BuildingType::Spikes,
+        BuildingType::Hedgehogs,
+        BuildingType::Radar,
+        BuildingType::RadioMast
+    };
+    return std::find(available.begin(), available.end(), type) != available.end();
+}
+
 Widget* UpgradePanel::create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons) {
     Widget* upgrades_panel = parent->add_widget(Widget::create());
     std::vector<Widget*> upgrade_buttons;

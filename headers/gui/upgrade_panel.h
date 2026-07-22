@@ -68,6 +68,7 @@ public:
     void capture(UpgradeButton* button);
     void update(int player_coins);
     Query on_event(EventContext event_context) override;
+    bool is_interface_available(BuildingType type);
     ~UpgradePanel();
 private:
     Widget* create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons);

@@ -154,6 +154,8 @@ void GameUI::on_button_pressed(ClickableWidget::Button::Type type) {
                     m_game_process_ui->delete_widget(m_upgrade_panel);
                     m_upgrade_panel = nullptr;
                 }
+                if (!m_upgrade_panel->is_interface_available(cell.building->type))
+                    return;
                 m_upgrade_panel = (UpgradePanel*)m_game_process_ui->add_widget(std::make_unique<UpgradePanel>(m_tile_size_reference, m_upgrade_panel_height_reference));
                 m_upgrade_panel->position_anchor(Anchor::RIGHT | Anchor::TOP, m_player_health_count_widget, Anchor::RIGHT | Anchor::BOTTOM);
                 cell.building->accept(*m_upgrade_panel);
