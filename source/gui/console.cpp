@@ -45,7 +45,9 @@ void Console::logic(float dtime_mc) {
         if (it->animation.started())
             ++it;
         else {
-            delete_widget(it->widget, Widget::RemovePolicy::Min);
+            //не можем просто удалить it->widget потому что останется висячее правило vbox, поэтому сначала
+            clear_rules(Property::SIZE);
+            delete_widget(it->widget);
             it = m_messages.erase(it);
             erased = true;
         }
@@ -60,8 +62,5 @@ void Console::update_rules() {
     std::vector<Widget*> labels;
     for (auto it = m_messages.rbegin(); it != m_messages.rend(); ++it)
         labels.push_back(it->widget);
-    clear_rules(Property::SIZE, true);
-    for (auto& child : m_children)
-        child->clear_rules(Property::POSITION, true);
     vbox(labels);
 }

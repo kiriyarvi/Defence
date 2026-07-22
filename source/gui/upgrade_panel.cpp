@@ -136,7 +136,7 @@ void UpgradeButton::create_tooltip_smart() {
 
 void UpgradeButton::delete_tooltip_smart() {
     if (m_tooltip) {
-        m_ui->delete_widget_smart(m_tooltip, RemovePolicy::Min);
+        m_ui->delete_widget_smart(m_tooltip);
         m_tooltip = nullptr;
     }
 }
@@ -180,7 +180,7 @@ void UpgradeButton::set_capture(bool capture) {
             m_capture_icon->size_inherited(this);
         }
         else {
-            delete_widget_deffered(m_capture_icon, RemovePolicy::Min);
+            delete_widget_deffered(m_capture_icon);
             m_capture_icon = nullptr;
         }
     }
@@ -230,7 +230,8 @@ void UpgradePanel::capture(UpgradeButton* button) {
 
 void UpgradePanel::create_info_panel_for_button(UpgradeButton* button) {
     GUI::Instance().add_deffered_command([this, button]() {
-        m_upgrade_info_widget->delete_all_widgets(RemovePolicy::Min); 
+        m_upgrade_info_widget->clear_rules(Property::SIZE); //удалим правило вычисления размера (нужно потому что используем vbox)
+        m_upgrade_info_widget->delete_all_widgets(); 
 
         Label* description = (Label*)m_upgrade_info_widget->add_widget(Label::create()); //label для общего описания апгрейда
         description->add_line(button->get_upgrate()->name + " " + std::string(button->get_level(), 'I'), sf::Color::White, sf::Text::Style::Bold);
@@ -257,15 +258,10 @@ void UpgradePanel::create_info_panel_for_button(UpgradeButton* button) {
             GridOptions options;
             options.alignment = Anchor::BOTTOM | Anchor::LEFT;
             prop_table->grid(prop_table_labels, {});
-            //обязательная очистка, поскольку могли остаться правила после предыдущих использований
-            //очистка жесткая, чтобы clear_rule не пытался сообщить старым description, prop_table
-            //(которых уже нет), что m_upgrade_info_widget от них больше не зависит. 
-            m_upgrade_info_widget->clear_rules(Property::SIZE, true);
             m_upgrade_info_widget->vbox({ description, prop_table });
             description->property_equal(Property::WIDTH, false, prop_table, Property::WIDTH, false, {});
         }
         else {
-            m_upgrade_info_widget->clear_rules(Property::SIZE, true);
             description->property_equal(Property::WIDTH, false, button->get_parent()->get_parent(), Property::WIDTH, false, {});
             m_upgrade_info_widget->size_include(description);
         }
@@ -411,16 +407,16 @@ void UpgradePanel::create_panel_for_building_with_health(BuildingType type, Buil
     auto unhover_event = [this]() {
         GUI::Instance().add_deffered_command([this]() {
             m_upgrade_info_widget->size_fixed(0, 0);
-            m_upgrade_info_widget->delete_all_widgets(RemovePolicy::Min);
+            m_upgrade_info_widget->delete_all_widgets();
         });
     };
     auto_repairing_switch->set_on_hovered([this, interface, type]() {
         GUI::Instance().add_deffered_command([this, interface, type]() {
-            m_upgrade_info_widget->delete_all_widgets(RemovePolicy::Min);
+            m_upgrade_info_widget->clear_rules(Property::SIZE);
+            m_upgrade_info_widget->delete_all_widgets();
             Label* label = (Label*)m_upgrade_info_widget->add_widget(Label::create());
             label->add_text("Включает автовосстановление. При достижении нулевой прочности и наличии достаточных средств, " + to_string(type) + " автоматически восстановят 5 единиц прочности.", Label::blueprint_color);
             label->property_equal(Property::WIDTH, false, interface, Property::WIDTH, true, {});
-            m_upgrade_info_widget->clear_rules(Property::SIZE, true);
             m_upgrade_info_widget->size_include(label);
         });
         return Query{ Query::PROCESSED };
@@ -429,12 +425,12 @@ void UpgradePanel::create_panel_for_building_with_health(BuildingType type, Buil
 
     enforce_button->set_on_hovered([this, interface, repairing_hp, enforce_cost]() {
         GUI::Instance().add_deffered_command([this, interface, repairing_hp, enforce_cost]() {
-            m_upgrade_info_widget->delete_all_widgets(RemovePolicy::Min);
+            m_upgrade_info_widget->clear_rules(Property::SIZE);
+            m_upgrade_info_widget->delete_all_widgets();
             Label* label = (Label*)m_upgrade_info_widget->add_widget(Label::create());
             label->add_line("Увеличивает прочность на " + std::to_string(repairing_hp) + " единиц.", Label::blueprint_color);
             label->add_text("Стоимость:" + std::to_string(enforce_cost), Label::coins_color);
             label->property_equal(Property::WIDTH, false, interface, Property::WIDTH, true, {});
-            m_upgrade_info_widget->clear_rules(Property::SIZE, true);
             m_upgrade_info_widget->size_include(label);
         });
     });

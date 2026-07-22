@@ -16,7 +16,7 @@ Scale::Scale() {
 Query Scale::on_event(Widget::EventContext event_context) {
     if (event_context.event_type == Event::BUTTON_PRESSED && GUI::Instance().mouse_button == sf::Mouse::Left) {
         if (m_tooltip) { //если есть tooltip => удалим чтоб не мешал
-            m_parent->delete_widget_deffered(m_tooltip, RemovePolicy::Min);
+            m_parent->delete_widget_deffered(m_tooltip);
             m_tooltip = nullptr;
         }
         m_clicked = true;
@@ -43,7 +43,7 @@ Query Scale::on_event(Widget::EventContext event_context) {
             }
             else { //кнопка не зажата, но получили по подписке => unhover
                 if (event_context.hit_list.empty() || event_context.hit_list.back().widget != this) {
-                    m_parent->delete_widget_deffered(m_tooltip, RemovePolicy::Min);
+                    m_parent->delete_widget_deffered(m_tooltip);
                     m_tooltip = nullptr;
                     GUI::Instance().unsubscribe_deffered(this, Event::MOUSE_MOVED); //отменим подписку
                     return Query{ Query::REPEAT, Query::PERFORM_DEFFERED };

@@ -389,12 +389,23 @@ void Property::clear_dependent(Dependent dependent) {
         dependents.erase(it);
 }
 
-/// Удаляет правила вычисления свойств properties. Инвалидирует properties
-///hard - не пытаться сообщать зависимостям, что зависимости больше нет
-void Widget::clear_rules(Property::Type properties, bool hard, bool recursive) {
+/**
+ * @brief Удаляем правила, вычисляющие свойства properties
+ * @param properties 
+ * @param notify_dependencies Оповестить виджеты, от которых мы зависим, что нам они больше не нужны. (TODO не должны нигде использовать)
+ * @param clear_partial Удалить правило, даже если оно вычисляет не только свойства из properties
+ * @param recursive вызвать рекурсивно для детей?
+ */
+void Widget::clear_rules(Property::Type properties, bool notify_dependencies, bool clear_partial, bool recursive) {
+    Property::Type invalidated_props = 0;
     for (auto rule = m_rules.begin(); rule != m_rules.end();) {
-        if ((rule->output & properties) == rule->output) { //rule->properties всключает все флаги что и properties
-            if (!hard) {
+        bool criteria = false;
+        if (clear_partial)
+            criteria = rule->output & properties; //rule->output и properties имеют хотя бы один общий флаг
+        else
+            criteria = (rule->output & properties) == rule->output; //rule->properties всключает все флаги что и properties
+        if (criteria) {
+            if (notify_dependencies) {
                 for (auto& dependency : rule->dependencies) {
                     //должны сказать зависимостям, что мы больше вычисление свойств rule->properties данного виджета не зависит от них.
                     for (auto& [prop, member] : Layout::s_property_map) {
@@ -406,6 +417,7 @@ void Widget::clear_rules(Property::Type properties, bool hard, bool recursive) {
 #ifdef GUI_DEBUG_ENABLED
             std::cout << "ERASE " << debug_name << " RULE for " + Layout::to_string(rule->output) << std::endl;
 #endif
+            invalidated_props |= rule->output;
             rule = m_rules.erase(rule);
             continue;
         }
@@ -413,10 +425,10 @@ void Widget::clear_rules(Property::Type properties, bool hard, bool recursive) {
         //если правило вычисляет X,Y, то мы не можем попросить удалить только X.
         ++rule;
     }
-    invalidate(properties);
+    invalidate(invalidated_props);
     if (recursive)
         for (auto& child : m_children)
-            child->clear_rules(properties, hard, recursive);
+            child->clear_rules(properties, clear_partial, recursive);
 }
 
 
@@ -737,6 +749,7 @@ void Widget::layout_contains(std::vector<Widget*> elements) {
 
 
 void Widget::vhbox(const VHBoxOptions& options, bool vertical) {
+    clear_rules(Property::SIZE);
     Property::Type height_prop = vertical ? Property::HEIGHT : Property::WIDTH;
     Property::Type width_prop = vertical ? Property::WIDTH : Property::HEIGHT;
     Property::Type x_prop = vertical ? Property::X : Property::Y;
@@ -964,88 +977,104 @@ bool Widget::hit_test(std::list<Widget::HitListNode>& hit_list, glm::uvec2 mouse
     return false;
 }
 
+//Проверяет что среди завивимостей этой иерархии есть данный виджет
+bool Widget::contain_dependency(Widget* widget) {
+    if (this == widget)
+        return false;
+    for (auto& rule : m_rules) {
+        for (auto& dependency : rule.dependencies)
+            if (dependency.widget == widget)
+                return true;
+    }
+    for (auto& child : m_children)
+        if (child->contain_dependency(widget))
+            return true;
+    return false;
+}
 
-void Widget::delete_widget(Widget* widget, RemovePolicy policy) {
+
+/**
+ * @brief Удаляет виджет вместе с его потомками. У виджета и его потомков перед удалением удаляются все правила.
+ */
+void Widget::delete_widget(Widget* widget) {
     assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
+    widget->clear_rules(Property::LAYOUT, true, false, true);
+    assert(!GUI::Instance().get_root()->contain_dependency(widget) && "Hanging rule");
     for (auto it = m_children.begin(); it != m_children.end(); ++it) {
         if (it->get() == widget) {
-            (*it)->remove(policy);
+            (*it)->delete_all_widgets();
             m_children.erase(it);
             return;
         }
     }
 }
 
-void Widget::delete_all_widgets(RemovePolicy policy) {
+void Widget::delete_all_widgets() {
+    assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
     for (auto& child : m_children)
-        child->remove(policy);
-    m_children.clear();
+        child->clear_rules(Property::LAYOUT, true, false, true); //Удалим правила
+#ifdef GUI_DEBUG_ENABLED
+    //после этого не должно остаться "высячих" правил
+    for (auto& child : m_children)
+        assert(!GUI::Instance().get_root()->contain_dependency(child.get()) && "Hanging rule");
+#endif
+    m_children.clear(); //теперь спокойно удаляем.
+}
+
+void Widget::add_children(std::list<Widget*>& list) {
+    for (auto& child : m_children)
+        list.push_back(child.get());
+    for (auto& child : m_children)
+        child->add_children(list);
+}
+
+bool Widget::check_for_external_referencies(std::list<Widget*>& hierarchy) {
+    for (auto& rule : m_rules)
+        for (auto dependency : rule.dependencies) {
+            if (std::find(hierarchy.begin(), hierarchy.end(), dependency.widget) == hierarchy.end())
+                return true;
+        }
+    for (auto& child : m_children)
+        if (child->check_for_external_referencies(hierarchy))
+            return true;
+    return false;
+}
+
+//проверяет есть ли в иерархии виджетов, начинающейся с данного виджета, правила вычисления по виджетам не из данной иерархии
+bool Widget::check_for_external_referencies() {
+    std::list<Widget*> hierarchy;
+    add_children(hierarchy);
+    return check_for_external_referencies(hierarchy);
+}
+
+std::unique_ptr<Widget> Widget::release(Widget* widget) {
+    assert(!widget->check_for_external_referencies() && "There should be no external referencies. You need to delete them by clear_rule call.");
+    for (auto it = m_children.begin(); it != m_children.end(); ++it) {
+        if (it->get() == widget) {
+            std::unique_ptr<Widget> out = std::move(*it);
+            it = m_children.erase(it);
+            return out;
+        }
+    }
+    return nullptr;
 }
 
 
 
-void Widget::delete_widget_deffered(Widget* widget, RemovePolicy policy) {
-    GUI::Instance().add_deffered_command([this, widget, policy]() {
-        for (auto it = m_children.begin(); it != m_children.end(); ++it) {
-            if (it->get() == widget) {
-                (*it)->remove(policy);
-                m_children.erase(it);
-                return;
-            }
-        }
+void Widget::delete_widget_deffered(Widget* widget) {
+    GUI::Instance().add_deffered_command([this, widget]() {
+        delete_widget(widget);
     });
 }
 
 /// В зависимости от того, происходит ли сейчас обработка событий или нет
 /// вызывает либо delete_widget либо delete_widget_deffered
-void Widget::delete_widget_smart(Widget* widget, RemovePolicy policy) {
+void Widget::delete_widget_smart(Widget* widget) {
     if (GUI::Instance().is_event_processing())
-        delete_widget_deffered(widget, policy);
+        delete_widget_deffered(widget);
     else
-        delete_widget(widget, policy);
+        delete_widget(widget);
 }
-
-
-void Widget::delete_dependent_rules(Property::Type props, bool hard) {
-    //удаляем правила других виджетов, зависимые от нас.
-    for (auto& [prop, member] : Layout::s_property_map) { //идем по всем свойствам
-        if (!(prop & props))
-            continue;
-        for (auto& dependency : (layout.*member).dependents) { //каждое свойство знает, кто от него зависит
-            for (auto rule = dependency.widget->m_rules.begin(); rule != dependency.widget->m_rules.end();) { //идем по правилам зависимого
-                auto this_it = std::find_if(rule->dependencies.begin(), rule->dependencies.end(), [this, prop](const Dependency& dependency) {
-                    return dependency.widget == this && ((dependency.source & prop) != 0);
-                }); //ищем правила, зависимые от this и вычисляемые по this->prop.
-                if (this_it == rule->dependencies.end()) {
-                    ++rule;
-                    continue;
-                } //не нашли
-                if (!hard && rule->dependencies.size() != 1) //в случае не жесткого удаления, не можем удалить правила, зависящие от нас частично
-                    throw "Cannot delete partial rule";
-                dependency.widget->invalidate(rule->output); //инвализация
-                dependency.widget->delete_dependent_rules(rule->output, hard); //удаляем правила, зависящие от output правила, которое мы хотим удалить
-#ifdef GUI_DEBUG_ENABLED
-                std::cout << "ERASE " << dependency.widget->debug_name << " RULE for " + Layout::to_string(rule->output) << std::endl;
-#endif
-                rule = dependency.widget->m_rules.erase(rule); //удаляем
-            }
-        }
-        (layout.*member).dependents.clear(); //больше никто от нас не зависит.
-    }
-}
-
-void Widget::remove(RemovePolicy policy) {
-    if (static_cast<int>(policy) & static_cast<int>(Widget::RemovePolicy::Min)) {
-        invalidate(Property::LAYOUT); //заинвалидируем layout у зависимых от нас
-        clear_rules(Property::LAYOUT); //удалим все правила вычисления. Это известит зависимых от нас, что мы от них больше не зависим
-    }
-    if (policy != Widget::RemovePolicy::Min)
-        delete_dependent_rules(Property::LAYOUT, policy == Widget::RemovePolicy::DeleteDepententRulesHard);
-    for (auto& child : m_children)
-        child->remove(policy);
-    GUI::Instance().unsubscribe(this, Property::LAYOUT);
-}
-
 
 Widget* Widget::get_root() {
     return m_parent == nullptr ? this : m_parent->get_root();

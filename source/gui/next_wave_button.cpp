@@ -17,7 +17,7 @@ NextWaveButton::NextWaveButton() {
         m_parent->add_widget_deffered(std::move(panel_ptr));
     };
     m_on_unhovered = [this]()  {
-        m_parent->delete_widget_deffered(m_tooltip, Widget::RemovePolicy::Min);
+        m_parent->delete_widget_deffered(m_tooltip);
     };
     m_on_mouse_moved = [this]()  {
         m_tooltip->invalidate(Property::POSITION); //инвалидируем позицию у tooltip, чтобы он пересчитал её.

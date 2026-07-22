@@ -244,18 +244,18 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
                 size_t N = TileMap::Instance().map.size();
                 bool on_map = cell_id.x < N && cell_id.x >= 0 && cell_id.y < N && cell_id.y >= 0;
                 if (!on_map) {
-                    m_game_process_ui->delete_widget(m_upgrade_panel, Widget::RemovePolicy::Min);
+                    m_game_process_ui->delete_widget(m_upgrade_panel);
                     m_upgrade_panel = nullptr;
                     return false;
                 }
                 auto& cell = TileMap::Instance().map[cell_id.x][cell_id.y];
                 if (!cell.building) {
-                    m_game_process_ui->delete_widget(m_upgrade_panel, Widget::RemovePolicy::Min);
+                    m_game_process_ui->delete_widget(m_upgrade_panel);
                     m_upgrade_panel = nullptr;
                     return false;
                 }
                 if (m_upgrade_panel) {
-                    m_game_process_ui->delete_widget(m_upgrade_panel, Widget::RemovePolicy::Min);
+                    m_game_process_ui->delete_widget(m_upgrade_panel);
                     m_upgrade_panel = nullptr;
                 }
                 m_upgrade_panel = (UpgradePanel*)m_game_process_ui->add_widget(std::make_unique<UpgradePanel>(m_tile_size_reference, m_upgrade_panel_height_reference));
@@ -365,7 +365,7 @@ void GameState::wave_started() {
 }
 
 void GameState::close_upgrade_panel() {
-    m_game_process_ui->delete_widget(m_upgrade_panel, Widget::RemovePolicy::Min);
+    m_game_process_ui->delete_widget(m_upgrade_panel);
     m_upgrade_panel = nullptr;
 }
 

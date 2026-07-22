@@ -258,7 +258,8 @@ public:
     void calc_properties(Property::Type property);
     void calc_layout();
     void invalidate(Property::Type property);
-    void clear_rules(Property::Type properties, bool hard = false, bool recursive = false);
+    void clear_rules(Property::Type properties, bool notify_depentents = true, bool clear_partial = false, bool recursive = false);
+
     glm::vec2 get_position_transform() const;
     glm::vec2 get_content_transform() const;
     //LAYOUT FUNCTIONS
@@ -287,23 +288,6 @@ public:
     void grid(const GridOptions& options);
     void grid(const std::vector<std::vector<Widget*>> elements, GridOptions options = {});
     //WIDGET HIERARCHY
-    enum class RemovePolicy {
-        /// Минимальное удаление, сохраняющее работоспособность системы
-        /// Инвалидирует Layout, указывает зависимостям, что данный виджет больше не зависит от них
-        /// Не удаляем правила других виджетов, ссылающиеся на данный виджет.
-        Min = 0b0001,
-        /// Тоже что Min, но дополнительно удаляет правила других виджетов
-        /// которые зависят от свойств данного виджета. Если обнаружено правило, которое зависит от данного
-        /// виджета только частично, то выдает исключение.
-        DeleteDepententRules = 0b0011, //< удалит правила других виджетов, зависимые только от свойств удаляемого виджета, если есть "смешанные правила" - исключение
-        /// Тоже что Min, но дополнительно удаляет правила других виджетов
-        /// которые зависят от свойств данного виджета. Если обнаружено правило, которое зависит от данного
-        /// виджета только частично, оно всё равно удаляется.
-        DeleteDepententRulesHard = 0b0101, //< удалит правила других виджетов, зависимые от свойств удаляемого виджета. Удаляет даже смешанные правила.
-    };
-
-    
-
     template<typename T>
     T* add_widget(std::unique_ptr<T>&& child) {
         assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
@@ -334,12 +318,11 @@ public:
             add_widget(std::move(child));
         return w;
     }
-
-
-    void delete_widget(Widget* widget, RemovePolicy policy);
-    void delete_widget_deffered(Widget* widget, RemovePolicy policy);
-    void delete_widget_smart(Widget* widget, RemovePolicy policy);
-    void delete_all_widgets(RemovePolicy policy);
+    void delete_widget(Widget* widget);
+    void delete_widget_deffered(Widget* widget);
+    void delete_widget_smart(Widget* widget);
+    void delete_all_widgets();
+    std::unique_ptr<Widget> release(Widget* widget);
     Widget* get_root();
     Widget* get_parent() const { return m_parent; }
     //DRAW CALLS
@@ -380,8 +363,10 @@ protected:
     Widget* m_parent;
     std::list<std::unique_ptr<Widget>> m_children;
     std::list<Rule> m_rules;
-    void remove(RemovePolicy policy); //< только перестаивает дерево соотвествующим образом, не совершает реального удаления, не удаляет детей
-    void delete_dependent_rules(Property::Type props, bool hard);
+    bool check_for_external_referencies();
+    bool check_for_external_referencies(std::list<Widget*>& hierarchy);
+    void add_children(std::list<Widget*>& list);
+    bool contain_dependency(Widget* widget);
 private:
     void vhbox(const VHBoxOptions& options, bool vertical);
 };

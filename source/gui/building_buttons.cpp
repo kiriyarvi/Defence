@@ -69,7 +69,6 @@ BuildingPanel::BuildingPanel(Widget* ui) : ui{ui}, Widget(ui) {
     add_rule(Property::HEIGHT, [last_button](Widget::Layout& layout) {
         layout.height = last_button->layout.y + last_button->layout.height;
     }, { {last_button, Property::Y | Property::HEIGHT} });
-
 }
 
 void BuildingPanel::update(int player_coins) {
@@ -158,7 +157,7 @@ BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type
     m_on_unhovered = [this]() {
         //удаляем tooltip
         Widget* ui = static_cast<BuildingPanel*>(m_parent)->ui;
-        ui->delete_widget_deffered(m_tooltip, RemovePolicy::Min);
+        ui->delete_widget_deffered(m_tooltip);
     };
 
     m_on_pressed = [this](Button::Type button) {
