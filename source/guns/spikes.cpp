@@ -10,7 +10,7 @@ Spikes::Spikes(int x_id, int y_id): BuildingWithHealth(x_id, y_id, BuildingType:
 }
 
 sf::Sprite Spikes::get_sprite_for_tile(int x_id, int y_id) {
-	auto& roads = TileMap::Instance().map[x_id][y_id].roads;
+	auto& roads = GameState::Instance().get_map().map[x_id][y_id].roads;
 	int tile_id = 0;
 	for (int i = 0; i < 4; ++i) {
 		tile_id *= 2;

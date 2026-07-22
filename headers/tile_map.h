@@ -16,6 +16,8 @@ enum class RoadType {
     Asphalt
 };
 
+class TileMap;
+
 class Tile {
 public:
     Tile() = default;
@@ -23,9 +25,7 @@ public:
     Tile& operator=(Tile&&) = default;
 	TextureID background_texture = TextureID::Grass;
 	std::array<bool, 4> roads; // Right, Up, Left, Down
-	virtual void draw(sf::RenderWindow& window, int x, int y);
-	virtual ~Tile() = default;
-
+	void draw(TileMap& map, sf::RenderWindow& window, int x, int y);
 	std::unique_ptr<IBuilding> building = nullptr;
     float height = 0;
     RoadType road_type = RoadType::None;
@@ -90,17 +90,7 @@ private:
 
 class TileMap {
 public:
-	// Получение единственного экземпляра
-	static TileMap& Instance() {
-		static TileMap instance; // Создаётся при первом вызове, потокобезопасно в C++11+
-		return instance;
-	}
-
-	// Удаляем копирование и перемещение
-	TileMap(const TileMap&) = delete;
-	TileMap& operator=(const TileMap&) = delete;
-	TileMap(TileMap&&) = delete;
-	TileMap& operator=(TileMap&&) = delete;
+    TileMap() = default;
 	void draw(sf::RenderWindow& window);
 	void draw_effects(sf::RenderWindow& window);
 	void logic(double dtime);
@@ -126,7 +116,6 @@ private:
         float direction_change_penalty = -1
         );
     void create_road_graph();
-	TileMap();
 private:
 	RoadGraph m_road_graph;
     sf::Texture m_test_texture;

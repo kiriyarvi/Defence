@@ -18,8 +18,9 @@
 
 GameState::GameState(sf::RenderWindow& window): m_ui{*this, window }
 {
-
-    m_ui.create(); //создаем интерфейс.
+    m_ui.create();          //создаем интерфейс.
+    m_map.generate_map();   //сгенерируем карту
+    m_ui.get_console()->add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.");
 }
 
 void GameState::set_game_finished_state(bool win) {
@@ -39,7 +40,7 @@ void GameState::on_event(sf::Event& event) {
 void GameState::logic(double dtime_mc) {
     float time_multiplier = GameState::Instance().get_time_multiplier();
     EnemyManager::Instance().logic(time_multiplier * dtime_mc);     //1. Логика врагов: уничтожение, перемещение по маршруту, волны, анимации дымовых завес
-    TileMap::Instance().logic(time_multiplier * dtime_mc);          //2. Логика построек.
+    m_map.logic(time_multiplier * dtime_mc);                        //2. Логика построек.
     NetManager::Instance().logic(time_multiplier * dtime_mc);       //3. Радары, объединенные в сеть не вычисляют свою логику. Логика единая на сеть - вычислим её.
     SoundManager::Instance().logic();                               //4. Проигрывание звуков
     AnimationHolder::Instance().logic(time_multiplier * dtime_mc);  //5. Отложенные анимации
@@ -49,10 +50,10 @@ void GameState::logic(double dtime_mc) {
 void GameState::draw(sf::RenderWindow& window) {
     m_ui.get_camera().apply(window);
     window.clear(sf::Color::Black);
-    TileMap::Instance().draw(window);               //1. TileMap
+    m_map.draw(window);                             //1. TileMap
     m_ui.draw_on_map_effects();                     //2. Обозначение маршрутов вражеских войск.
     EnemyManager::Instance().draw(window);          //3. Вражеские войска
-    TileMap::Instance().draw_effects(window);       //4. Анимации взрывов и выстрелов от зданий
+    m_map.draw_effects(window);                     //4. Анимации взрывов и выстрелов от зданий
     AnimationHolder::Instance().draw(window);       //5. Отложенные анимации. Используется только в CRUISER. TODO: уточнить, можно ли без этого обойтись
     EnemyManager::Instance().draw_effects(window);  //6. Анимации уничтожения врагов, дым, обозначения рассекреченных врагов
     Debugger::Instance().draw(window);              //7. Всякие дебажные штуки поверх

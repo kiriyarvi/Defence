@@ -107,14 +107,13 @@ bool TileMap::valid_ids(int x, int y) {
     return sf::IntRect(0, 0, N, N).contains(sf::Vector2i{ x, y });
 }
 
-void Tile::draw(sf::RenderWindow& window, int x, int y) {
+void Tile::draw(TileMap& tile_map, sf::RenderWindow& window, int x, int y) {
 	sf::Sprite sprite;
 	sprite.setPosition(x * 32, y * 32);
 	sprite.setTexture(TextureManager::Instance().textures[TextureID::Grass]);
 	window.draw(sprite);
 
-    auto& tile_map = TileMap::Instance();
-    auto& map = TileMap::Instance().map;
+    auto& map = tile_map.map;
 
     std::array<std::array<RoadType, 3>, 3> int_points;
     for (size_t x = 0; x < 3; ++x) for (size_t y = 0; y < 3; ++y)
@@ -657,86 +656,10 @@ void TileMap::create_tile_test_map() {
 
 }
 
-TileMap::TileMap() {
-	//Test Map
-	/*map[0][1].roads = { 1,0,1,0 };
-	map[1][1].roads = { 1,0,1,0 };
-	map[2][1].roads = { 0,0,1,1};
-	map[2][2].roads = { 1,1,0,1 };
-	map[3][2].roads = { 1,0,1,0 };
-	map[4][2].roads = { 1,0,1,0 };
-	map[5][2].roads = { 0,1,1,1 };
-	map[5][1].roads = { 1,0,0,1 };
-	map[6][1].roads = { 1,0,1,0 };
-	map[7][1].roads = { 1,0,1,0 };
-
-	map[2][3].roads = { 0,1,0,1 };
-	map[2][4].roads = { 0,1,0,1 };
-	map[2][5].roads = { 1,1,0,1 };
-	map[2][6].roads = { 0,1,1,0 };
-	map[1][6].roads = { 1,0,1,0 };
-	map[0][6].roads = { 1,0,1,0 };
-
-	map[3][5].roads = { 1,0,1,0 };
-	map[4][5].roads = { 1,0,1,0 };
-	map[5][5].roads = { 1,1,1,1 };
-
-	map[5][6].roads = { 1,1,0,0 };
-	map[6][6].roads = { 1,0,1,0 };
-	map[7][6].roads = { 1,0,1,0 };
-
-	map[6][5].roads = { 0,1,1,0 };
-	map[6][4].roads = { 1,0,0,1 };
-	map[7][4].roads = { 1,0,1,0 };
-
-	map[5][1].roads = { 1,0,0,1 };
-	map[6][1].roads = { 1,0,1,0 };
-	map[7][1].roads = { 1,0,1,0 };
-
-	map[5][4].roads = { 0,1,0,1 };
-	map[5][3].roads = { 0,1,0,1 };*/
-	
-	/*m_road_graph.nodes.reserve(15);
-	m_road_graph.nodes.push_back(RoadGraph::Node(0, 1)); auto& nodeA = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(2, 1)); auto& nodeB = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(2, 2)); auto& nodeC = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(2,5)); auto& nodeD = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(2, 6)); auto& nodeE = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(0, 6)); auto& nodeF = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(5, 2)); auto& nodeG = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(5, 1)); auto& nodeX = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(7, 1)); auto& nodeH = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(5, 5)); auto& nodeK = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(6, 5)); auto& nodeL = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(6, 4)); auto& nodeS = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(7, 4)); auto& nodeM = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(5, 6)); auto& nodeJ = m_road_graph.nodes.back();
-	m_road_graph.nodes.push_back(RoadGraph::Node(7, 6)); auto& nodeN = m_road_graph.nodes.back();
-	nodeA.relations.push_back(&nodeB);
-	nodeB.relations.push_back(&nodeC);
-	nodeC.relations.push_back(&nodeG);
-	nodeC.relations.push_back(&nodeD);
-	nodeD.relations.push_back(&nodeK);
-	nodeE.relations.push_back(&nodeD);
-	nodeF.relations.push_back(&nodeE);
-	nodeG.relations.push_back(&nodeX);
-	nodeG.relations.push_back(&nodeK);
-	nodeX.relations.push_back(&nodeH);
-	nodeK.relations.push_back(&nodeG);
-	nodeK.relations.push_back(&nodeL);
-	nodeK.relations.push_back(&nodeJ);
-	nodeL.relations.push_back(&nodeS);
-	nodeS.relations.push_back(&nodeM);
-	nodeJ.relations.push_back(&nodeN);
-	m_road_graph.start_nodes = { &nodeA, &nodeF };
-	m_road_graph.end_nodes = { &nodeH, &nodeN, &nodeM };*/
-}
-
-
 void TileMap::draw(sf::RenderWindow& window) {
 	for (int x = 0; x < map.size(); ++x)
 		for (int y = 0; y < map[x].size(); ++y) {
-			map[x][y].draw(window, x, y);
+			map[x][y].draw(*this, window, x, y);
 		}
 	for (int x = 0; x < map.size(); ++x)
 		for (int y = 0; y < map[x].size(); ++y) {

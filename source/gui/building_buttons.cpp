@@ -81,7 +81,7 @@ void BuildingPanel::update(int player_coins) {
 BuildingPanel::BuildResult BuildingPanel::build_if_allowed(const sf::Vector2f& mouse_pos) {
     if (!m_selected_button)
         return BuildResult::NO_SELECTED_BUILDING_BUTTON;
-    size_t N = TileMap::Instance().map.size();
+    size_t N = GameState::Instance().get_map().map.size();
     bool on_map = mouse_pos.x < N * 32 && mouse_pos.x >= 0 && mouse_pos.y < N * 32 && mouse_pos.y >= 0;
     if (!on_map)
         return BuildResult::NO_TILE_UNDER_MOUSE;
@@ -89,7 +89,7 @@ BuildingPanel::BuildResult BuildingPanel::build_if_allowed(const sf::Vector2f& m
     bool allowed = m_selected_button->is_cell_allowed(cell_id.x, cell_id.y);
     if (!allowed)
         return BuildResult::INVALID_TILE_TYPE;
-    TileMap::Instance().map[cell_id.x][cell_id.y].building = m_selected_button->m_creator(cell_id.x, cell_id.y);
+    GameState::Instance().get_map().map[cell_id.x][cell_id.y].building = m_selected_button->m_creator(cell_id.x, cell_id.y);
     GameState::Instance().player_coins_add(-m_selected_button->m_cost);
     return BuildResult::SUCCESS;
 }
@@ -225,7 +225,7 @@ void BuildingButton::set_state(State state) {
 
 
 bool BuildingButton::is_cell_allowed(int x_id, int y_id) {
-    auto& tile = TileMap::Instance().map[x_id][y_id];
+    auto& tile = GameState::Instance().get_map().map[x_id][y_id];
     if (tile.building)
         return false;
     int roads_count = std::count(tile.roads.begin(), tile.roads.end(), true);

@@ -4,6 +4,7 @@
 #include "enemies/IEnemy.h"
 #include "utils/animation.h"
 #include "game_ui.h"
+#include "tile_map.h"
 
 class GameState {
 public:
@@ -27,7 +28,9 @@ public:
     int get_player_coins() const { return m_player_coins; }
     int get_player_health() const { return m_player_hp; }
     float get_time_multiplier() const { return m_time_multiplier; }
+    //SYSTEMS
     GameUI& get_ui() { return m_ui; }
+    TileMap& get_map() { return m_map; }
     //SETTERS
 	void player_health_add(int health);
     void kill_player();
@@ -48,12 +51,13 @@ private:
 	GameState(sf::RenderWindow& window);
     ~GameState();
     void init_stage(int stage);
+    void set_game_finished_state(bool win);
 private:
     GameUI m_ui;
+    TileMap m_map;
 	int m_player_hp = 10;
 	int m_player_coins = 0;
     float m_time_multiplier = 1.f;
     State m_state = State::PREPAIRING;
     bool m_win = false;
-    void set_game_finished_state(bool win);
 };

@@ -101,7 +101,6 @@ void GameUI::create() {
     m_enters_widget = std::make_unique<EntersWidget>(m_game_process_ui);
 
     m_game_process_ui->set_on_hovered([this]() {
-        std::cout << "ON HOVERED" << std::endl;
         auto mouse_screen_pos = GUI::Instance().mouse_pos;
         auto mouse_pos = m_render_window.mapPixelToCoords(sf::Vector2i( mouse_screen_pos.x, mouse_screen_pos.y ), m_camera.get_view());
         m_enters_widget->on_mouse_moved_on_map(mouse_pos);
@@ -113,20 +112,14 @@ void GameUI::create() {
         m_game_process_ui->on_mouse_moved_return = Query{ Query::PASS }; //иначе событие не уйдет камере!
     });
     m_game_process_ui->set_on_unhovered([this]() {
-        std::cout << "ON UNHOVERED" << std::endl;
         m_enters_widget->on_mouse_leave_map();
     });
     m_game_process_ui->set_on_pressed([this](ClickableWidget::Button::Type button) {
-        std::cout << "ON PRESSED" << std::endl;
         on_button_pressed(button);
     });
     m_game_process_ui->set_on_released([this](ClickableWidget::Button::Type button) {
-        std::cout << "ON RELEASED" << std::endl;
         m_game_process_ui->on_released_return = Query{ Query::PASS };
     });
-
-    TileMap::Instance().generate_map();
-    m_console->add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.");
 }
 
 void GameUI::on_button_pressed(ClickableWidget::Button::Type type) {
@@ -144,14 +137,14 @@ void GameUI::on_button_pressed(ClickableWidget::Button::Type type) {
         else { // если не строили, значит запросили открыть окно постройки
             GUI::Instance().add_deffered_command([mouse_pos, this]() {
                 sf::Vector2i cell_id(mouse_pos.x / 32, mouse_pos.y / 32);
-                size_t N = TileMap::Instance().map.size();
+                size_t N = m_game_state.get_map().map.size();
                 bool on_map = cell_id.x < N && cell_id.x >= 0 && cell_id.y < N && cell_id.y >= 0;
                 if (!on_map) {
                     m_game_process_ui->delete_widget(m_upgrade_panel);
                     m_upgrade_panel = nullptr;
                     return;
                 }
-                auto& cell = TileMap::Instance().map[cell_id.x][cell_id.y];
+                auto& cell = m_game_state.get_map().map[cell_id.x][cell_id.y];
                 if (!cell.building) {
                     m_game_process_ui->delete_widget(m_upgrade_panel);
                     m_upgrade_panel = nullptr;
@@ -175,19 +168,19 @@ void GameUI::on_event(sf::Event& event) {
     if (event.type == sf::Event::KeyPressed) {
         if (m_game_state.get_state() == GameState::State::PREPAIRING) {
             if (event.key.code == sf::Keyboard::Key::R)
-                TileMap::Instance().generate_map();
+                m_game_state.get_map().generate_map();
             else if (event.key.code == sf::Keyboard::Key::Q) {
                 m_game_state.start_game();
             }
         }
         //DEBUG
         if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) {
-            TileMap::Instance().enlarge_map();
+            m_game_state.get_map().enlarge_map();
         } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::K) {
             for (auto& enemy : EnemyManager::Instance().m_enemies)
                 enemy->health = 0;
         } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::T) {
-            TileMap::Instance().create_tile_test_map();
+            m_game_state.get_map().create_tile_test_map();
         } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S) {
             sf::Vector2i mouse_screen_pos = sf::Mouse().getPosition();
             auto mouse_pos = m_render_window.mapPixelToCoords(mouse_screen_pos);
@@ -226,7 +219,6 @@ void GameUI::update_on_enemy_defeated(int coins) {
 
 void GameUI::game_over(bool win) {
     Widget* root = GUI::Instance().get_root();
-    root->delete_all_widgets();
     Label* label = root->add_widget(Label::create(true, 128, &ResourceManager::Instance().PixelSplitter_Bold_font));
     if (win)
         label->add_text("WIN!", sf::Color::Red);
@@ -249,7 +241,7 @@ void GameUI::update_wave_indicator_text(const std::string& text) {
 void GameUI::draw_on_map_effects() {
     auto mouse_screen_pos = GUI::Instance().mouse_pos;
     auto mouse_pos = m_render_window.mapPixelToCoords(sf::Vector2i(mouse_screen_pos.x, mouse_screen_pos.y), m_camera.get_view());
-    size_t N = TileMap::Instance().map.size();
+    size_t N = m_game_state.get_map().map.size();
     bool on_map = mouse_pos.x < N * 32 && mouse_pos.x >= 0 && mouse_pos.y < N * 32 && mouse_pos.y >= 0;
     sf::Vector2i cell_id(mouse_pos.x / 32, mouse_pos.y / 32);
     if (on_map)

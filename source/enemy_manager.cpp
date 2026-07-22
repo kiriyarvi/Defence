@@ -11,11 +11,10 @@
 #include "enemies/cruiser_I.h"
 
 
-
 EnemyManager::EnemyManager() {}
 
 void EnemyManager::generate_waves() {
-    all_paths = TileMap::Instance().get_road_graph().find_all_paths();
+    all_paths = GameState::Instance().get_map().get_road_graph().find_all_paths();
     m_wave_controller = std::make_unique<WaveController>();
 }
 
