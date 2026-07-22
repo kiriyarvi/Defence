@@ -371,3 +371,13 @@ RadioMastBuildingButton::RadioMastBuildingButton():
         ParamsManager::Instance().params.guns.radio_tower.radius,
         TextureID::RadioMast
     ) {}
+
+
+void RadioMastBuildingButton::draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) {
+    sf::Sprite plan(TextureManager::Instance().textures[TextureID::RadioMast]);
+    plan.setOrigin(48, 64);
+    plan.setScale(64 / 96.f, 64 / 96.f);
+    plan.setPosition(x_id * 32 + 16, y_id * 32 + 16);
+    if (!allowed) plan.setColor(sf::Color(255, 0, 0));
+    window.draw(plan);
+}

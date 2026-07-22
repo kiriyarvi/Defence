@@ -10,7 +10,7 @@ void LayeredIcon::draw(const glm::vec2& position_transform, sf::RenderTarget& wi
         sf::Texture& texture = TextureManager::Instance().textures[*it];
         auto texture_size = texture.getSize();
         m_sprite.setScale({ (float)layout.width / texture_size.x, (float)layout.height / texture_size.y });
-        m_sprite.setTexture(texture);
+        m_sprite.setTexture(texture, true);
         window.draw(m_sprite, states);
     }
 }

@@ -78,7 +78,7 @@ void GameState::init_stage(int stage) {
         player_coins_add(1000);
     } else {
         AchievementSystem::Instance().unlock_all();
-        player_coins_add(10000);
+        player_coins_add(100000);
     }
 }
 

@@ -109,4 +109,5 @@ public:
 class RadioMastBuildingButton : public BuildingButton {
 public:
     RadioMastBuildingButton();
+    void draw_building(sf::RenderWindow& window, int x_id, int y_id, bool allowed) override;
 };
