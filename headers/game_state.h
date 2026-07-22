@@ -1,7 +1,4 @@
 #pragma once
-#include "TGUI/TGUI.hpp"
-#include "TGUI/Backend/SFML-Graphics.hpp"
-
 #include "tile_map.h"
 #include <functional>
 #include "gui/building_buttons.h"
@@ -13,6 +10,7 @@
 #include "gui/next_wave_button.h"
 #include "gui/console.h"
 #include "utils/animation.h"
+#include "gui/enters.h"
 
 #include <list>
 
@@ -27,51 +25,39 @@ public:
 	GameState& operator=(const GameState&) = delete;
 	GameState(GameState&&) = delete;
 	GameState& operator=(GameState&&) = delete;
-	
-	tgui::Gui& get_tgui();
+
+    enum class State {
+        PREPAIRING, //< подготовка (игрок может перегенирировать карту или начать игру)
+        GAME, //< игра
+        GAME_FINISHED //< игра окончена (статус в m_win)
+    };
+    State get_state() const { return m_state; }
 
 	bool event(sf::Event& event, const sf::RenderWindow& current_window);
 	void logic(double dtime_mc);
 	void draw(sf::RenderWindow& current_window);
-	bool is_player_defeated() { return  m_player_hp <= 0; }
-    bool is_game_over() { return is_player_defeated() || m_win; }
 	void player_health_add(int health);
     void kill_player();
 	void player_coins_add(int coins);
     int get_player_coins() const { return m_player_coins; }
     void enemy_defeated(EnemyType type);
     void win();
-    void display_help(bool help);
-    bool is_help_displayed() {
-        return m_is_help_displayed;
-    }
     void init_stage(int stage);
-    void set_tooltip_content(const std::string& content, sf::Vector2f origin = {0.,1.});
     void set_wave_info(const std::string& wave);
-    sf::Window& window;
-
-    struct Enter {
-        int x_id;
-        int y_id;
-        RoadGraph::PathID id;
-        std::string content;
-        RouteDrawer drawer;
-    };
-    void add_enter(RoadGraph::PathID id, const std::string& content);
-    void delete_all_enters();
     Console* get_console() { return m_console; }
-
+    EntersWidget* get_enters_widget() { return m_enters_widget.get(); }
     void wave_preparing();
     void wave_started();
     float get_time_multiplier() const { return m_time_multiplier; }
     Widget* get_tile_size_reference() { return m_tile_size_reference; }
     void close_upgrade_panel();
+
+    sf::Window& window;
 private:
 	friend class BuildingButton;	
 private:
 	GameState(sf::RenderWindow& window);
     ~GameState();
-    void align_console_labels();
 private:
 	int m_player_hp = 10;
 	int m_player_coins = 0;
@@ -87,20 +73,10 @@ private:
     Widget* m_tile_size_reference;
     Widget* m_upgrade_panel_height_reference;
     Console* m_console;
-    bool m_is_preparing = true;
-
-	tgui::Gui m_gui;
-    tgui::Group::Ptr m_ui;
-    Help m_help;
-
+    State m_state = State::PREPAIRING;
     bool m_win = false;
-    bool m_is_help_displayed = false;
-	tgui::Label::Ptr m_centered_message; // сообщение по центру
+    void set_game_finished_state(bool win);
+    std::unique_ptr<EntersWidget> m_enters_widget = nullptr;
+
 	sf::Vector2f m_mouse_pos;
-    tgui::RichTextLabel::Ptr m_mouse_tooltip;
-    std::vector<Enter> m_enters;
-    Enter* m_showed_enter = nullptr;
-public:
-    tgui::Font GOSTtypeA_font;
-    tgui::Font PixelSplitter_Bold_font; // расположены здесь, чтобы уничтожались первее (иначе ошибка в tgui).
 };

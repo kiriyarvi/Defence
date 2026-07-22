@@ -1,9 +1,6 @@
 #pragma once
-
 #include "gui/layered_icon.h"
 #include "tile_map.h"
-#include <TGUI/TGUI.hpp>
-
 #include <functional>
 #include <memory>
 

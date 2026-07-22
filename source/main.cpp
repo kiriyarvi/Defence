@@ -16,7 +16,6 @@ int main() {
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
     GUI::Instance().set_root(Widget::create(),window);
 	auto& game_state = GameState::Instance(&window);
-	auto& gui = GameState::Instance().get_tgui();
 
 	Camera camera(window);
 
@@ -53,7 +52,7 @@ int main() {
                 auto mouse_pos = window.mapPixelToCoords(mouse_screen_pos);
                 EnemyManager::Instance().add_smoke(Smoke({ mouse_pos.x, mouse_pos.y }, 4., 20.));
             }
-            if (!GUI::Instance().event(event) && !gui.handleEvent(event)) {
+            if (!GUI::Instance().event(event)) {
                 camera.process(event);
                 game_state.event(event, window);
             }
@@ -65,7 +64,7 @@ int main() {
 			dtime = accumulator;
 			accumulator = 0;
 			game_state.logic(dtime);
-			if (!game_state.is_game_over() && !game_state.is_help_displayed()) {
+			if (game_state.get_state() == GameState::State::GAME || game_state.get_state() == GameState::State::PREPAIRING) {
                 float time_multiplier = GameState::Instance().get_time_multiplier();
 				EnemyManager::Instance().logic(time_multiplier * dtime);
 				TileMap::Instance().logic(time_multiplier * dtime);
@@ -85,7 +84,6 @@ int main() {
         EnemyManager::Instance().draw_effects(window); // health + smoke + uncovering box
         Debugger::Instance().draw(window);
 		game_state.draw(window);
-		gui.draw();
         GUI::Instance().draw(window);
         window.display();
 	}

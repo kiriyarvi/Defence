@@ -12,7 +12,7 @@
 #include "gui/icon.h"
 #include "gui/scale.h"
 
-GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
+GameState::GameState(sf::RenderWindow& window) : window{window} {
     Widget* root = GUI::Instance().get_root();
     DEBUG_TAG(root, "root")
     m_game_process_ui = root->add_widget(Widget::create());
@@ -95,86 +95,28 @@ GameState::GameState(sf::RenderWindow& window) : m_gui(window), window{window} {
     m_console = m_game_process_ui->add_widget(std::make_unique<Console>());
     m_console->position_anchor(Anchor::BOTTOM | Anchor::LEFT, m_building_panel, Anchor::TOP | Anchor::LEFT);
 
-    GOSTtypeA_font = tgui::Font{ "fonts/GOSTtypeA.ttf" }; //TODO
-    PixelSplitter_Bold_font = tgui::Font{ "fonts/PixelSplitter-Bold.ttf" };//TODO
-	m_gui.setFont(PixelSplitter_Bold_font);//TODO
-	tgui::Texture::setDefaultSmooth(false); // отключим сглаживание текстур //TODO
+    //Enters Widget
+    m_enters_widget = std::make_unique<EntersWidget>(m_game_process_ui);
 
-    m_ui = tgui::Group::create(); //TODO
-	
-	m_centered_message = tgui::Label::create("");
-	m_centered_message->setPosition("50%", "50%");
-	m_centered_message->setOrigin(0.5, 0.5);
-	m_centered_message->setTextSize(128);
-	m_centered_message->ignoreMouseEvents(true);
-	m_centered_message->getRenderer()->setTextColor(tgui::Color::Red);
-
-	m_ui->add(m_centered_message);
-
-	// Нижняя панель
-
-	auto bottom_panel_group = tgui::Group::create(tgui::Layout2d("100%", "10%"));
-	bottom_panel_group->setPosition("0%", "90%");
-	bottom_panel_group->setOrigin(0, 1.);
-
-    auto help_button = tgui::BitmapButton::create("?");
-    help_button->setImage(TextureManager::Instance().textures[TextureID::Question]);
-    help_button->setImageScaling(1.);
-    help_button->getRenderer()->setTexture(TextureManager::Instance().textures[TextureID::UpgradeButtonBackground]);
-    help_button->getRenderer()->setBorders(0);
-    help_button->onClick.connect([&]() {
-        display_help(true);
-    });
-    help_button->setOrigin(1., 0.);
-    help_button->setPosition("100%", 0);
-    help_button->setVisible(true);
-    bottom_panel_group->add(help_button, "HelpButton");
-	bottom_panel_group->onSizeChange([=]() {
-		const float spacing = 4.f;
-		float size = bottom_panel_group->getSize().y;
-        help_button->setSize({ size, size });
-	});
-    m_ui->add(bottom_panel_group, "BottomPanelGroup");
-
-    m_gui.add(m_ui);
-
-    m_help.get_content()->getRenderer()->setFont(GOSTtypeA_font);
-    m_help.get_content()->setTextSize(30);
-
-    m_mouse_tooltip = tgui::RichTextLabel::create();
-    m_mouse_tooltip->setVisible(false);
-    m_mouse_tooltip->setTextSize(30);
-    m_mouse_tooltip->setOrigin(0, 1);
-    m_mouse_tooltip->ignoreMouseEvents(true);
-    auto mouse_tooltip_renderer = m_mouse_tooltip->getRenderer();
-    mouse_tooltip_renderer->setFont(GOSTtypeA_font);
-    mouse_tooltip_renderer->setBackgroundColor(sf::Color(50, 50, 50, 255));
-    mouse_tooltip_renderer->setTextColor(sf::Color::White);
-
-    m_ui->add(m_mouse_tooltip);
-
-  
     TileMap::Instance().generate_map();
     m_console->add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.");
 }
 
+void GameState::set_game_finished_state(bool win) {
+    m_win = win;
+    Widget* root = GUI::Instance().get_root();
+    root->delete_all_widgets();
+    Label* label = root->add_widget(Label::create(true, 128, &ResourceManager::Instance().PixelSplitter_Bold_font));
+    if (m_win)
+        label->add_text("WIN!", sf::Color::Red);
+    else
+        label->add_text("DEFEAT!", sf::Color::Red);
+    label->position_centering();
+    m_state = State::GAME_FINISHED;
+}
+
 GameState::~GameState() {
 
-}
-
-tgui::Gui& GameState::get_tgui() {
-	return m_gui;
-}
-
-void GameState::set_tooltip_content(const std::string& content, sf::Vector2f origin) {
-    if (!content.empty()) {
-        m_mouse_tooltip->setOrigin(origin.x, origin.y);
-        m_mouse_tooltip->setText(content);
-        m_mouse_tooltip->setVisible(true);
-    }
-    else {
-        m_mouse_tooltip->setVisible(false);
-    }
 }
 
 void GameState::set_wave_info(const std::string& wave) {
@@ -182,52 +124,25 @@ void GameState::set_wave_info(const std::string& wave) {
     m_wave_info->add_text(wave);
 }
 
-void GameState::add_enter(RoadGraph::PathID id, const std::string& content) {
-    auto& path = EnemyManager::Instance().all_paths[id.start_node][id.path];
-    Enter enter{ path[0]->x, path[0]->y, id, content, RouteDrawer(path) };
-    m_enters.push_back(enter);
-}
-
-void GameState::delete_all_enters() {
-    m_enters.clear();
-    m_showed_enter = nullptr;
-}
-
 bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) {
+    if (m_state != State::GAME && m_state != State::PREPAIRING)
+        return false;
     if (event.type == sf::Event::KeyPressed) {
-        if (m_is_preparing) {
+        if (m_state == State::PREPAIRING) {
             if (event.key.code == sf::Keyboard::Key::R) {
                 TileMap::Instance().generate_map();
             }
             else if (event.key.code == sf::Keyboard::Key::Q) {
-                m_is_preparing = false;
+                m_state == State::GAME;
                 EnemyManager::Instance().generate_waves();
                 init_stage(1);
             }
         }
     }
 	if (event.type == sf::Event::MouseMoved) {
-		sf::Vector2i mouse_screen_pos(event.mouseMove.x, event.mouseMove.y);
-		m_mouse_pos = current_window.mapPixelToCoords(mouse_screen_pos);
-        m_mouse_tooltip->setPosition(mouse_screen_pos.x, mouse_screen_pos.y);
-        sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
-        bool mouse_on_enter = false;
-        if (cell_id.x == 0 && m_mouse_pos.x < 0) {
-            for (auto& enter : m_enters) {
-                if (enter.y_id == cell_id.y) { // показать информацию о волне
-                    if (m_showed_enter != &enter) {
-                        set_tooltip_content(enter.content);
-                        m_showed_enter = &enter;
-                    }
-                    mouse_on_enter = true;
-                    break;
-                }
-            }
-        }
-        if (!mouse_on_enter && m_showed_enter) {
-            set_tooltip_content("");
-            m_showed_enter = nullptr;
-        }
+        m_enters_widget->on_event(current_window, event);
+        sf::Vector2i mouse_screen_pos(event.mouseMove.x, event.mouseMove.y);
+        m_mouse_pos = current_window.mapPixelToCoords(mouse_screen_pos);
 		return false;
 	}
 	if (event.type == sf::Event::MouseButtonPressed) {
@@ -269,41 +184,28 @@ bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) 
 }
 
 void GameState::logic(double dtime_mc) {
-	if (is_player_defeated()) {
-		m_centered_message->setText("GAME OVER");
-		return;
-	}
-    if (m_win) {
-        m_centered_message->setText("WIN, WIN, WIN!");
+    if (m_state == State::GAME_FINISHED)
         return;
-    }
-    if (m_showed_enter) {
-        m_showed_enter->drawer.logic(dtime_mc);
-    }
+    m_enters_widget->logic(dtime_mc);
     m_console->logic(dtime_mc);
 }
 
 void GameState::draw(sf::RenderWindow& current_window) {
+    if (m_state != State::GAME && m_state != State::PREPAIRING)
+        return;
     size_t N = TileMap::Instance().map.size();
 	bool on_map = m_mouse_pos.x < N * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < N * 32 && m_mouse_pos.y >= 0;
     sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
     if (on_map)
         m_building_panel->draw_building_plan(current_window, cell_id.x, cell_id.y);
-    if (!m_enters.empty()) {
-        sf::Sprite wave_arrow(TextureManager::Instance().textures[TextureID::Arrow]);
-        for (auto& enter : m_enters) {
-            wave_arrow.setPosition((enter.x_id - 1) * 32, enter.y_id * 32);
-            current_window.draw(wave_arrow);
-        }
-    }
-    if (m_showed_enter) {
-        m_showed_enter->drawer.draw(current_window);
-    }
+    m_enters_widget->draw(current_window);
 }
 
 void GameState::enemy_defeated(EnemyType type) {
     bool achievement = AchievementSystem::Instance().defeated(type);
     if (!achievement)
+        return;
+    if (m_state != State::GAME && m_state != State::PREPAIRING)
         return;
     m_building_panel->update(m_player_coins);
     if (m_upgrade_panel)
@@ -311,16 +213,7 @@ void GameState::enemy_defeated(EnemyType type) {
 }
 
 void GameState::win() {
-    m_win = true;
-}
-
-void GameState::display_help(bool help) {
-    m_is_help_displayed = help;
-    m_gui.removeAllWidgets();
-    if (help)
-        m_gui.add(m_help.get_content());
-    else
-        m_gui.add(m_ui);
+    set_game_finished_state(true);
 }
 
 void GameState::init_stage(int stage) {
@@ -335,18 +228,22 @@ void GameState::init_stage(int stage) {
 }
 
 void GameState::player_health_add(int health) {
+    if (m_state != State::GAME && m_state != State::PREPAIRING)
+        return;
 	m_player_hp += health;
     m_player_health_count_widget->clear();
 	m_player_health_count_widget->add_text("X" + std::to_string(m_player_hp));
+    if (m_player_hp <= 0)
+        set_game_finished_state(false);
 }
 
 void GameState::kill_player() {
-    m_player_hp = 0;
-    m_player_health_count_widget->clear();
-    m_player_health_count_widget->add_text("X" + std::to_string(m_player_hp));
+    player_health_add(-m_player_hp);
 }
 
 void GameState::player_coins_add(int coins) {
+    if (m_state != State::GAME && m_state != State::PREPAIRING)
+        return;
 	m_player_coins += coins;
     m_player_coins_count_widget->clear();
     m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::coins_color);
@@ -357,14 +254,20 @@ void GameState::player_coins_add(int coins) {
 
 
 void GameState::wave_preparing() {
+    if (m_state != State::GAME && m_state != State::PREPAIRING)
+        return;
     m_next_wave_button->set_active(true);
 }
 
 void GameState::wave_started() {
+    if (m_state != State::GAME && m_state != State::PREPAIRING)
+        return;
     m_next_wave_button->set_active(false);
 }
 
 void GameState::close_upgrade_panel() {
+    if (m_state != State::GAME && m_state != State::PREPAIRING)
+        return;
     m_game_process_ui->delete_widget(m_upgrade_panel);
     m_upgrade_panel = nullptr;
 }

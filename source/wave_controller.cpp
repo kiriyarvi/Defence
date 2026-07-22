@@ -131,7 +131,7 @@ WaveController::WaveController() {
    {
         auto r1 = std::make_unique<UniformSpawner>();
         r1->id = one_random_route();
-        r1->add_spawner(EnemyType::Bike, 1);
+        r1->add_spawner(EnemyType::Bike, 10);
         Wave w;
         w.prepairing_time = 60;
         w.routes.push_back(std::move(r1));
@@ -564,9 +564,9 @@ bool WaveController::set_active_wave(int wave) {
     auto& w = m_waves[m_current_wave];
     auto& game_state = GameState::Instance();
     auto& all_paths = EnemyManager::Instance().all_paths;
-    game_state.delete_all_enters();
+    game_state.get_enters_widget()->delete_all_enters();
     for (auto& route : w.routes) {
-        game_state.add_enter(route->id, route->description());
+        game_state.get_enters_widget()->add_enter(route->id, route->description());
     }
     game_state.wave_preparing();
     for (auto& r : w.routes)

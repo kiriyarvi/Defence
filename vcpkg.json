@@ -2,7 +2,6 @@
   "dependencies": [
     "sfml",
     "glm",
-    "tgui",
     "nlohmann-json"
   ]
 }

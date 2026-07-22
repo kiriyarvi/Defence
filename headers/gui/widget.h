@@ -289,20 +289,26 @@ public:
     void grid(const std::vector<std::vector<Widget*>> elements, GridOptions options = {});
     //WIDGET HIERARCHY
     template<typename T>
-    T* add_widget(std::unique_ptr<T>&& child) {
+    T* add_widget(std::unique_ptr<T>&& child, bool push_back = true) {
         assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
         T* ptr = child.get();
         ptr->m_parent = this;
-        m_children.push_back(std::move(child));
+        if (push_back)
+            m_children.push_back(std::move(child));
+        else
+            m_children.emplace_front(std::move(child));
         return ptr;
     }
 
     template<typename T>
-    T* add_widget_deffered(std::unique_ptr<T>&& child) {
+    T* add_widget_deffered(std::unique_ptr<T>&& child, bool push_back = true) {
         T* child_ptr = child.release();
-        GUI::Instance().add_deffered_command([this, child = child_ptr]() {
+        GUI::Instance().add_deffered_command([this, child = child_ptr, push_back]() {
             child->m_parent = this;
-            m_children.push_back(std::unique_ptr<Widget>(child));
+            if (push_back)
+                m_children.push_back(std::unique_ptr<Widget>(child));
+            else
+                m_children.emplace_front(std::unique_ptr<Widget>(child));
         });
         return child_ptr;
     }
@@ -310,12 +316,12 @@ public:
     /// В зависимости от того, происходит ли сейчас обработка событий или нет
     /// вызывает либо add_widget либо add_widget_deffered
     template<typename T>
-    T* add_widget_smart(std::unique_ptr<T>&& child) {
+    T* add_widget_smart(std::unique_ptr<T>&& child, bool push_back = true) {
         T* w = child.get();
         if (GUI::Instance().is_event_processing())
-            add_widget_deffered(std::move(child));
+            add_widget_deffered(std::move(child), push_back);
         else
-            add_widget(std::move(child));
+            add_widget(std::move(child), push_back);
         return w;
     }
     void delete_widget(Widget* widget);

@@ -997,6 +997,8 @@ bool Widget::contain_dependency(Widget* widget) {
  * @brief Удаляет виджет вместе с его потомками. У виджета и его потомков перед удалением удаляются все правила.
  */
 void Widget::delete_widget(Widget* widget) {
+    if (widget == nullptr)
+        return;
     assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
     widget->clear_rules(Property::LAYOUT, true, false, true);
     assert(!GUI::Instance().get_root()->contain_dependency(widget) && "Hanging rule");

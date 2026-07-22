@@ -10,6 +10,8 @@
 #include "guns/hedgehog.h"
 #include "guns/radio_mast.h"
 
+#include <sstream>
+
 struct Stringifier: public IStringifier {
 public:
     Comparation compare(const std::string& prop, float current, float goal) override {
@@ -59,12 +61,10 @@ UpgradeButton::UpgradeButton(
     capture_mode = true;
     unhover_on_pressed = false;
     set_on_hovered([this]() {
-        std::cout << "HOVERED" << std::endl;
         create_tooltip_smart();
     });
 
     set_on_unhovered([this]() {
-        std::cout << "UNHOVERED" << std::endl;
         delete_tooltip_smart();
     });
 
