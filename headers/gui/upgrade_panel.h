@@ -4,7 +4,7 @@
 #include "gui/icon.h"
 #include "guns/building_with_health.h"
 
-#include "tile_map.h"
+#include "guns/building.h"
 
 #include <functional>
 
@@ -72,7 +72,7 @@ public:
 private:
     Widget* create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons);
     void create_info_panel_for_button(UpgradeButton* button);
-    void create_panel_for_building_with_health(BuildingType type, BuildingWithHealth* building, int enforce_cost, int repairing_hp);
+    void create_panel_for_building_with_health(BuildingWithHealth* building, int enforce_cost, int repairing_hp);
     Widget* create_header_and_content(BuildingType type);
     VHBoxOptions options_for_vhbox();
     Widget* m_tile_size_reference;

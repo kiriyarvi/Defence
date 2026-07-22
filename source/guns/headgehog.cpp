@@ -1,11 +1,10 @@
 #include "guns/hedgehog.h"
-#include "tile_map.h"
 #include "enemy_manager.h"
 #include "texture_manager.h"
 #include "sound_manager.h"
 #include "game_state.h"
 
-Hedgehog::Hedgehog(int x_id, int y_id): BuildingWithHealth(x_id, y_id), params(ParamsManager::Instance().params.guns.hedgehog) {
+Hedgehog::Hedgehog(int x_id, int y_id): BuildingWithHealth(x_id, y_id, BuildingType::Hedgehogs), params(ParamsManager::Instance().params.guns.hedgehog) {
     set_health(params.health);
 }
 

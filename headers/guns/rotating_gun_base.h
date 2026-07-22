@@ -1,5 +1,5 @@
 #pragma once
-#include "tile_map.h"
+#include "guns/building.h"
 #include "texture_manager.h"
 
 class IEnemy;
@@ -7,7 +7,7 @@ class IEnemy;
 // TODO добавить возможность указания приоритета целей.
 class IRotatingGun : public IBuilding {
 public:
-    IRotatingGun(int x_id, int y_id);
+    IRotatingGun(int x_id, int y_id, BuildingType type);
 	void draw(sf::RenderWindow& window) override;
 	void logic(double dtime_microseconds) override;
 	virtual void shoot_logic(IEnemy& enemy) = 0;

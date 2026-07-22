@@ -3,6 +3,7 @@
 #include "utils/animation.h"
 #include "utils/sprite_chain.h"
 #include "params_manager.h"
+#include <glm/vec2.hpp>
 
 class MiniGun : public IRotatingGun {
 	friend class GameState;

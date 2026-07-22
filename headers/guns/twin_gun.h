@@ -2,6 +2,7 @@
 #include "rotating_gun_base.h"
 #include "utils/sprite_chain.h"
 #include "params_manager.h"
+#include <glm/vec2.hpp>
 
 class TwinGunAnimation {
 public:

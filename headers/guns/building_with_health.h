@@ -1,10 +1,10 @@
 #pragma once
-#include "tile_map.h"
+#include "guns/building.h"
 #include <functional>
 
 class BuildingWithHealth : public IBuilding {
 public:
-    BuildingWithHealth(int x_id, int y_id) : IBuilding(x_id, y_id) {}
+    BuildingWithHealth(int x_id, int y_id, BuildingType type) : IBuilding(x_id, y_id, type) {}
     int get_health() { return m_health; }
     void set_health_changed_callback(const std::function<void()>& callback) { m_on_health_changed = callback; }
     void set_health(int health) {

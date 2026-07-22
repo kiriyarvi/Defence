@@ -124,7 +124,7 @@ void TwinGunAnimation::start_barrel_animation(bool upper) {
 }
 
 
-TwinGun::TwinGun(int x_id, int y_id): IRotatingGun(x_id, y_id), m_params(ParamsManager::Instance().params.guns.twingun) {
+TwinGun::TwinGun(int x_id, int y_id): IRotatingGun(x_id, y_id, BuildingType::TwinGun), m_params(ParamsManager::Instance().params.guns.twingun) {
 	radius = m_params.radius;
 }
 

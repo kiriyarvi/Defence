@@ -10,7 +10,7 @@
 #include "glm/gtx/rotate_vector.hpp"
 #include "glm/gtc/random.hpp"
 
-MiniGun::MiniGun(int x_id, int y_id):  IRotatingGun(x_id, y_id), m_params(ParamsManager::Instance().params.guns.minigun) {
+MiniGun::MiniGun(int x_id, int y_id):  IRotatingGun(x_id, y_id, BuildingType::Minigun), m_params(ParamsManager::Instance().params.guns.minigun) {
     rotation_speed = m_params.rotation_speed;
 	radius = m_params.radius;
 	

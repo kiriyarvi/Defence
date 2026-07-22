@@ -1,7 +1,8 @@
 #include "guns/radio_mast.h"
 #include "net_manager.h"
+#include "texture_manager.h"
 
-RadioMast::RadioMast(int x_id, int y_id): IBuilding(x_id, y_id) {
+RadioMast::RadioMast(int x_id, int y_id): IBuilding(x_id, y_id, BuildingType::RadioMast) {
     m_tower_sprite.setTexture(TextureManager::Instance().textures[TextureID::RadioMast]);
     m_tower_sprite.setOrigin(16, 16);
 }

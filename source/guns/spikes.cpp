@@ -4,7 +4,7 @@
 #include "sound_manager.h"
 #include "game_state.h"
 
-Spikes::Spikes(int x_id, int y_id): BuildingWithHealth(x_id, y_id), params(ParamsManager::Instance().params.guns.spikes)
+Spikes::Spikes(int x_id, int y_id): BuildingWithHealth(x_id, y_id, BuildingType::Spikes), params(ParamsManager::Instance().params.guns.spikes)
 {
 	set_health(params.health);
 }

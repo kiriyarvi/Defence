@@ -3,7 +3,7 @@
 #include "covering_database.h"
 #include "glm/glm.hpp"
 
-IRotatingGun::IRotatingGun(int x_id, int y_id) : IBuilding(x_id, y_id) {}
+IRotatingGun::IRotatingGun(int x_id, int y_id, BuildingType type) : IBuilding(x_id, y_id, type) {}
 
 void IRotatingGun::draw(sf::RenderWindow& window) {
 	sf::Sprite sprite;

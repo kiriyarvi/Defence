@@ -1,5 +1,5 @@
 #pragma once
-#include "tile_map.h"
+#include "guns/building.h"
 #include "enemies/IEnemy.h"
 #include "guns/minigun.h"
 #include "guns/radar.h"

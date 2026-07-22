@@ -1,8 +1,9 @@
 #pragma once
 #include "gui/layered_icon.h"
-#include "tile_map.h"
+#include "guns/building.h"
 #include <functional>
 #include <memory>
+#include <array>
 
 class BuildingButton;
 

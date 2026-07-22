@@ -4,7 +4,7 @@
 #include "sound_manager.h"
 #include "texture_manager.h"
 
-Mine::Mine(int x_id, int y_id): IBuilding(x_id, y_id), m_params(ParamsManager::Instance().params.guns.mine) {
+Mine::Mine(int x_id, int y_id): IBuilding(x_id, y_id, BuildingType::Mine), m_params(ParamsManager::Instance().params.guns.mine) {
 	m_mine_sprite.setTexture(TextureManager::Instance().textures[TextureID::Mine]);
 	m_mine_sprite.setOrigin(8, 8);
 

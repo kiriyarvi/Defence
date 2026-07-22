@@ -3,7 +3,7 @@
 #include "sound_manager.h"
 #include "texture_manager.h"
 
-AntitankGun::AntitankGun(int x_id, int y_id) : IRotatingGun(x_id, y_id),
+AntitankGun::AntitankGun(int x_id, int y_id) : IRotatingGun(x_id, y_id, BuildingType::AntitankGun),
 m_params(ParamsManager::Instance().params.guns.antitank) {
     radius = m_params.radius;
 

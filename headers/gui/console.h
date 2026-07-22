@@ -2,7 +2,7 @@
 #include <string>
 #include <list>
 #include "gui/label.h"
-#include "tile_map.h"
+#include "guns/building.h"
 #include "achievement_system.h"
 #include "utils/animation.h"
 

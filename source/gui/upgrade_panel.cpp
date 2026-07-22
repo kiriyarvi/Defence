@@ -364,8 +364,8 @@ Widget* UpgradePanel::create_header_and_content(BuildingType type) {
     return content;
 }
 
-void UpgradePanel::create_panel_for_building_with_health(BuildingType type, BuildingWithHealth* building, int enforce_cost, int repairing_hp) {
-    Widget* content = create_header_and_content(type);
+void UpgradePanel::create_panel_for_building_with_health(BuildingWithHealth* building, int enforce_cost, int repairing_hp) {
+    Widget* content = create_header_and_content(building->type);
     DEBUG_TAG(content, "content");
     //INTERFACE
     Widget* interface = content->add_widget(Widget::create());
@@ -410,7 +410,7 @@ void UpgradePanel::create_panel_for_building_with_health(BuildingType type, Buil
             m_upgrade_info_widget->delete_all_widgets();
         });
     };
-    auto_repairing_switch->set_on_hovered([this, interface, type]() {
+    auto_repairing_switch->set_on_hovered([this, interface, type = building->type]() {
         GUI::Instance().add_deffered_command([this, interface, type]() {
             m_upgrade_info_widget->clear_rules(Property::SIZE);
             m_upgrade_info_widget->delete_all_widgets();
@@ -459,12 +459,12 @@ void UpgradePanel::create_panel_for_building_with_health(BuildingType type, Buil
 
 void UpgradePanel::visit(Spikes& spikes) {
     auto& params = ParamsManager::Instance().params.guns.spikes;
-    create_panel_for_building_with_health(BuildingType::Spikes, &spikes, params.cost, params.health);
+    create_panel_for_building_with_health(&spikes, params.cost, params.health);
 }
 
 void UpgradePanel::visit(Hedgehog& headgehogs) {
     auto& params = ParamsManager::Instance().params.guns.hedgehog;
-    create_panel_for_building_with_health(BuildingType::Hedgehogs, &headgehogs, params.cost, params.health);
+    create_panel_for_building_with_health(&headgehogs, params.cost, params.health);
 }
 
 void UpgradePanel::visit(AntitankGun& antitank_gun) {

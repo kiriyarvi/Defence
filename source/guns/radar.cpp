@@ -3,7 +3,7 @@
 #include <covering_database.h>
 #include <debugger.h>
 
-Radar::Radar(int x_id, int y_id):IBuilding(x_id, y_id), m_params(ParamsManager::Instance().params.guns.radar) {
+Radar::Radar(int x_id, int y_id):IBuilding(x_id, y_id, BuildingType::Radar), m_params(ParamsManager::Instance().params.guns.radar) {
     m_radar_sprite.setTexture(TextureManager::Instance().textures[TextureID::Radar]);
     m_radar_sprite.setOrigin(16, 16);
 
