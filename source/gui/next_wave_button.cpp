@@ -40,10 +40,12 @@ void NextWaveButton::set_active(bool active) {
         if (active) {
             layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
             grayscale = false;
+            enabled(Button::LEFT);
         }
         else {
             layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
             grayscale = true;
+            enabled(0);
         }
     }
     m_active = active;

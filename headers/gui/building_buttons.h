@@ -11,7 +11,13 @@ class BuildingPanel : public Widget {
 public:
     BuildingPanel(Widget* ui);
     void update(int player_coins);
-    void build_if_allowed(const sf::Vector2f& mouse_pos);
+    enum BuildResult {
+        NO_SELECTED_BUILDING_BUTTON,
+        NO_TILE_UNDER_MOUSE,
+        INVALID_TILE_TYPE,
+        SUCCESS
+    };
+    BuildResult build_if_allowed(const sf::Vector2f& mouse_pos);
     void unselect();
     void unselect(BuildingButton* button);
     void select(BuildingButton* button);

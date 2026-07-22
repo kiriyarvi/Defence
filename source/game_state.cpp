@@ -7,111 +7,24 @@
 #include "achievement_system.h"
 #include "enemy_manager.h"
 #include "resource_manager.h"
+#include "sound_manager.h"
+#include "animation_holder.h"
+#include "debugger.h"
 
 #include "gui/label.h"
 #include "gui/icon.h"
 #include "gui/scale.h"
 
-GameState::GameState(sf::RenderWindow& window) : window{window} {
-    Widget* root = GUI::Instance().get_root();
-    DEBUG_TAG(root, "root")
-    m_game_process_ui = root->add_widget(Widget::create());
-    m_game_process_ui->size_inherited(root);
-    DEBUG_TAG(m_game_process_ui, "m_game_process_ui")
 
-    //coin indicator (Hierarchy)
-    m_player_coins_count_widget = (Label*)m_game_process_ui->add_widget(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
-    DEBUG_TAG(m_player_coins_count_widget, "m_player_coins_count_widget")
-    m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::coins_color);
-    Icon* coin_icon = (Icon*)m_game_process_ui->add_widget(Icon::create(TextureID::Coin));
-    DEBUG_TAG(coin_icon, "coin_icon")
-    //coin indicator (Layout)
-    coin_icon->add_rule(Property::SIZE, [coins_counter = m_player_coins_count_widget](Widget::Layout& layout) {
-        layout.width = coins_counter->layout.height;
-        layout.height = coins_counter->layout.height;
-    }, { {m_player_coins_count_widget, Property::SIZE} });
-    coin_icon->position_anchor(Anchor::LEFT, m_player_coins_count_widget, Anchor::RIGHT);
-    //health indicator (Hierarchy)
-    m_player_health_count_widget = (Label*)m_game_process_ui->add_widget(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
-    DEBUG_TAG(m_player_health_count_widget, "m_player_health_count_widget")
-    m_player_health_count_widget->add_text("X" + std::to_string(m_player_hp));
-    Icon* heart_icon = (Icon*)m_game_process_ui->add_widget(Icon::create(TextureID::Heart));
-    DEBUG_TAG(heart_icon, "heart_icon")
-    //health indicator (Layout)
-    m_player_health_count_widget->position_anchor(Anchor::RIGHT | Anchor::TOP, m_game_process_ui, Anchor::RIGHT | Anchor::TOP);
-    heart_icon->add_rule(Property::SIZE, [hp_counter = m_player_health_count_widget](Widget::Layout& layout) {
-        layout.width = hp_counter->layout.height;
-        layout.height = hp_counter->layout.height;
-    }, { {m_player_health_count_widget, Property::SIZE} });
-    heart_icon->position_anchor(Anchor::RIGHT, m_player_health_count_widget, Anchor::LEFT);
+GameState::GameState(sf::RenderWindow& window): m_ui{*this, window }
+{
 
-    //wave info (Hierarchy)
-    m_wave_info = (Label*)m_game_process_ui->add_widget(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
-    DEBUG_TAG(m_wave_info, "m_wave_info")
-    //wave info (Layout)
-    m_wave_info->position_anchor(Anchor::TOP, m_game_process_ui, Anchor::TOP);
-
-    //building panel
-    m_building_panel = (BuildingPanel*)m_game_process_ui->add_widget(std::make_unique<BuildingPanel>(m_game_process_ui));
-    DEBUG_TAG(m_building_panel, "m_building_panel");
-
-    //next wave button(Hierarchy)
-    m_next_wave_button = m_game_process_ui->add_widget(std::make_unique<NextWaveButton>());
-    DEBUG_TAG(m_next_wave_button, "m_next_wave_button");
-    //next wave button(Layout)
-    m_next_wave_button->position_anchor(Anchor::BOTTOM | Anchor::RIGHT, m_game_process_ui, Anchor::BOTTOM | Anchor::RIGHT);
-    m_next_wave_button->add_rule(Property::SIZE, [ui = m_game_process_ui](Widget::Layout& layout) {
-        layout.height = ui->layout.height * 0.1;
-        layout.width = layout.height;
-    }, { { m_game_process_ui, Property::HEIGHT } });
-
-    //scale for speed control (Hierarchy)
-    Scale* speed_controller = (Scale*)m_game_process_ui->add_widget(std::make_unique<Scale>());
-    speed_controller->set_on_pos_update_callback([this](size_t pos) {
-        m_time_multiplier = 1 + pos;
-    });
-    DEBUG_TAG(speed_controller, "speed_controller");
-    //scale for speed control (Layout)
-    speed_controller->position_anchor(Anchor::RIGHT | Anchor::BOTTOM, m_next_wave_button, Anchor::LEFT | Anchor::BOTTOM);
-    speed_controller->property_from_content(m_game_process_ui, Property::HEIGHT, [](float h) {return  0.1 * h; });
-
-    m_building_panel->add_rule(Property::WIDTH, [speed_controller](Widget::Layout& layout) {
-        layout.width = speed_controller->layout.x;
-    }, { {speed_controller, Property::X} });
-
-    //m_tile_size_reference (испольщуется для тайловых виджетов)
-    m_tile_size_reference = m_game_process_ui->add_widget(Widget::create());
-    m_tile_size_reference->add_rule(Property::SIZE, [ui = m_game_process_ui](Widget::Layout& layout) {
-        layout.width = ui->layout.width * 0.05;
-        layout.height = ui->layout.width * 0.05;
-    }, { { m_game_process_ui, Property::HEIGHT } } );
-    //m_upgrade_panel_height_reference (вспомогательный виджет для панели апгрейдов), вычисляет высоту панели апгрейдов
-    m_upgrade_panel_height_reference = m_game_process_ui->add_widget(Widget::create());
-    m_upgrade_panel_height_reference->add_rule(Property::SIZE, [hc = m_player_health_count_widget, bp = m_building_panel, ui = m_game_process_ui](Widget::Layout& layout) {
-        layout.height = ui->layout.height - hc->layout.height - bp->layout.height;
-    }, { { m_player_health_count_widget, Property::HEIGHT }, {m_building_panel, Property::HEIGHT}, {m_game_process_ui, Property::HEIGHT} });
-
-    //Console
-    m_console = m_game_process_ui->add_widget(std::make_unique<Console>());
-    m_console->position_anchor(Anchor::BOTTOM | Anchor::LEFT, m_building_panel, Anchor::TOP | Anchor::LEFT);
-
-    //Enters Widget
-    m_enters_widget = std::make_unique<EntersWidget>(m_game_process_ui);
-
-    TileMap::Instance().generate_map();
-    m_console->add_message("Нажмите R чтобы перегенерировать карту и Q, чтобы подтвердить выбор.");
+    m_ui.create(); //создаем интерфейс.
 }
 
 void GameState::set_game_finished_state(bool win) {
     m_win = win;
-    Widget* root = GUI::Instance().get_root();
-    root->delete_all_widgets();
-    Label* label = root->add_widget(Label::create(true, 128, &ResourceManager::Instance().PixelSplitter_Bold_font));
-    if (m_win)
-        label->add_text("WIN!", sf::Color::Red);
-    else
-        label->add_text("DEFEAT!", sf::Color::Red);
-    label->position_centering();
+    m_ui.game_over(win);
     m_state = State::GAME_FINISHED;
 }
 
@@ -119,86 +32,31 @@ GameState::~GameState() {
 
 }
 
-void GameState::set_wave_info(const std::string& wave) {
-    m_wave_info->clear();
-    m_wave_info->add_text(wave);
-}
-
-bool GameState::event(sf::Event& event, const sf::RenderWindow& current_window) {
-    if (m_state != State::GAME && m_state != State::PREPAIRING)
-        return false;
-    if (event.type == sf::Event::KeyPressed) {
-        if (m_state == State::PREPAIRING) {
-            if (event.key.code == sf::Keyboard::Key::R) {
-                TileMap::Instance().generate_map();
-            }
-            else if (event.key.code == sf::Keyboard::Key::Q) {
-                m_state == State::GAME;
-                EnemyManager::Instance().generate_waves();
-                init_stage(1);
-            }
-        }
-    }
-	if (event.type == sf::Event::MouseMoved) {
-        m_enters_widget->on_event(current_window, event);
-        sf::Vector2i mouse_screen_pos(event.mouseMove.x, event.mouseMove.y);
-        m_mouse_pos = current_window.mapPixelToCoords(mouse_screen_pos);
-		return false;
-	}
-	if (event.type == sf::Event::MouseButtonPressed) {
-		if (event.mouseButton.button == sf::Mouse::Button::Left) {
-            m_building_panel->build_if_allowed(m_mouse_pos);
-		}
-		else if (event.mouseButton.button == sf::Mouse::Button::Right) {
-            m_building_panel->unselect();
-            if (m_building_panel->is_seleted()) { // если мы строили, нужно отменить строительство
-                m_building_panel->unselect();
-            }
-            else { // если не строили, значит запросили открыть окно постройки
-                sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
-                size_t N = TileMap::Instance().map.size();
-                bool on_map = cell_id.x < N && cell_id.x >= 0 && cell_id.y < N && cell_id.y >= 0;
-                if (!on_map) {
-                    m_game_process_ui->delete_widget(m_upgrade_panel);
-                    m_upgrade_panel = nullptr;
-                    return false;
-                }
-                auto& cell = TileMap::Instance().map[cell_id.x][cell_id.y];
-                if (!cell.building) {
-                    m_game_process_ui->delete_widget(m_upgrade_panel);
-                    m_upgrade_panel = nullptr;
-                    return false;
-                }
-                if (m_upgrade_panel) {
-                    m_game_process_ui->delete_widget(m_upgrade_panel);
-                    m_upgrade_panel = nullptr;
-                }
-                m_upgrade_panel = (UpgradePanel*)m_game_process_ui->add_widget(std::make_unique<UpgradePanel>(m_tile_size_reference, m_upgrade_panel_height_reference));
-                m_upgrade_panel->position_anchor(Anchor::RIGHT | Anchor::TOP, m_player_health_count_widget, Anchor::RIGHT | Anchor::BOTTOM);
-                cell.building->accept(*m_upgrade_panel);
-            }
-			return true;
-		}
-	}
-	return false;
+void GameState::on_event(sf::Event& event) {
+    m_ui.on_event(event);
 }
 
 void GameState::logic(double dtime_mc) {
-    if (m_state == State::GAME_FINISHED)
-        return;
-    m_enters_widget->logic(dtime_mc);
-    m_console->logic(dtime_mc);
+    float time_multiplier = GameState::Instance().get_time_multiplier();
+    EnemyManager::Instance().logic(time_multiplier * dtime_mc);     //1. Логика врагов: уничтожение, перемещение по маршруту, волны, анимации дымовых завес
+    TileMap::Instance().logic(time_multiplier * dtime_mc);          //2. Логика построек.
+    NetManager::Instance().logic(time_multiplier * dtime_mc);       //3. Радары, объединенные в сеть не вычисляют свою логику. Логика единая на сеть - вычислим её.
+    SoundManager::Instance().logic();                               //4. Проигрывание звуков
+    AnimationHolder::Instance().logic(time_multiplier * dtime_mc);  //5. Отложенные анимации
+    m_ui.logic(dtime_mc);                                           //6. Анимации пользовательского интерфейса.
 }
 
-void GameState::draw(sf::RenderWindow& current_window) {
-    if (m_state != State::GAME && m_state != State::PREPAIRING)
-        return;
-    size_t N = TileMap::Instance().map.size();
-	bool on_map = m_mouse_pos.x < N * 32 && m_mouse_pos.x >= 0 && m_mouse_pos.y < N * 32 && m_mouse_pos.y >= 0;
-    sf::Vector2i cell_id(m_mouse_pos.x / 32, m_mouse_pos.y / 32);
-    if (on_map)
-        m_building_panel->draw_building_plan(current_window, cell_id.x, cell_id.y);
-    m_enters_widget->draw(current_window);
+void GameState::draw(sf::RenderWindow& window) {
+    m_ui.get_camera().apply(window);
+    window.clear(sf::Color::Black);
+    TileMap::Instance().draw(window);               //1. TileMap
+    m_ui.draw_on_map_effects();                     //2. Обозначение маршрутов вражеских войск.
+    EnemyManager::Instance().draw(window);          //3. Вражеские войска
+    TileMap::Instance().draw_effects(window);       //4. Анимации взрывов и выстрелов от зданий
+    AnimationHolder::Instance().draw(window);       //5. Отложенные анимации. Используется только в CRUISER. TODO: уточнить, можно ли без этого обойтись
+    EnemyManager::Instance().draw_effects(window);  //6. Анимации уничтожения врагов, дым, обозначения рассекреченных врагов
+    Debugger::Instance().draw(window);              //7. Всякие дебажные штуки поверх
+    GUI::Instance().draw(window);                   //8. Интерфейс
 }
 
 void GameState::enemy_defeated(EnemyType type) {
@@ -207,9 +65,7 @@ void GameState::enemy_defeated(EnemyType type) {
         return;
     if (m_state != State::GAME && m_state != State::PREPAIRING)
         return;
-    m_building_panel->update(m_player_coins);
-    if (m_upgrade_panel)
-        m_upgrade_panel->update(m_player_coins);
+    m_ui.update_on_enemy_defeated(m_player_coins);
 }
 
 void GameState::win() {
@@ -219,20 +75,15 @@ void GameState::win() {
 void GameState::init_stage(int stage) {
     if (stage == 0) {
         player_coins_add(1000);
-        m_building_panel->update(m_player_coins);
-    }
-    else {
+    } else {
         AchievementSystem::Instance().unlock_all();
         player_coins_add(10000);
     }
 }
 
 void GameState::player_health_add(int health) {
-    if (m_state != State::GAME && m_state != State::PREPAIRING)
-        return;
 	m_player_hp += health;
-    m_player_health_count_widget->clear();
-	m_player_health_count_widget->add_text("X" + std::to_string(m_player_hp));
+    m_ui.update_player_health(m_player_hp);
     if (m_player_hp <= 0)
         set_game_finished_state(false);
 }
@@ -245,29 +96,16 @@ void GameState::player_coins_add(int coins) {
     if (m_state != State::GAME && m_state != State::PREPAIRING)
         return;
 	m_player_coins += coins;
-    m_player_coins_count_widget->clear();
-    m_player_coins_count_widget->add_text(std::to_string(m_player_coins), Label::coins_color);
-    m_building_panel->update(m_player_coins);
-    if (m_upgrade_panel)
-        m_upgrade_panel->update(m_player_coins);
+    m_ui.update_player_coins(m_player_coins);
+}
+
+void GameState::wave(bool started) {
+    m_ui.update_wave_info(started);
 }
 
 
-void GameState::wave_preparing() {
-    if (m_state != State::GAME && m_state != State::PREPAIRING)
-        return;
-    m_next_wave_button->set_active(true);
-}
-
-void GameState::wave_started() {
-    if (m_state != State::GAME && m_state != State::PREPAIRING)
-        return;
-    m_next_wave_button->set_active(false);
-}
-
-void GameState::close_upgrade_panel() {
-    if (m_state != State::GAME && m_state != State::PREPAIRING)
-        return;
-    m_game_process_ui->delete_widget(m_upgrade_panel);
-    m_upgrade_panel = nullptr;
+void GameState::start_game() {
+    m_state = State::GAME;
+    EnemyManager::Instance().generate_waves();
+    init_stage(1);
 }

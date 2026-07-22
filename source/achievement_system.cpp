@@ -41,13 +41,13 @@ bool AchievementSystem::defeated(EnemyType enemy_type) {
         if (update) {
             for (auto b : it->second) {
                 m_unlocked_buildings[b] = true;
-                GameState::Instance().get_console()->add_building_unlock_message(b);
+                GameState::Instance().get_ui().get_console()->add_building_unlock_message(b);
             }
         }
     }
     for (auto& upgrade : m_upgrades)
         if (upgrade->on_event(enemy_type)) {
-            GameState::Instance().get_console()->add_upgrade_unlock_message(*upgrade, upgrade->available_level);
+            GameState::Instance().get_ui().get_console()->add_upgrade_unlock_message(*upgrade, upgrade->available_level);
             update = true;
         }
     return update;

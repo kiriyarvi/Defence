@@ -78,16 +78,20 @@ void BuildingPanel::update(int player_coins) {
         m_selected_button = nullptr;
 }
 
-void BuildingPanel::build_if_allowed(const sf::Vector2f& mouse_pos) {
+BuildingPanel::BuildResult BuildingPanel::build_if_allowed(const sf::Vector2f& mouse_pos) {
     if (!m_selected_button)
-        return;
+        return BuildResult::NO_SELECTED_BUILDING_BUTTON;
     size_t N = TileMap::Instance().map.size();
     bool on_map = mouse_pos.x < N * 32 && mouse_pos.x >= 0 && mouse_pos.y < N * 32 && mouse_pos.y >= 0;
+    if (!on_map)
+        return BuildResult::NO_TILE_UNDER_MOUSE;
     sf::Vector2i cell_id(mouse_pos.x / 32, mouse_pos.y / 32);
-    if (on_map && m_selected_button->is_cell_allowed(cell_id.x, cell_id.y)) {
-        TileMap::Instance().map[cell_id.x][cell_id.y].building = m_selected_button->m_creator(cell_id.x, cell_id.y);
-        GameState::Instance().player_coins_add(-m_selected_button->m_cost);
-    }
+    bool allowed = m_selected_button->is_cell_allowed(cell_id.x, cell_id.y);
+    if (!allowed)
+        return BuildResult::INVALID_TILE_TYPE;
+    TileMap::Instance().map[cell_id.x][cell_id.y].building = m_selected_button->m_creator(cell_id.x, cell_id.y);
+    GameState::Instance().player_coins_add(-m_selected_button->m_cost);
+    return BuildResult::SUCCESS;
 }
 
 void BuildingPanel::select(BuildingButton* button_to_select) {
@@ -161,11 +165,8 @@ BuildingButton::BuildingButton(const BuildingCreator& creator, BuildingType type
     };
 
     m_on_pressed = [this](Button::Type button) {
-        if (m_state == State::UNDISCOVERED || m_state == State::NOT_ENOUGTH_MONEY)
-            return Query{}; //не принимаем событие
         BuildingPanel* building_panel = dynamic_cast<BuildingPanel*>(m_parent);
         building_panel->select(this);
-        return Query{ Query::Workflow::PROCESSED };
     };
 }
 
@@ -199,18 +200,22 @@ void BuildingButton::set_state(State state) {
     case BuildingButton::State::ACTIVE:
         grayscale = false;
         layers = { TextureID::ButtonBackground, m_icon };
+        enabled(Button::LEFT);
         break;
     case BuildingButton::State::SELECTED:
         grayscale = false;
         layers = { TextureID::ButtonClickedBackground, m_icon };
+        enabled(Button::LEFT);
         break;
     case BuildingButton::State::UNDISCOVERED:
         grayscale = true;
         layers = { TextureID::ButtonBackground, m_icon, TextureID::Locked };
+        enabled(0);
         break;
     case BuildingButton::State::NOT_ENOUGTH_MONEY:
         grayscale = true;
         layers = { TextureID::ButtonBackground, m_icon };
+        enabled(0);
         break;
     default:
         break;

@@ -492,10 +492,10 @@ void WaveController::logic(double dtime_microseconds) {
     switch (m_state) {
     case WaveController::State::Prepairing: {
         m_timer += dtime_microseconds;
-        GameState::Instance().set_wave_info(std::to_string(m_current_wave + 1) + "/" + std::to_string(m_waves.size()) + " " + std::to_string(static_cast<int>(wave.prepairing_time - m_timer / (1000 * 1000.f))) + "s.");
+        GameState::Instance().get_ui().update_wave_indicator_text(std::to_string(m_current_wave + 1) + "/" + std::to_string(m_waves.size()) + " " + std::to_string(static_cast<int>(wave.prepairing_time - m_timer / (1000 * 1000.f))) + "s.");
         if (m_timer >= wave.prepairing_time * 1000 * 1000) {
             m_state = State::Spawn;
-            GameState::Instance().wave_started();
+            GameState::Instance().wave(true);
             m_timer = 0;
         }
         break;
@@ -519,8 +519,8 @@ void WaveController::start_wave() {
     if (m_state == WaveController::State::Prepairing) {
         m_state = State::Spawn;
         m_timer = 0;
-        GameState::Instance().set_wave_info(std::to_string(m_current_wave + 1) + "/" + std::to_string(m_waves.size()) + " 0s.");
-        GameState::Instance().wave_started();
+        GameState::Instance().get_ui().update_wave_indicator_text(std::to_string(m_current_wave + 1) + "/" + std::to_string(m_waves.size()) + " 0s.");
+        GameState::Instance().wave(this);
     }
 }
 
@@ -550,7 +550,7 @@ bool WaveController::next_wave() {
     if (m_state != State::Completed)
         return true;
     GameState::Instance().player_coins_add(m_waves[m_current_wave].reward);
-    GameState::Instance().wave_preparing();
+    GameState::Instance().wave(false);
     return set_active_wave(++m_current_wave);
 }
 
@@ -564,11 +564,11 @@ bool WaveController::set_active_wave(int wave) {
     auto& w = m_waves[m_current_wave];
     auto& game_state = GameState::Instance();
     auto& all_paths = EnemyManager::Instance().all_paths;
-    game_state.get_enters_widget()->delete_all_enters();
+    game_state.get_ui().get_enters_widget()->delete_all_enters();
     for (auto& route : w.routes) {
-        game_state.get_enters_widget()->add_enter(route->id, route->description());
+        game_state.get_ui().get_enters_widget()->add_enter(route->id, route->description());
     }
-    game_state.wave_preparing();
+    game_state.wave(false);
     for (auto& r : w.routes)
         m_routes_states.push_back(RouteState(*r.get()));
 

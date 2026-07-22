@@ -8,19 +8,15 @@ void EntersWidget::create_tooltip(const std::string& content) {
     auto [panel, label] =  ::create_tooltip(Anchor::LEFT | Anchor::BOTTOM);
     label->add_text(content);
     m_tooltip_widget = panel.get();
-    m_ui->add_widget(std::move(panel));
+    m_ui->add_widget_deffered(std::move(panel));
 }
 
 void EntersWidget::delete_tooltip() {
-    m_ui->delete_widget(m_tooltip_widget);
+    m_ui->delete_widget_deffered(m_tooltip_widget);
     m_tooltip_widget = nullptr;
 }
 
-void EntersWidget::on_event(const sf::RenderWindow& window, sf::Event event) {
-    if (event.type != sf::Event::MouseMoved)
-        return;
-    sf::Vector2i mouse_screen_pos(event.mouseMove.x, event.mouseMove.y);
-    sf::Vector2f mouse_pos = window.mapPixelToCoords(mouse_screen_pos);
+void EntersWidget::on_mouse_moved_on_map(const sf::Vector2f& mouse_pos) {
     sf::Vector2i cell_id(std::ceil(mouse_pos.x / 32.f), std::floor(mouse_pos.y / 32.f));
     bool mouse_on_enter = false;
 
@@ -41,6 +37,11 @@ void EntersWidget::on_event(const sf::RenderWindow& window, sf::Event event) {
         delete_tooltip();
         m_hovered_enter = nullptr;
     }
+}
+
+void EntersWidget::on_mouse_leave_map() {
+    delete_tooltip();
+    m_hovered_enter = nullptr;
 }
 
 void EntersWidget::add_enter(RoadGraph::PathID id, const std::string& content) {

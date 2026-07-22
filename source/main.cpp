@@ -14,14 +14,10 @@
 int main() {
 	//sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Defence", sf::Style::Fullscreen);
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Defence");
-    GUI::Instance().set_root(Widget::create(),window);
 	auto& game_state = GameState::Instance(&window);
-
-	Camera camera(window);
 
 	sf::Clock clock;
 
-	
 	const float dt = 1.f / 60.f; // логика обновляется 60 раз в секунду
 	float accumulator = 0.f;
 
@@ -37,25 +33,7 @@ int main() {
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				window.close();
-            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) {
-                TileMap::Instance().enlarge_map();
-            }
-            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::K) {
-                for (auto& enemy : EnemyManager::Instance().m_enemies)
-                    enemy->health = 0;
-            }
-            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::T) {
-                TileMap::Instance().create_tile_test_map();
-            }
-            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S) {
-                sf::Vector2i mouse_screen_pos = sf::Mouse().getPosition();
-                auto mouse_pos = window.mapPixelToCoords(mouse_screen_pos);
-                EnemyManager::Instance().add_smoke(Smoke({ mouse_pos.x, mouse_pos.y }, 4., 20.));
-            }
-            if (!GUI::Instance().event(event)) {
-                camera.process(event);
-                game_state.event(event, window);
-            }
+            game_state.on_event(event);   
 		}
 		// логика
 		double dtime = clock.getElapsedTime().asMicroseconds();
@@ -64,27 +42,10 @@ int main() {
 			dtime = accumulator;
 			accumulator = 0;
 			game_state.logic(dtime);
-			if (game_state.get_state() == GameState::State::GAME || game_state.get_state() == GameState::State::PREPAIRING) {
-                float time_multiplier = GameState::Instance().get_time_multiplier();
-				EnemyManager::Instance().logic(time_multiplier * dtime);
-				TileMap::Instance().logic(time_multiplier * dtime);
-                NetManager::Instance().logic(time_multiplier * dtime);
-				SoundManager::Instance().logic();
-                AnimationHolder::Instance().logic(time_multiplier * dtime);
-			}
 		}
 		//отрисовка
 		clock.restart(); // рестарт часов после логики.
-		camera.apply(window);
-		window.clear(sf::Color::Black);
-		TileMap::Instance().draw(window);
-		EnemyManager::Instance().draw(window);
-		TileMap::Instance().draw_effects(window); // анимации взрывов и выстрелов.
-        AnimationHolder::Instance().draw(window);
-        EnemyManager::Instance().draw_effects(window); // health + smoke + uncovering box
-        Debugger::Instance().draw(window);
-		game_state.draw(window);
-        GUI::Instance().draw(window);
+        game_state.draw(window);
         window.display();
 	}
 

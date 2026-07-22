@@ -6,6 +6,7 @@ public:
 	Camera(const sf::RenderWindow& window);
 	void apply(sf::RenderWindow& window);
 	bool process(const sf::Event& event);
+    sf::View& get_view() { return m_view; }
 private:
 	sf::View m_view;
 	const sf::RenderWindow& m_window;

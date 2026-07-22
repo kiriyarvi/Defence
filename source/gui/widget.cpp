@@ -108,7 +108,6 @@ private:
 
 /// true - событие обработано
 bool GUI::event(const sf::Event& event) {
-    m_event_processing = true;
     if (!m_root)
         return false;
 
@@ -126,6 +125,7 @@ bool GUI::event(const sf::Event& event) {
             event.type == sf::Event::MouseWheelScrolled);
     if (!valid_event)
         return false;
+    m_event_processing = true;
     //1. Заполним переменные контекста
     if (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::MouseButtonReleased) {
         mouse_pos = { event.mouseButton.x, event.mouseButton.y };
@@ -154,11 +154,11 @@ bool GUI::event_impl() {
         std::list<Widget::HitListNode> hit_test;
         m_root->hit_test(hit_test, mouse_pos, event_type);
 #ifdef GUI_DEBUG_ENABLED
-        for (auto& w : hit_test) {
+       /* for (auto& w : hit_test) {
             std::cout << w.widget->debug_name << " -> ";
         }
         if (!hit_test.empty())
-            std::cout << std::endl;
+            std::cout << std::endl;*/
 #endif
         //2. получаем виджет для обработки события
         WidgetIterator widget_iterator;
@@ -480,11 +480,11 @@ void Widget::calc_properties(Property::Type property) {
     }
 
 #ifdef GUI_DEBUG_ENABLED
-    std::cout << "calc " << current_frame << " [" <<
+   /* std::cout << "calc " << current_frame << " [" <<
         ((property & Property::X) ? "X," : "") <<
         ((property & Property::Y) ? "Y," : "") <<
         ((property & Property::WIDTH) ? "WIDTH," : "") <<
-        ((property & Property::HEIGHT) ? "HEIGHT," : "") << "] for " << debug_name << std::endl;
+        ((property & Property::HEIGHT) ? "HEIGHT," : "") << "] for " << debug_name << std::endl;*/
 #endif
     //выполним все правила, которые вычисляют properties пересекающиеся с property.
     for (auto& rule : m_rules) {
@@ -1108,8 +1108,13 @@ void Panel::draw(const glm::vec2& position_transform, sf::RenderTarget& window) 
 
 
 Query HoverableWidget::on_event(EventContext event_context) {
+    on_hovered_return = Query{ Query::PROCESSED };
+    on_unhovered_return = Query{ Query::REPEAT, Query::PERFORM_DEFFERED };
+    on_mouse_moved_return = Query{ Query::PROCESSED };
     if (event_context.event_type == Event::MOUSE_MOVED) {
         if (!m_hovered) {
+            if (capture_mouse_move_only_if_no_obstacles && event_context.hit_list.back().widget != this)
+                return Query{ Query::PASS };
             GUI::Instance().subscribe_deffered(this, Event::MOUSE_MOVED);
             m_hovered = true;
             if (m_on_hovered)
@@ -1117,7 +1122,12 @@ Query HoverableWidget::on_event(EventContext event_context) {
             return on_hovered_return;
         }
         else {
-            if (std::find_if(event_context.hit_list.begin(), event_context.hit_list.end(), [this](const Widget::HitListNode& node) { return node.widget == this; }) != event_context.hit_list.end()) {
+            bool hit_test;
+            if (!capture_mouse_move_only_if_no_obstacles)
+                hit_test = std::find_if(event_context.hit_list.begin(), event_context.hit_list.end(), [this](const Widget::HitListNode& node) { return node.widget == this; }) != event_context.hit_list.end();
+            else
+                hit_test = !event_context.hit_list.empty() && event_context.hit_list.back().widget == this;
+            if (hit_test) {
                 if (m_on_mouse_moved)
                     m_on_mouse_moved();
                 return on_mouse_moved_return;
@@ -1132,7 +1142,7 @@ Query HoverableWidget::on_event(EventContext event_context) {
             }
         }
     }
-    return default_return;
+    return Query{ Query::PASS };
 }
 
 
@@ -1156,6 +1166,8 @@ ClickableWidget::Button::Type ClickableWidget::button_type_from(sf::Mouse::Butto
 }
 
 Query ClickableWidget::on_event(EventContext event_context) {
+    on_pressed_return = Query{ Query::PROCESSED };
+    on_released_return = Query{ Query::PROCESSED };
     if (!m_enabled) // если не активны, не взаимодействуем.
         return Query{ Query::PASS };
     Button::Type mouse_button = button_type_from(GUI::Instance().mouse_button);
@@ -1165,7 +1177,7 @@ Query ClickableWidget::on_event(EventContext event_context) {
         m_clicked |= mouse_button; //указываем, что нажали
         if (m_on_pressed)
             m_on_pressed(mouse_button); //отправляем только то, что нажали, а не накопленное
-        return Query{ Query::PROCESSED };
+        return on_pressed_return;
     }
     else if (event_context.event_type == Event::BUTTON_RELEASED && (mouse_button & m_button)) {
         if (m_clicked) {
@@ -1174,7 +1186,7 @@ Query ClickableWidget::on_event(EventContext event_context) {
             if (m_on_released)
                 m_on_released(mouse_button);
             m_clicked &= ~mouse_button;
-            return Query{ Query::PROCESSED };
+            return on_released_return;
         } //else - skip - кнопку зажали, навели на нас и отпустили или по какой-то причине мы не словили BUTTON_PRESSED (например виджет перед нами его перехватил) => игнорируем
     }
     return Query::skip(event_context.from_subscribe);
@@ -1182,6 +1194,11 @@ Query ClickableWidget::on_event(EventContext event_context) {
 
 
 Query HoverableClickableWidget::on_event(Widget::EventContext event_context) {
+    on_hovered_return = Query{ Query::PROCESSED };
+    on_unhovered_return = Query{ Query::REPEAT, Query::PERFORM_DEFFERED };
+    on_mouse_moved_return = Query{ Query::PROCESSED };
+    on_pressed_return = Query{ Query::PROCESSED };
+    on_released_return = Query{ Query::PROCESSED };
     Button::Type mouse_button = button_type_from(GUI::Instance().mouse_button);
     if (event_context.event_type == Event::BUTTON_PRESSED && (mouse_button & m_button)) { //если нажали кнопку
         if (!m_enabled) // если не активны, не взаимодействуем.
@@ -1196,7 +1213,7 @@ Query HoverableClickableWidget::on_event(Widget::EventContext event_context) {
         }
         if (m_on_pressed)
             m_on_pressed(mouse_button); //отправляем только то, что нажали, а не накопленное
-        return Query{ Query::PROCESSED };
+        return on_pressed_return;
     }
     else if (event_context.event_type == Event::BUTTON_RELEASED && (mouse_button & m_button)) {
         if (!m_enabled) // если не активны, не взаимодействуем.
@@ -1207,13 +1224,18 @@ Query HoverableClickableWidget::on_event(Widget::EventContext event_context) {
             if (m_on_released)
                 m_on_released(mouse_button);
             m_clicked &= ~mouse_button;
-            return Query{ Query::PROCESSED };
+            return on_released_return;
         } //else - skip - кнопку зажали, навели на нас и отпустили или по какой-то причине мы не словили BUTTON_PRESSED (например виджет перед нами его перехватил) => игнорируем
     } else if (event_context.event_type == Event::MOUSE_MOVED) {
         if (m_clicked && unhover_on_pressed)
             return Query::skip(event_context.from_subscribe);
         if (m_hovered) {
-            if (std::find_if(event_context.hit_list.begin(), event_context.hit_list.end(), [this](const Widget::HitListNode& node) { return node.widget == this; }) != event_context.hit_list.end()) {
+            bool hit_test;
+            if (!capture_mouse_move_only_if_no_obstacles)
+                hit_test = std::find_if(event_context.hit_list.begin(), event_context.hit_list.end(), [this](const Widget::HitListNode& node) { return node.widget == this; }) != event_context.hit_list.end();
+            else
+                hit_test = !event_context.hit_list.empty() && event_context.hit_list.back().widget == this;
+            if (hit_test) {
                 if (m_on_mouse_moved)
                     m_on_mouse_moved();
                 return on_mouse_moved_return;
@@ -1228,6 +1250,8 @@ Query HoverableClickableWidget::on_event(Widget::EventContext event_context) {
             }
         }
         else {
+            if (capture_mouse_move_only_if_no_obstacles && event_context.hit_list.back().widget != this)
+                return Query{ Query::PASS };
             GUI::Instance().subscribe_deffered(this, Event::MOUSE_MOVED);
             m_hovered = true;
             if (m_on_hovered)

@@ -446,7 +446,7 @@ void UpgradePanel::create_panel_for_building_with_health(BuildingWithHealth* bui
         health_panel_label->clear();
         health_panel_label->add_text("Прочность: " + std::to_string(building->get_health()));
         if (building->get_health() <= 0) {
-            GameState::Instance().close_upgrade_panel();
+            GameState::Instance().get_ui().close_upgrade_panel();
         }
     });
     m_on_kill_actions.push_back([building]() {

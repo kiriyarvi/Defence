@@ -5,6 +5,7 @@ Switch::Switch(bool initial_state, const std::function<void(bool)>& on_changed)
 {
     m_switch_sprite.setTexture(TextureManager::Instance().textures[TextureID::Switch]);
     m_button = Button::LEFT;
+    m_enabled = Button::LEFT;
     capture_mode = false;
     m_state = !initial_state;
     set_state(initial_state);

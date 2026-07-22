@@ -401,7 +401,7 @@ public:
     Query on_hovered_return = Query{Query::PROCESSED};
     Query on_unhovered_return = Query{ Query::REPEAT, Query::PERFORM_DEFFERED };
     Query on_mouse_moved_return = Query{ Query::PROCESSED };
-    Query default_return = Query{ Query::PASS };
+    bool capture_mouse_move_only_if_no_obstacles = false;
 protected:
     std::function<void()> m_on_hovered;
     std::function<void()> m_on_unhovered;
@@ -418,9 +418,10 @@ public:
         inline static Type BOTH = 0b11;
     };
     Button::Type button_type_from(sf::Mouse::Button button);
+    Query on_pressed_return = Query{ Query::PROCESSED };
+    Query on_released_return = Query{ Query::PROCESSED };
 
-
-    ClickableWidget(Button::Type button = Button::LEFT, bool enabled = true) : m_button{ button }, m_enabled{ enabled } {}
+    ClickableWidget(Button::Type button = Button::LEFT, Button::Type enabled = 0) : m_button{ button }, m_enabled{ enabled } {}
     void set_on_pressed(const std::function<void(Button::Type button)>& on_pressed) { m_on_pressed = on_pressed; }
     void set_on_released(const std::function<void(Button::Type button)>& on_released) { m_on_released = on_released; }
     void enabled(Button::Type enabled);
@@ -430,7 +431,7 @@ public:
 protected:
     std::function<void(Button::Type button)> m_on_pressed;
     std::function<void(Button::Type button)> m_on_released;
-    Button::Type m_enabled = true;
+    Button::Type m_enabled = 0;
     Button::Type m_button = 0;
     Button::Type m_clicked = 0;
 };
@@ -438,6 +439,8 @@ protected:
 //TODO переделать классы с собственной логикой на HoverableClickableWidget, HoverableWidget, ClickableWidget
 class HoverableClickableWidget : public HoverableWidget, public ClickableWidget {
 public:
+    HoverableClickableWidget(Button::Type button = Button::LEFT, Button::Type enabled = 0) : ClickableWidget(button, enabled) {}
+    static std::unique_ptr<HoverableClickableWidget> create(Button::Type button = Button::LEFT, Button::Type enabled = 0) { return std::make_unique<HoverableClickableWidget>(button, enabled); }
     Query on_event(EventContext event_context);
     bool unhover_on_pressed = false;
 };

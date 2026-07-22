@@ -17,7 +17,7 @@ std::pair<std::unique_ptr<Panel>, Label*> create_tooltip(Anchor::Type tooltip_an
 
 std::pair<std::unique_ptr<TiledPanel>, Label*> create_tooltip_paper(Anchor::Type tooltip_anchor, Widget* tile_size_reference) {
     //создаем tooltip
-    auto panel_ptr = std::make_unique<TiledPanel>(TiledPanel::Type::Paper, tile_size_reference ? tile_size_reference : GameState::Instance().get_tile_size_reference());
+    auto panel_ptr = std::make_unique<TiledPanel>(TiledPanel::Type::Paper, tile_size_reference ? tile_size_reference : GameState::Instance().get_ui().get_tile_size_reference());
     TiledPanel* panel = panel_ptr.get();
     DEBUG_TAG(panel, "tooltip_panel")
     Label* label = (Label*)panel->content_widget->add_widget(Label::create(true)); //можем вызвать add_widget, поскольку panel пока не вмонтирован в общую иерархию
