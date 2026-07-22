@@ -26,7 +26,7 @@ public:
 	TextureID background_texture = TextureID::Grass;
 	std::array<bool, 4> roads; // Right, Up, Left, Down
 	void draw(TileMap& map, sf::RenderWindow& window, int x, int y);
-	std::unique_ptr<IBuilding> building = nullptr;
+	IBuilding* building = nullptr;
     float height = 0;
     RoadType road_type = RoadType::None;
 };
@@ -100,7 +100,9 @@ public:
 	std::vector<std::vector<Tile>> map;
 	const RoadGraph& get_road_graph() { return m_road_graph; }
     void create_tile_test_map();
+
     void delete_building(int x_id, int y_id);
+    void add_building(std::unique_ptr<IBuilding>&& building);
 private:
     void generate_dirt_road_height_map(sf::IntRect prohibited_zone);
     void generate_asphalt_road_height_map(sf::IntRect prohibited_zone);
@@ -120,4 +122,5 @@ private:
 	RoadGraph m_road_graph;
     sf::Texture m_test_texture;
     sf::Image m_test_image;
+    std::list<std::unique_ptr<IBuilding>> m_building_registry;
 };

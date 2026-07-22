@@ -592,7 +592,13 @@ void TileMap::create_road_graph() {
 }
 
 void TileMap::delete_building(int x_id, int y_id) {
-    map[x_id][y_id].building.reset(nullptr);
+    m_building_registry.remove_if([ref = map[x_id][y_id].building](const std::unique_ptr<IBuilding>& building) { return building.get() == ref; });
+    map[x_id][y_id].building = nullptr;
+}
+
+void TileMap::add_building(std::unique_ptr<IBuilding>&& building) {
+    map[building->x_id][building->y_id].building = building.get();
+    m_building_registry.push_back(std::move(building));
 }
 
 void TileMap::create_tile_test_map() {
@@ -682,14 +688,16 @@ void TileMap::draw_effects(sf::RenderWindow& window) {
 }
 
 void TileMap::logic(double dtime) {
-	for (int x = 0; x < map.size(); ++x)
-		for (int y = 0; y < map[x].size(); ++y) {
-			if (map[x][y].building) {
-				map[x][y].building->logic(dtime);
-				if (map[x][y].building->is_destroyed())
-					map[x][y].building.reset();
-			}
-		}
+    for (auto it = m_building_registry.begin(); it != m_building_registry.end();) {
+        IBuilding& building = *(*it).get();
+        building.logic(dtime);
+        if (building.is_destroyed()) {
+            map[building.x_id][building.y_id].building = nullptr;
+            it = m_building_registry.erase(it);
+            continue;
+        }
+        ++it;
+    }
 }
 
 void RoadGraph::Path::calc_dist() {

@@ -89,7 +89,7 @@ BuildingPanel::BuildResult BuildingPanel::build_if_allowed(const sf::Vector2f& m
     bool allowed = m_selected_button->is_cell_allowed(cell_id.x, cell_id.y);
     if (!allowed)
         return BuildResult::INVALID_TILE_TYPE;
-    GameState::Instance().get_map().map[cell_id.x][cell_id.y].building = m_selected_button->m_creator(cell_id.x, cell_id.y);
+    GameState::Instance().get_map().add_building(m_selected_button->m_creator(cell_id.x, cell_id.y));
     GameState::Instance().player_coins_add(-m_selected_button->m_cost);
     return BuildResult::SUCCESS;
 }
