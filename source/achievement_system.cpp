@@ -37,10 +37,12 @@ bool AchievementSystem::defeated(EnemyType enemy_type) {
     bool update = false;
     auto it = m_building_unlock_achievements.find(enemy_type);
     if (it != m_building_unlock_achievements.end()) {
-        update = true;
-        for (auto b : it->second) {
-            m_unlocked_buildings[b] = true;
-            GameState::Instance().get_console()->add_building_unlock_message(b);
+        update = !m_unlocked_buildings[it->second[0]]; //если первая постройка в списке уже разблокирована, значит достижение уже получено
+        if (update) {
+            for (auto b : it->second) {
+                m_unlocked_buildings[b] = true;
+                GameState::Instance().get_console()->add_building_unlock_message(b);
+            }
         }
     }
     for (auto& upgrade : m_upgrades)

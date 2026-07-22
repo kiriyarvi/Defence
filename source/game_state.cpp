@@ -271,4 +271,3 @@ void GameState::close_upgrade_panel() {
     m_game_process_ui->delete_widget(m_upgrade_panel);
     m_upgrade_panel = nullptr;
 }
-
