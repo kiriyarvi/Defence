@@ -357,6 +357,21 @@ glm::vec2 Widget::Layout::get_anchor_relative_to_center(Anchor::Type anchor) con
     return center;
 }
 
+/// Возвращает координаты указанного якоря прямоугольника контента относительно центра прямоугольника контента
+glm::vec2 Widget::Layout::get_content_anchor_relative_to_center(Anchor::Type anchor) const {
+    glm::vec2 r = { (width - padding.left - padding.right) / 2.f , (height - padding.top - padding.bottom) / 2.f };
+    glm::vec2 center = { 0,0 };
+    if (anchor & Anchor::BOTTOM)
+        center.y += r.y;
+    if (anchor & Anchor::TOP)
+        center.y -= r.y;
+    if (anchor & Anchor::LEFT)
+        center.x -= r.x;
+    if (anchor & Anchor::RIGHT)
+        center.x += r.x;
+    return center;
+}
+
 /// Возвращает координаты центра виджета
 glm::vec2 Widget::Layout::center() const {
     return { x + width / 2.f, y + height / 2.f };
@@ -448,7 +463,7 @@ void Widget::add_rule(Property::Type output, const std::function<void(Layout&)>&
         assert(set.insert(item.widget).second && "Duplicates in dependencies list");
 #endif
     clear_rules(output);
-    m_rules.emplace_back(Rule{ output, std::move(calc), dependencies });
+    m_rules.emplace_back(Rule{ output, calc, dependencies });
     for (auto& dependency : dependencies) {
         for (auto& [prop, member] : Layout::s_property_map) {
             if (dependency.source & prop)
@@ -710,13 +725,24 @@ void Widget::position_tooltip(size_t ancher) {
 void Widget::position_anchor(Anchor::Type pivot, Widget* to, Anchor::Type anchor) {
     assert((this->m_parent == to->m_parent || this->m_parent == to) && "position_anchor invalid operation");
     //TODO проверка родителя
-    add_rule(Property::POSITION, [pivot, to, anchor](Layout& layout) {
-        glm::vec2 anchor_pos = to->layout.get_anchor_relative_to_center(anchor) + to->layout.center();
-        glm::vec2 pivot_anchor = layout.get_anchor_relative_to_center(pivot);
-        glm::vec2 pos = anchor_pos - pivot_anchor - glm::vec2{ layout.width / 2.f, layout.height / 2.f };
-        layout.x = pos.x;
-        layout.y = pos.y;
-    }, { {to, Property::LAYOUT}, {this, Property::SIZE} });
+    if (m_parent != to) { //виджеты на одном уровне и живут в одной системе координат родителя
+        add_rule(Property::POSITION, [pivot, to, anchor](Layout& layout) {
+            glm::vec2 anchor_pos = to->layout.get_anchor_relative_to_center(anchor) + to->layout.center();
+            glm::vec2 pivot_anchor = layout.get_anchor_relative_to_center(pivot);
+            glm::vec2 pos = anchor_pos - pivot_anchor - glm::vec2{ layout.width / 2.f, layout.height / 2.f };
+            layout.x = pos.x;
+            layout.y = pos.y;
+        }, { {to, Property::LAYOUT}, {this, Property::SIZE} });
+    }
+    else { //иначе случай, когда to --- наш родитель
+        add_rule(Property::POSITION, [pivot, to, anchor](Layout& layout) {
+            glm::vec2 anchor_pos = to->layout.get_content_anchor_relative_to_center(anchor) + glm::vec2{ (to->layout.width - to->layout.padding.left - to->layout.padding.right) / 2.f, (to->layout.height - to->layout.padding.top - to->layout.padding.bottom) / 2.f};
+            glm::vec2 pivot_anchor = layout.get_anchor_relative_to_center(pivot);
+            glm::vec2 pos = anchor_pos - pivot_anchor - glm::vec2{ layout.width / 2.f, layout.height / 2.f };
+            layout.x = pos.x;
+            layout.y = pos.y;
+        }, { {to, Property::SIZE}, {this, Property::SIZE} });
+    }
 }
 
 void Widget::layout_contains(std::vector<Widget*> elements) {
@@ -994,33 +1020,45 @@ bool Widget::contain_dependency(Widget* widget) {
 
 
 /**
- * @brief Удаляет виджет вместе с его потомками. У виджета и его потомков перед удалением удаляются все правила.
+ * @brief Удаляет виджет вместе с его потомками.
+ * У виджета и его потомков перед удалением удаляются все правила.
+ * Также удаляются подписки виджета и его потомков.
  */
 void Widget::delete_widget(Widget* widget) {
     if (widget == nullptr)
         return;
     assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
-    widget->clear_rules(Property::LAYOUT, true, false, true);
+    auto it = std::find_if(m_children.begin(), m_children.end(), [widget](std::unique_ptr<Widget>& child) {return child.get() == widget; });
+    assert(it != m_children.end() && "Widget is no a child of this widget");
+    widget->clear_rules(Property::LAYOUT, true, false, true); //Удалим правила из всей иерархии
     assert(!GUI::Instance().get_root()->contain_dependency(widget) && "Hanging rule");
-    for (auto it = m_children.begin(); it != m_children.end(); ++it) {
-        if (it->get() == widget) {
-            (*it)->delete_all_widgets();
-            m_children.erase(it);
-            return;
-        }
-    }
+    widget->delete_all_widgets_impl(); //удаляем детей
+    GUI::Instance().unsubscribe(widget, Event::ANY); //отписываемся
+    auto w = std::move(*it);
+    m_children.erase(it); //достали виджет из иерархии, теперь он полностью от нее независим.
+    w.reset();//можем удалить, во время удаления виджет может пытаться менять дерево виджетов
+    //поскольку оно на текущий момент корректно.
 }
 
 void Widget::delete_all_widgets() {
     assert((!GUI::Instance().is_event_processing() || get_root() != GUI::Instance().get_root()) && "Cannot change widget hierarchy on event processing");
     for (auto& child : m_children)
-        child->clear_rules(Property::LAYOUT, true, false, true); //Удалим правила
+        child->clear_rules(Property::LAYOUT, true, false, true); //Удалим правила из всей иерархии
+    delete_all_widgets_impl();
+}
+
+void Widget::delete_all_widgets_impl() {
 #ifdef GUI_DEBUG_ENABLED
-    //после этого не должно остаться "высячих" правил
+    //при вызове этой функции не должно быть никаких "высячих" правил
     for (auto& child : m_children)
         assert(!GUI::Instance().get_root()->contain_dependency(child.get()) && "Hanging rule");
 #endif
-    m_children.clear(); //теперь спокойно удаляем.
+    for (auto& child : m_children)
+        child->delete_all_widgets();
+    for (auto& child : m_children)
+        GUI::Instance().unsubscribe(child.get(), Event::ANY); //отписать всех  
+    std::list<std::unique_ptr<Widget>> children = std::move(m_children); //вынимаем детей из иерархии
+    children.clear(); //удаляем их.
 }
 
 void Widget::add_children(std::list<Widget*>& list) {

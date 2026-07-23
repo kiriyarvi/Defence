@@ -187,6 +187,73 @@ void UpgradeButton::set_capture(bool capture) {
 }
 
 
+SellButton::SellButton(Widget* ui, IBuilding* building, bool building_with_health, BuildingCostComputer* cost_computer) :
+    m_ui{ ui }, m_cost_computer{ cost_computer }, m_building{ building }, m_building_with_health{building_with_health}
+{
+
+    layers = { TextureID::DeleteBuildingIcon, TextureID::X48Button };
+    enabled(Button::LEFT);
+
+    set_on_mouse_moved([this]() {
+        if (m_tooltip)
+            m_tooltip->invalidate(Property::POSITION);
+    });
+
+    set_on_hovered([this]() {
+        create_tooltip_deffered();
+    });
+
+    set_on_unhovered([this]() {
+        delete_tooltip_smart();
+    });
+
+    set_on_pressed([this](ClickableWidget::Button::Type button) {
+        layers = { TextureID::DeleteBuildingIcon, TextureID::X48ButtonClicked};
+    });
+    set_on_released([this](ClickableWidget::Button::Type button) {
+        m_building->accept(*m_cost_computer); //вычислить стоимость
+        GameState::Instance().player_coins_add(m_cost_computer->cost / 2);
+        layers = { TextureID::DeleteBuildingIcon, TextureID::X48Button };
+        GameState::Instance().get_map().delete_building(m_building->x_id, m_building->y_id);
+        GameState::Instance().get_ui().close_upgrade_panel();
+    });
+
+}
+
+void SellButton::create_tooltip_deffered() {
+    delete_tooltip_smart();
+    auto [panel, label] = create_tooltip(Anchor::BOTTOM | Anchor::RIGHT);
+    DEBUG_TAG(label, "SellButton::tooltip::label");
+    DEBUG_TAG(panel.get(), "SellButton::tooltip");
+    label->add_text("Продать за ");
+    m_building->accept(*m_cost_computer); //вычислить стоимость
+    label->add_line(std::to_string(static_cast<int>(m_cost_computer->cost / 2.f)), Label::coins_color);
+    if (!m_building_with_health) {
+        label->add_line("Стоимость равна половине вложенных средств");
+        label->add_text("с учетом установленных апгрейдов.");
+    }
+    else {
+        label->add_line("Стоимость рассчитывается исходя из текущего запаса прочности.");
+        label->add_line("Стоимость пяти единиц прочности равна половине прочности постройки"); //TODO
+    }
+    m_tooltip = panel.get();
+    m_ui->add_widget_deffered(std::move(panel));
+}
+
+void SellButton::delete_tooltip_smart() {
+    if (m_tooltip) {
+        m_ui->delete_widget_smart(m_tooltip);
+        m_tooltip = nullptr;
+    }
+
+}
+
+SellButton::~SellButton() {
+    delete_tooltip_smart();
+}
+
+
+
 UpgradePanel::UpgradePanel(Widget* tile_size_reference, Widget* height_reference):
     TiledPanel(TiledPanel::Type::Blueprint, tile_size_reference),
     m_tile_size_reference(tile_size_reference), m_height_reference(height_reference)
@@ -326,8 +393,53 @@ VHBoxOptions UpgradePanel::options_for_vhbox() {
     return vbox_options;
 }
 
+Widget* UpgradePanel::create_header_and_content(IBuilding* building, bool building_with_health, bool create_sell_button) {
+    Widget* top_panel = content_widget->add_widget(Widget::create());
+    DEBUG_TAG(top_panel, "top_panel");
+    Widget* headline = top_panel->add_widget(Widget::create());
+    DEBUG_TAG(headline, "headline");
+        //HEADLINE
+        Label* title = headline->add_widget(Label::create(true, 40));
+        title->add_text(to_string(building->type), sf::Color::White, sf::Text::Bold);
+        DEBUG_TAG(title, "title");
+        //HRULE
+        Widget* rule = headline->add_widget(Panel::create(sf::Color::White, sf::Color::Transparent, 0));
+        DEBUG_TAG(rule, "rule");
+    VHBoxOptions vbox_options = options_for_vhbox();
+    vbox_options.items = { {title, Anchor::CENTER}, { rule, Anchor::CENTER} };
+    headline->vbox(vbox_options);
+
+    Widget* content = top_panel->add_widget(Widget::create());
+    rule->add_rule(Property::WIDTH, [content, title](Layout& layout) {
+        layout.width = std::max<float>(content->layout.width, title->layout.width);
+    }, { {content, Property::WIDTH}, {title, Property::WIDTH} });
+    rule->property_equal(Property::HEIGHT, false, m_tile_size_reference, Property::HEIGHT, false, modifiers::Multiply(0.02));
+
+    vbox_options.items = { {headline, Anchor::CENTER}, { content, Anchor::CENTER} };
+    top_panel->vbox(vbox_options);
+
+
+    if (create_sell_button) {
+        SellButton* sell_button = content_widget->add_widget(std::make_unique<SellButton>(m_parent, building, building_with_health, &m_cost_computer));
+        DEBUG_TAG(sell_button, "SellButton");
+        sell_button->add_rule(Property::SIZE, [p = m_parent](Layout& layout) {
+            layout.width = 0.1 * p->layout.height;
+            layout.height = 0.1 * p->layout.height;
+        }, { {m_parent, Property::HEIGHT } });
+        sell_button->position_anchor(Anchor::RIGHT | Anchor::BOTTOM, content_widget, Anchor::RIGHT | Anchor::BOTTOM);
+        content_widget->add_rule(Property::HEIGHT, [this](Layout& layout) {
+            layout.height = m_cached_tile_size * (m_cached_tiles_count.y - 1);
+        }, { {this, Property::HEIGHT} });
+        content_widget->property_equal(Property::WIDTH, false, top_panel, Property::WIDTH, false, {});
+    }
+    else
+        content_widget->size_include(top_panel);
+    return content;
+
+}
+
 void UpgradePanel::visit(MiniGun& minigun) {
-    Widget* content = create_header_and_content(BuildingType::Minigun);
+    Widget* content = create_header_and_content(&minigun, false, true);
     DEBUG_TAG(content, "content");
 
     auto& achievement_system = AchievementSystem::Instance();
@@ -350,33 +462,9 @@ void UpgradePanel::visit(MiniGun& minigun) {
     content->vbox(options);
 }
 
-Widget* UpgradePanel::create_header_and_content(BuildingType type) {
-    Widget* headline = content_widget->add_widget(Widget::create());
-    DEBUG_TAG(headline, "headline");
-        //HEADLINE
-        Label* title = headline->add_widget(Label::create(true, 40));
-        title->add_text(to_string(type), sf::Color::White, sf::Text::Bold);
-        DEBUG_TAG(title, "title");
-        //HRULE
-        Widget* rule = headline->add_widget(Panel::create(sf::Color::White, sf::Color::Transparent, 0));
-        DEBUG_TAG(rule, "rule");
-        VHBoxOptions vbox_options = options_for_vhbox();
-        vbox_options.items = { {title, Anchor::CENTER}, { rule, Anchor::CENTER} };
-        headline->vbox(vbox_options);
-
-    Widget* content = content_widget->add_widget(Widget::create());
-    vbox_options.items = { {headline, Anchor::CENTER}, { content, Anchor::CENTER} };
-    content_widget->vbox(vbox_options);
-
-    rule->add_rule(Property::WIDTH, [content, title](Layout& layout) {
-        layout.width = std::max<float>(content->layout.width, title->layout.width);
-    }, { {content, Property::WIDTH}, {title, Property::WIDTH} });
-    rule->property_equal(Property::HEIGHT, false, m_tile_size_reference, Property::HEIGHT, false, modifiers::Multiply(0.02));
-    return content;
-}
 
 void UpgradePanel::create_panel_for_building_with_health(BuildingWithHealth* building, int enforce_cost, int repairing_hp) {
-    Widget* content = create_header_and_content(building->type);
+    Widget* content = create_header_and_content(building, true, true);
     DEBUG_TAG(content, "content");
     //INTERFACE
     Widget* interface = content->add_widget(Widget::create());
@@ -491,7 +579,7 @@ void UpgradePanel::visit(Mine& mine) {
 }
 
 void UpgradePanel::visit(Radar& radar) {
-    Widget* content = create_header_and_content(BuildingType::Radar);
+    Widget* content = create_header_and_content(&radar, false, true);
     DEBUG_TAG(content, "content");
 
     auto& achievement_system = AchievementSystem::Instance();
@@ -517,7 +605,7 @@ void UpgradePanel::visit(Radar& radar) {
 
 
 void UpgradePanel::visit(RadioMast& radio_tower) {
-    Widget* content = create_header_and_content(BuildingType::RadioMast);
+    Widget* content = create_header_and_content(&radio_tower, false, true);
     DEBUG_TAG(content, "content");
 
     auto& net_manager = NetManager::Instance();

@@ -29,9 +29,10 @@ public:
     virtual void visit(AntitankGun& antitank_gun) = 0;
     virtual void visit(TwinGun& twingun) = 0;
     virtual void visit(Mine& mine) = 0;
-    virtual void visit(Radar& mine) = 0;
+    virtual void visit(Radar& radar) = 0;
     virtual void visit(RadioMast& radio_tower) = 0;
 };
+
 
 enum class LanguageCase {
     NOMINATIVE, //< именительный

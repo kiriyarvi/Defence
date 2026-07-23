@@ -124,4 +124,9 @@ TextureManager::TextureManager() {
     textures[TextureID::IconButton].loadFromFile("sprites/icon_button.png");
     textures[TextureID::IconButtonPressed].loadFromFile("sprites/icon_button_pressed.png");
     textures[TextureID::IconButtonLocked].loadFromFile("sprites/icon_button_locked.png");
+
+    textures[TextureID::DeleteBuildingIcon].loadFromFile("sprites/delete_building_icon.png");
+    textures[TextureID::X48Button].loadFromFile("sprites/x48_button.png");
+    textures[TextureID::X48ButtonClicked].loadFromFile("sprites/x48_button_clicked.png");
+    textures[TextureID::X48ButtonLocked].loadFromFile("sprites/x48_button_locked.png");
 }

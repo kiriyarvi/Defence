@@ -36,11 +36,11 @@ void GameUI::create() {
     //health indicator (Hierarchy)
     m_player_health_count_widget = (Label*)m_game_process_ui->add_widget(Label::create(true, 36, &ResourceManager::Instance().PixelSplitter_Bold_font));
     DEBUG_TAG(m_player_health_count_widget, "m_player_health_count_widget")
-        m_player_health_count_widget->add_text("X" + std::to_string(m_game_state.get_player_health()));
+    m_player_health_count_widget->add_text("X" + std::to_string(m_game_state.get_player_health()));
     Icon* heart_icon = (Icon*)m_game_process_ui->add_widget(Icon::create(TextureID::Heart));
     DEBUG_TAG(heart_icon, "heart_icon")
-        //health indicator (Layout)
-        m_player_health_count_widget->position_anchor(Anchor::RIGHT | Anchor::TOP, m_game_process_ui, Anchor::RIGHT | Anchor::TOP);
+    //health indicator (Layout)
+    m_player_health_count_widget->position_anchor(Anchor::RIGHT | Anchor::TOP, m_game_process_ui, Anchor::RIGHT | Anchor::TOP);
     heart_icon->add_rule(Property::SIZE, [hp_counter = m_player_health_count_widget](Widget::Layout& layout) {
         layout.width = hp_counter->layout.height;
         layout.height = hp_counter->layout.height;
@@ -83,12 +83,14 @@ void GameUI::create() {
 
     //m_tile_size_reference (испольщуется для тайловых виджетов)
     m_tile_size_reference = m_game_process_ui->add_widget(Widget::create());
+    DEBUG_TAG(m_tile_size_reference, "m_tile_size_reference");
     m_tile_size_reference->add_rule(Property::SIZE, [ui = m_game_process_ui](Widget::Layout& layout) {
         layout.width = ui->layout.width * 0.05;
         layout.height = ui->layout.width * 0.05;
     }, { { m_game_process_ui, Property::HEIGHT } });
     //m_upgrade_panel_height_reference (вспомогательный виджет для панели апгрейдов), вычисляет высоту панели апгрейдов
     m_upgrade_panel_height_reference = m_game_process_ui->add_widget(Widget::create());
+    DEBUG_TAG(m_upgrade_panel_height_reference, "m_upgrade_panel_height_reference");
     m_upgrade_panel_height_reference->add_rule(Property::SIZE, [hc = m_player_health_count_widget, bp = m_building_panel, ui = m_game_process_ui](Widget::Layout& layout) {
         layout.height = ui->layout.height - hc->layout.height - bp->layout.height;
     }, { { m_player_health_count_widget, Property::HEIGHT }, {m_building_panel, Property::HEIGHT}, {m_game_process_ui, Property::HEIGHT} });
@@ -230,7 +232,7 @@ void GameUI::game_over(bool win) {
 }
 
 void GameUI::close_upgrade_panel() {
-    m_game_process_ui->delete_widget(m_upgrade_panel);
+    m_game_process_ui->delete_widget_smart(m_upgrade_panel);
     m_upgrade_panel = nullptr;
 }
 

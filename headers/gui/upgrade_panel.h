@@ -3,8 +3,7 @@
 #include "gui/layered_icon.h"
 #include "gui/icon.h"
 #include "guns/building_with_health.h"
-
-#include "guns/building.h"
+#include "guns/building_cost_computer.h"
 
 #include <functional>
 
@@ -54,6 +53,22 @@ private:
     bool m_clicked = false;
 };
 
+class SellButton: public HoverableClickableWidget, public LayeredIcon {
+public:
+    SellButton(Widget* ui, IBuilding* building, bool building_with_health, BuildingCostComputer* cost_computer);
+    ~SellButton();
+private:
+    void create_tooltip_deffered();
+    void delete_tooltip_smart();
+private:
+    Widget* m_tooltip = nullptr;
+    Widget* m_ui;
+    IBuilding* m_building;
+    BuildingCostComputer* m_cost_computer = nullptr;
+    bool m_building_with_health;
+};
+
+
 class UpgradePanel : public TiledPanel, public IBuildingVisitor {
 public:
     UpgradePanel(Widget* tile_size_reference, Widget* height_reference);
@@ -74,7 +89,7 @@ private:
     Widget* create_buttons_for_upgrade(Widget* parent, IBuilding* building, Upgrade* upgrade, const std::vector<TextureID>& upgrade_buttons_icons);
     void create_info_panel_for_button(UpgradeButton* button);
     void create_panel_for_building_with_health(BuildingWithHealth* building, int enforce_cost, int repairing_hp);
-    Widget* create_header_and_content(BuildingType type);
+    Widget* create_header_and_content(IBuilding* building, bool building_with_health, bool create_sell_button);
     VHBoxOptions options_for_vhbox();
     Widget* m_tile_size_reference;
     Widget* m_height_reference;
@@ -82,4 +97,5 @@ private:
     std::vector<UpgradeButton*> m_upgrade_buttons;
     std::vector<std::function<void()>> m_on_kill_actions;
     std::vector<std::function<void(int)>> m_update_callbacks;
+    BuildingCostComputer m_cost_computer;
 };

@@ -22,6 +22,7 @@ namespace Event {
     inline Type BUTTON_PRESSED = 0b0010;
     inline Type BUTTON_RELEASED = 0b0100;
     inline Type WHEEL_SCROLLED = 0b1000;
+    inline Type ANY = 0b1111;
 }
 
 
@@ -239,6 +240,7 @@ public:
         glm::vec2 center() const;
         bool contains(const glm::vec2& transform, float x, float y);
         glm::vec2 get_anchor_relative_to_center(Anchor::Type anchor) const;
+        glm::vec2 get_content_anchor_relative_to_center(Anchor::Type anchor) const;
         Property::Type invalidated_props() const { return m_invalidated_props; }
     private:
         static std::string to_string(Property::Type type);
@@ -375,6 +377,7 @@ protected:
     bool contain_dependency(Widget* widget);
 private:
     void vhbox(const VHBoxOptions& options, bool vertical);
+    void delete_all_widgets_impl();
 };
 
 

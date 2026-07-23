@@ -96,7 +96,11 @@ enum class TextureID {
     TextButton,
     IconButton,
     IconButtonPressed,
-    IconButtonLocked
+    IconButtonLocked,
+    DeleteBuildingIcon,
+    X48Button,
+    X48ButtonClicked,
+    X48ButtonLocked
 };
 
 class TextureManager {

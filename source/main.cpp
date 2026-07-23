@@ -148,29 +148,14 @@ int main() {
     Widget* root = GUI::Instance().get_root();
     DEBUG_TAG(root, "root");
 
-    //HIERARCHY
-    Panel* panel = (Panel*)root->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Red));
-    Widget* box_1 = panel->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Blue));
-    DEBUG_TAG(box_1, "box_1");
-    Widget* box_2 = panel->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Blue));
-    DEBUG_TAG(box_2, "box_2");
-    Widget* box_3 = panel->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Blue));
-    DEBUG_TAG(box_3, "box_3");
-    Widget* box_4 = panel->add_widget(Panel::create(sf::Color::Transparent, sf::Color::Blue));
-    DEBUG_TAG(box_4, "box_4");
-    box_1->size_fixed(50, 50);
-    box_2->size_fixed(50, 50);
-    box_3->size_fixed(50, 50);
-    box_4->size_fixed(50, 50);
+    Panel* panel_1 = root->add_widget(Panel::create());
+    Panel* panel_2 = panel_1->add_widget(Panel::create());
 
-    GridOptions options;
-    options.resize(2, 2);
-    options.items = {
-        {{box_1, Anchor::CENTER}, {box_2, Anchor::CENTER }},
-        {{box_3, Anchor::RIGHT|Anchor::Y_CENTER}, {box_4, Anchor::CENTER}}
-    };
-    options.margin_source = 4;
-    panel->grid(options);
+    panel_1->size_fixed(300, 300);
+    panel_2->size_fixed(50, 50);
+    panel_1->position_centering();
+    panel_2->position_anchor(Anchor::RIGHT | Anchor::BOTTOM, panel_1, Anchor::RIGHT | Anchor::BOTTOM);
+
 
     sf::Clock clock;
 
