@@ -133,7 +133,7 @@ WaveController::WaveController() {
         r1->id = one_random_route();
         r1->add_spawner(EnemyType::Bike, 10);
         Wave w;
-        w.prepairing_time = 60;
+        w.prepairing_time = 4;
         w.routes.push_back(std::move(r1));
         w.reward = 1000;
         m_waves.push_back(std::move(w));

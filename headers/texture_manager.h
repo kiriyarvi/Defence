@@ -93,7 +93,10 @@ enum class TextureID {
     UpgradeButtonCapture,
     UpgradeLock,
     Switch,
-    TextButton
+    TextButton,
+    IconButton,
+    IconButtonPressed,
+    IconButtonLocked
 };
 
 class TextureManager {

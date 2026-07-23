@@ -120,4 +120,8 @@ TextureManager::TextureManager() {
 
     textures[TextureID::Switch].loadFromFile("sprites/switch.png");
     textures[TextureID::TextButton].loadFromFile("sprites/text_button.png");
+
+    textures[TextureID::IconButton].loadFromFile("sprites/icon_button.png");
+    textures[TextureID::IconButtonPressed].loadFromFile("sprites/icon_button_pressed.png");
+    textures[TextureID::IconButtonLocked].loadFromFile("sprites/icon_button_locked.png");
 }

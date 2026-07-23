@@ -5,8 +5,7 @@
 
 NextWaveButton::NextWaveButton() {
     //inactive state
-    layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
-    grayscale = true;
+    layers = { TextureID::IconButtonLocked, TextureID::Locked };
     m_button = Button::LEFT;
 
     m_on_hovered = [this]()  {
@@ -24,27 +23,25 @@ NextWaveButton::NextWaveButton() {
     };
     m_on_pressed = [this](Button::Type) {
         if (m_active) {
-            layers = { TextureID::ButtonClickedBackground, TextureID::NextWaveIcon };
+            layers = { TextureID::IconButtonPressed, TextureID::NextWaveIcon };
         }
     };
     m_on_released = [this](Button::Type) {
         if (m_active) {
             EnemyManager::Instance().start_wave();
-            layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
-        }
+        } else
+            layers = { TextureID::IconButton, TextureID::NextWaveIcon };
     };
 }
 
 void NextWaveButton::set_active(bool active) {
     if (m_active != active) {
         if (active) {
-            layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
-            grayscale = false;
+            layers = { TextureID::IconButton, TextureID::NextWaveIcon };
             enabled(Button::LEFT);
         }
         else {
-            layers = { TextureID::ButtonBackground, TextureID::NextWaveIcon };
-            grayscale = true;
+            layers = { TextureID::IconButtonLocked, TextureID::Locked };
             enabled(0);
         }
     }
