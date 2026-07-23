@@ -179,7 +179,7 @@ void GameUI::on_event(sf::Event& event) {
         if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) {
             m_game_state.get_map().enlarge_map();
         } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::K) {
-            for (auto& enemy : EnemyManager::Instance().m_enemies)
+            for (auto enemy : EnemyManager::Instance().get_enemy_container())
                 enemy->health = 0;
         } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::T) {
             m_game_state.get_map().create_tile_test_map();

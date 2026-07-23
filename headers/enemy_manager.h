@@ -1,12 +1,12 @@
 #pragma once
 #include "tile_map.h"
 #include "SFML/Audio.hpp"
-#include "enemies/IEnemy.h"
+#include "enemies/enemy_container.h"
 #include "wave_controller.h"
 #include <enemies/smoke.h>
 
 #include "utils/animation.h"
-
+#include <list>
 
 class EnemyManager {
 public:
@@ -26,17 +26,18 @@ public:
 	void draw(sf::RenderWindow& window);
     void draw_effects(sf::RenderWindow& window);
     void start_wave() { if (m_wave_controller) m_wave_controller->start_wave(); }
-	IEnemy* get_enemy_by_id(uint32_t id);
+	IEnemy* get_enemy_by_id(EnemyContainer::EnemyID id);
     RoadGraph::Paths all_paths;
-	std::list<IEnemy::Ptr> m_enemies;
-    std::unordered_map<uint32_t, IEnemy*> m_MREW_enemy_info;
+    std::list<IEnemy*> MREW_enemies; //< отдельный массив для врагов с функцией радиоподавления. Гарантируется, что в этом массиве расположены не уничтоженные враги.
     void generate_waves();
     void add_smoke(Smoke&& smoke) { m_smokes.push_back(std::move(smoke)); }
     const std::list<Smoke>& get_smokes() { return m_smokes; }
+    EnemyContainer& get_enemy_container() { return m_enemies; }
 private:
 	EnemyManager();
+private:
+    EnemyContainer m_enemies;
     std::list<Smoke> m_smokes;
-	uint32_t current_max_id = 0;
 	std::list<IDestroyedEnemy::Ptr> m_destroyed_enemies;
     std::unique_ptr<WaveController> m_wave_controller;
 };

@@ -2,7 +2,7 @@
 #include <list>
 #include <glm/vec2.hpp>
 #include <SFML/Graphics.hpp>
-
+#include <enemies/enemy_container.h>
 
 class Debugger {
 public:
@@ -18,7 +18,7 @@ public:
     Debugger& operator=(Debugger&&) = delete;
 
     void add_line(const glm::vec2& from, const glm::vec2& to, sf::Color color);
-    void add_indicator(uint32_t enemy_id, float p);
+    void add_indicator(EnemyContainer::EnemyID enemy_id, float p);
     void add_text(const std::string& text, const glm::vec2& position);
     void draw(sf::RenderWindow& window);
      
@@ -33,7 +33,7 @@ private:
     std::list<Line> m_lines;
 
     struct EnemyIndicators {
-        uint32_t enemy_id;
+        EnemyContainer::EnemyID enemy_id;
         glm::vec2 enemy_pos;
         std::list<float> progresses;
     };

@@ -1,6 +1,7 @@
 #pragma once
 #include "guns/building.h"
 #include "texture_manager.h"
+#include "enemies/enemy_container.h"
 
 class IEnemy;
 
@@ -27,6 +28,6 @@ protected:
 protected:
 	bool m_is_gun_pointed = false;
 	bool m_is_enemy_captured = false;
-	uint32_t m_captured_enemy_id;
+	EnemyContainer::EnemyID m_captured_enemy_id;
 };
 

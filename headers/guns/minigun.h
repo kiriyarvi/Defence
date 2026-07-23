@@ -2,6 +2,7 @@
 #include "guns/rotating_gun_base.h"
 #include "utils/animation.h"
 #include "utils/sprite_chain.h"
+#include "enemies/enemy_container.h"
 #include "params_manager.h"
 #include <glm/vec2.hpp>
 
@@ -63,7 +64,7 @@ private:
 	ISpriteFramer::Ptr m_shot_framer;
 	SpriteChain* m_shot_sprite = nullptr;
 
-	uint32_t m_shoted_enemy_id;
+    EnemyContainer::EnemyID m_shoted_enemy_id;
 	Animation m_enemy_hit_animation;
 	ISpriteFramer::Ptr m_enemy_hit_framer;
 	glm::vec2 m_random_hit_offset = glm::vec2(0,0);

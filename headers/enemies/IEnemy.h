@@ -4,6 +4,7 @@
 #include "glm/glm.hpp"
 #include "params_manager.h"
 #include "tile_map.h"
+#include "enemies/enemy_container.h"
 
 enum class EnemyType {
     Solder,
@@ -65,9 +66,9 @@ public:
     virtual void draw_collision(sf::RenderWindow& window);
     glm::vec2 rotate(const glm::vec2& a) const;
 
-
-	uint32_t id; // уникальный идентификатор врага
 	const ParamsManager::Params::Enemies::Enemy& params;
+
+    EnemyContainer::EnemyID id; //уникальный идентификатор врага
 
 	int health;
 	glm::vec2 position = { 0,0 };

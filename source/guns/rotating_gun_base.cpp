@@ -44,15 +44,15 @@ void IRotatingGun::logic(double dtime_microseconds) {
 	// если нет захваченного врага, найдем его.
 	if (!m_is_enemy_captured) {
 		// захватываем цель. Ищем ближайшего врага.
-		auto& enemies = EnemyManager::Instance().m_enemies;
+		auto& enemies = EnemyManager::Instance().get_enemy_container();
 		if (enemies.empty()) return; // врагов нет
 		
 		// ищем ближайшего врага в радиусе действия (по приоритету)
 		double best_priority = 0;
-		for (auto& enemy : enemies) {
+		for (auto enemy : enemies) {
             if (!CoveringDataBase::Instance().is_available_taget(enemy->id))
                 continue;
-            auto status = get_enemy_status(*enemy.get());
+            auto status = get_enemy_status(*enemy);
             if (!status.valid)
                 continue;
             double dist = glm::length(enemy->get_position() - gun_pos);
@@ -61,11 +61,11 @@ void IRotatingGun::logic(double dtime_microseconds) {
                 if (status.mult_by_distance)
                     p *= 1. - dist / (radius * 32);
 				if (!captured_enemy) {
-					captured_enemy = enemy.get();
+					captured_enemy = enemy;
                     best_priority = p;
 				}
 				else if (best_priority < p) {
-					captured_enemy = enemy.get();
+					captured_enemy = enemy;
                     best_priority = p;
 				}
 			}

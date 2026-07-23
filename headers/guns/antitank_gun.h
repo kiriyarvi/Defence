@@ -1,6 +1,7 @@
 #pragma once
 #include "rotating_gun_base.h"
 #include "utils/sprite_chain.h"
+#include "enemies/enemy_container.h"
 #include "params_manager.h"
 
 class AntitankGun: public IRotatingGun {
@@ -32,5 +33,5 @@ private:
 	double m_animation_duration = 1.5;
 	double m_animation_timer = 0.0;
 	double m_barrel_offset = 0.0;
-	uint32_t m_shoted_enemy_id;
+	EnemyContainer::EnemyID m_shoted_enemy_id;
 };

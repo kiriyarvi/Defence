@@ -2,6 +2,7 @@
 #include "rotating_gun_base.h"
 #include "utils/sprite_chain.h"
 #include "params_manager.h"
+#include "enemies/IEnemy.h"
 #include <glm/vec2.hpp>
 
 class TwinGunAnimation {
@@ -25,8 +26,8 @@ public:
 public:
 	glm::vec2 upper_shot_fire_pos; // точка попадания по врагу, относительно центра врага.
 	glm::vec2 lower_shot_fire_pos;
-	uint32_t upper_barrel_shoted_enemy_id; // id врага, по которому попало верхнее орудие
-	uint32_t lower_barrel_shoted_enemy_id; // id врага, по которому попало верхнее орудие
+	EnemyContainer::EnemyID upper_barrel_shoted_enemy_id; // id врага, по которому попало верхнее орудие
+    EnemyContainer::EnemyID lower_barrel_shoted_enemy_id; // id врага, по которому попало верхнее орудие
 private:
 	float compute_k(bool upper);
 private:

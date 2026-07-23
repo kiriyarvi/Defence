@@ -105,7 +105,7 @@ void Radar::logic(double dtime_microseconds) {
         // поиск новых целей.
         IEnemy* enemy = nullptr;
         float metric = 1.;
-        for (auto& e : enemy_manager.m_enemies) {
+        for (auto e : enemy_manager.get_enemy_container()) {
             if (e->m_covering_level > uncovering_level)
                 continue; //не хватает uncovering для раскрытия цели
             if (CoveringDataBase::Instance().is_available_taget(e->id))
@@ -117,7 +117,7 @@ void Radar::logic(double dtime_microseconds) {
                 continue; // цель слишком далеко
             
             if ((enemy == nullptr || e->path_progress < metric) && e->m_covering_level <= uncovering_level) {
-                enemy = e.get();
+                enemy = e;
                 metric = e->path_progress;
             }
         }

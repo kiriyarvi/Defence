@@ -17,7 +17,7 @@ void Hedgehog::draw(sf::RenderWindow& window) {
 void Hedgehog::logic(double dtime) {
     glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);
     int health = get_health();
-    for (auto& enemy : EnemyManager::Instance().m_enemies) {
+    for (auto enemy : EnemyManager::Instance().get_enemy_container()) {
         if (enemy->infantry || enemy->wheels == IEnemy::Wheels::None)
             continue;
         if (health <= 0)

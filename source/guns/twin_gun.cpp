@@ -73,7 +73,7 @@ void TwinGunAnimation::draw_enemy_hit_animation(sf::RenderWindow& window, int x_
 		return;
 	k = k / fire_duration;
 
-	uint32_t& enemy_id = upper ? upper_barrel_shoted_enemy_id : lower_barrel_shoted_enemy_id;
+	EnemyContainer::EnemyID enemy_id = upper ? upper_barrel_shoted_enemy_id : lower_barrel_shoted_enemy_id;
 	IEnemy* enemy = EnemyManager::Instance().get_enemy_by_id(enemy_id);
 	if (!enemy) return;
 	glm::vec2 enemy_pos = enemy->get_position();
@@ -154,7 +154,7 @@ void TwinGun::logic(double dtime_microseconds) {
 }
 
 void TwinGun::shot(IEnemy& enemy, bool upper_barrel) {
-    for (auto& e : EnemyManager::Instance().m_enemies) {
+    for (auto e : EnemyManager::Instance().get_enemy_container()) {
         if (e->params.armor_level > m_params.armor_penetration_level)
             continue;
         float dist = glm::length(e->get_position() - enemy.get_position()) / 32.f;
@@ -168,15 +168,6 @@ void TwinGun::shot(IEnemy& enemy, bool upper_barrel) {
         }
     }
 	SoundManager::Instance().play(Sounds::TwinGunShot);
-	glm::vec3 gun_pos(x_id * 32 + 16, y_id * 32 + 16, 0);
-	glm::vec3 enemy_pos = glm::vec3(enemy.get_position(), 0.0);
-	glm::vec3 up(0, 0, 1);
-	glm::vec3 dir = enemy_pos - gun_pos;
-	glm::vec3 perp = 3.f * glm::normalize(glm::cross(dir, up));
-	uint32_t& save_enemy_id = upper_barrel ? animation.upper_barrel_shoted_enemy_id : animation.lower_barrel_shoted_enemy_id;
-	glm::vec2& shot_rel_pos = upper_barrel ? animation.upper_shot_fire_pos : animation.lower_shot_fire_pos;
-	save_enemy_id = enemy.id;
-	shot_rel_pos = (upper_barrel ? perp : -perp);
 }
 
 void TwinGun::shoot_logic(IEnemy& enemy) {

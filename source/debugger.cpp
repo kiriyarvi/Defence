@@ -6,7 +6,7 @@ void Debugger::add_line(const glm::vec2& from, const glm::vec2& to, sf::Color co
     m_lines.push_back({ from, to, color });
 }
 
-void Debugger::add_indicator(uint32_t enemy_id, float p) {
+void Debugger::add_indicator(EnemyContainer::EnemyID enemy_id, float p) {
     auto it = std::find_if(m_enemies_indicators.begin(), m_enemies_indicators.end(), [&](EnemyIndicators& ind) {return ind.enemy_id == enemy_id; });
     if (it != m_enemies_indicators.end()) {
         it->progresses.push_back(p);

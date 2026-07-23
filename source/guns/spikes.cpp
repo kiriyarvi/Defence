@@ -68,7 +68,7 @@ void Spikes::logic(double dtime) {
         return;
 	glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);
     int health = get_health();
-	for (auto& enemy : EnemyManager::Instance().m_enemies) {
+	for (auto enemy : EnemyManager::Instance().get_enemy_container()) {
         if (enemy->wheels == IEnemy::Wheels::None || enemy->wheels == IEnemy::Wheels::Tracks)
             continue;
 		if (glm::length(pos - enemy->get_position()) < 0.2 * 32) {

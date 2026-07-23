@@ -56,7 +56,7 @@ bool IEnemy::logic(double dtime) {
     }
     //1.2 Дополнительный уровень засекреченности от средств радио-электронной борьбы
     int max_mrew_covering_level = 0;
-    for (auto& [id, enemy_ptr] : EnemyManager::Instance().m_MREW_enemy_info) {
+    for (auto& enemy_ptr : EnemyManager::Instance().MREW_enemies) {
         float d = glm::distance(enemy_ptr->position, position);
         if (d <= 32 * enemy_ptr->m_MREW_params_ptr->radius)
             max_mrew_covering_level = std::max(max_mrew_covering_level, enemy_ptr->m_MREW_params_ptr->covering_level);

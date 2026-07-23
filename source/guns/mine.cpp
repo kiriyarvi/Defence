@@ -35,9 +35,9 @@ struct EnemyD {
 void Mine::logic(double dtime_microseconds) {
 	if (m_state == State::Ready) {
 		glm::vec2 pos(x_id * 32 + 16, y_id * 32 + 16);
-		auto& enemies = EnemyManager::Instance().m_enemies;
+		auto& enemies = EnemyManager::Instance().get_enemy_container();
 		std::list<EnemyD> in_damage_radius;
-		for (auto& enemy : enemies) {
+		for (auto enemy : enemies) {
 			double distance = glm::length(enemy->get_position() - pos) / 32;
 			if (distance <= m_params.activation_radius) {
 				m_state = State::Activated;
@@ -46,7 +46,7 @@ void Mine::logic(double dtime_microseconds) {
 				m_blast_animation.logic(0.0);
 			}
 			if (distance < m_params.damage_radius)
-				in_damage_radius.push_back(EnemyD{ enemy.get(), distance });
+				in_damage_radius.push_back(EnemyD{ enemy, distance });
 		}
 		if (m_state == State::Activated) {
 			for (auto& enemy : in_damage_radius) {

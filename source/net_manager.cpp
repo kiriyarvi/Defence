@@ -86,23 +86,23 @@ void NetManager::Net::logic(float dtime_microseconds) {
         }
     }
     // B. Собираем актуальный список раскрывающихся целей
-    std::list<int> busy_targets;
+    std::list<EnemyContainer::EnemyID> busy_targets;
     for (auto& radar : radars)
         for (auto& target : radar.radar_ptr->m_targets)
             busy_targets.push_back(target.target);
 
     // C. Составляем список врагов, попадающих в зону раскрытия сети
     std::list<IEnemy*> enemies_to_uncover;
-    for (auto& enemy : enemy_manager.m_enemies) {
+    for (auto enemy : enemy_manager.get_enemy_container()) {
         if (CoveringDataBase::Instance().is_available_taget(enemy->id))
             continue; //цель рассекречена => пропускаем
-        if (std::find_if(busy_targets.begin(), busy_targets.end(), [&](int target) {
+        if (std::find_if(busy_targets.begin(), busy_targets.end(), [&](EnemyContainer::EnemyID target) {
             return target == enemy->id;
         }) != busy_targets.end())
             continue; //цель уже раскрывается одним из радаров
         if (!in_uncover_zone(enemy->position))
             continue; //враг не в зона действия сети
-        enemies_to_uncover.push_back(enemy.get());
+        enemies_to_uncover.push_back(enemy);
     }
     enemies_to_uncover.sort([](IEnemy* a, IEnemy* b) {
         return a->path_progress < b->path_progress;

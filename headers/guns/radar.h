@@ -2,6 +2,7 @@
 #include "guns/building.h"
 #include "params_manager.h"
 #include "net_manager.h"
+#include "enemies/enemy_container.h"
 #include <list>
 
 
@@ -31,7 +32,7 @@ private:
     const ParamsManager::Params::Guns::Radar& m_params;
 
     struct Target {
-        uint32_t target;
+        EnemyContainer::EnemyID target;
         float uncovering_time = 0;
     };
     float m_aiming_timer = 0.0;
